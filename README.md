@@ -1,7 +1,7 @@
 # GSUA-CSB
 
 
-Global Sensitivity and Uncertainty Analysis - Confidence Subcontour Box (GSUA-UCI) Toolbox is a product developed by Universidad EAFIT for command-line mathematical model validation in both of Simulink or Symbolic Math Toolbox environment . At present time, the toolbox allows to perform the following functions: To apply and visualize several variance-based sensitivity (SA) and uncertainty (UA) analysis, to estimate model parameters (PE) and to estimate confidence subcontour box (CSB) for estimated parameters. This toolbox is based on the previous work of Carlos Mario Vélez: GSUA of dynamical systems using variance-based methods.
+Global Sensitivity and Uncertainty Analysis - Confidence Subcontour Box (GSUA-CSB) Toolbox is a product developed by Universidad EAFIT for command-line mathematical model validation in both of Simulink or Symbolic Math Toolbox environment . At present time, the toolbox allows to perform the following functions: To apply and visualize several variance-based sensitivity (SA) and uncertainty (UA) analysis, to estimate model parameters (PE) and to estimate confidence subcontour box (CSB) for estimated parameters. This toolbox is based on the previous work of Carlos Mario Vélez: GSUA of dynamical systems using variance-based methods.
 
 Sensitivity indices estimators implemented in this toolbox are based on the following works:
 
