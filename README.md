@@ -24,3 +24,5 @@ Rojas-Díaz, Daniel and Vélez-Sánchez, Carlos Mario (2019). GSUA-CSB (https://
 # CSB method in detail
 
 Working paper for CSB method available: [A NOVEL ALGORITHM  FOR  CONFIDENCE SUBCONTOUR BOX (CSB) ESTIMATION: AN ALTERNATIVE TO TRADITIONAL CONFIDENCE INTERVALS](https://arxiv.org/pdf/1909.09603.pdf)
+
+[![View GSUA-CSB on File Exchange](https://www.mathworks.com/matlabcentral/images/matlab-file-exchange.svg)](https://www.mathworks.com/matlabcentral/fileexchange/72637-gsua-csb)
