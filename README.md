@@ -1,28 +1,44 @@
 # GSUA-CSB
 
+Global Sensitivity and Uncertainty Analysis - Confidence Subcontour Box (GSUA-CSB) is a MATLAB toolbox for validating mathematical models implemented with Symbolic Math Toolbox or Simulink.
 
-Global Sensitivity and Uncertainty Analysis - Confidence Subcontour Box (GSUA-CSB) Toolbox is a product developed by Universidad EAFIT for command-line mathematical model validation in both of Simulink or Symbolic Math Toolbox environment . At present time, the toolbox allows to perform the following functions: To apply and visualize several variance-based sensitivity (SA) and uncertainty (UA) analysis, to estimate model parameters (PE) and to estimate confidence subcontour box (CSB) for estimated parameters. This toolbox is based on the previous work of Carlos Mario Vélez: GSUA of dynamical systems using variance-based methods.
+The toolbox supports:
 
-Sensitivity indices estimators implemented in this toolbox are based on the following works:
+- variance-based sensitivity analysis;
+- uncertainty analysis;
+- parameter estimation;
+- confidence sub-contour box estimation for fitted parameters;
+- visualization workflows for model-validation studies.
 
-[1]: Saltelli, A., Annoni, P., Azzini, I., Campolongo, F., Ratto, M., and Tarantola, S. (2010). Variance based sensitivity analysis of model output. design and estimator for the total sensitivity index. Computer Physics Communications, 181(2):259–270.
+GSUA-CSB was developed at Universidad EAFIT and builds on previous work by Carlos Mario Velez on GSUA for dynamical systems using variance-based methods.
 
-[2]: Xiao, S., Lu, Z., and Wang, P. (2018). Multivariate global sensitivity analysis based on distance components decomposition. Risk Analysis, 38(12):2703–2721.
+## Why It Matters
 
-Cite this work as:
-Rojas-Díaz, Daniel and Vélez-Sánchez, Carlos Mario (2019). GSUA-CSB (https://www.github.com/drojasd/GSUA-CSB), GitHub. Retrieved September 2, 2019. doi:10.5755281/zenodo.3383316.
+Mathematical models used in epidemiology, public health, engineering, and biological systems often depend on uncertain parameters. GSUA-CSB helps researchers understand which parameters matter, how uncertainty propagates through the model, and how identifiable fitted parameters are under available data.
 
+## Links
+
+- User guide and examples: [GSUA-CSB documentation](https://drojasd.github.io/GSUA-CSB/gsua_userguide)
+- MATLAB File Exchange: [View GSUA-CSB on File Exchange](https://www.mathworks.com/matlabcentral/fileexchange/72637-gsua-csb)
+- Latest GitHub release: [v1.6](https://github.com/drojasd/GSUA-CSB/releases/tag/v1.6)
+- DOI: [Zenodo DOI](https://zenodo.org/badge/latestdoi/205731654)
 
 [![DOI](https://zenodo.org/badge/205731654.svg)](https://zenodo.org/badge/latestdoi/205731654)
 
+## Methods Implemented
 
-# Userguide
+Sensitivity index estimators implemented in this toolbox are based on:
 
-[Online toolbox userguide and examples](https://drojasd.github.io/GSUA-CSB/gsua_userguide)
+1. Saltelli, A., Annoni, P., Azzini, I., Campolongo, F., Ratto, M., and Tarantola, S. (2010). Variance based sensitivity analysis of model output: design and estimator for the total sensitivity index. *Computer Physics Communications*, 181(2), 259-270.
+2. Xiao, S., Lu, Z., and Wang, P. (2018). Multivariate global sensitivity analysis based on distance components decomposition. *Risk Analysis*, 38(12), 2703-2721.
 
+## Citation
 
-# CSB method in detail
+If you use this toolbox, cite:
 
-Working paper for CSB method available: [A NOVEL ALGORITHM  FOR  CONFIDENCE SUBCONTOUR BOX (CSB) ESTIMATION: AN ALTERNATIVE TO TRADITIONAL CONFIDENCE INTERVALS](https://arxiv.org/pdf/1909.09603.pdf)
+Rojas-Diaz, Daniel and Velez-Sanchez, Carlos Mario (2019). GSUA-CSB (https://www.github.com/drojasd/GSUA-CSB), GitHub. doi:10.5755281/zenodo.3383316.
 
-[![View GSUA-CSB on File Exchange](https://www.mathworks.com/matlabcentral/images/matlab-file-exchange.svg)](https://www.mathworks.com/matlabcentral/fileexchange/72637-gsua-csb)
+## License
+
+This project is distributed under the MIT License.
+
