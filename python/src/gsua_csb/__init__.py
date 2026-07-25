@@ -15,6 +15,7 @@ from __future__ import annotations
 
 from ._costs import costf, costf_multi, coverage_metric, likecost, rcostf
 from ._estimation import PEResult, parameter_estimation
+from ._identifiability import ClusterInfo, IdentifiabilityResult, identifiability_analysis
 from ._model import Model, UserFunctionModel, build_range
 from ._sampling import design_matrix
 from ._sensitivity import SensitivityResult, sensitivity_analysis
@@ -41,6 +42,8 @@ gsua_sa = sensitivity_analysis
 gsua_ua = uncertainty_analysis
 gsua_mcf = monte_carlo_filter
 gsua_pe = parameter_estimation
+gsua_ia = identifiability_analysis
+gsua_dia = identifiability_analysis
 
 __all__ = [
     "Model",
@@ -63,6 +66,9 @@ __all__ = [
     "monte_carlo_filter",
     "PEResult",
     "parameter_estimation",
+    "ClusterInfo",
+    "IdentifiabilityResult",
+    "identifiability_analysis",
     "gsua_costf",
     "gsua_rcostf",
     "gsua_costfmulti",
@@ -75,4 +81,6 @@ __all__ = [
     "gsua_ua",
     "gsua_mcf",
     "gsua_pe",
+    "gsua_ia",
+    "gsua_dia",
 ]
