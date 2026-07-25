@@ -15,3 +15,7 @@ htmlcov/
 # Virtual environments
 .venv/
 venv/
+
+# Paper draft (not ready for public view yet)
+paper.md
+paper.bib
