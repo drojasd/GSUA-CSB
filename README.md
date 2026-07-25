@@ -4,10 +4,33 @@
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](LICENSE)
 [![DOI](https://zenodo.org/badge/205731654.svg)](https://zenodo.org/badge/latestdoi/205731654)
 
-> This repository contains the original **MATLAB toolbox** (this directory) and an in-progress
-> **Python port** in [`python/`](python/) — see [`python/README.md`](python/README.md) for what's
-> implemented so far. The Python port drops Simulink-backed models (no equivalent; use the MATLAB
-> Engine API instead) but otherwise targets full parity, including symbolic-ODE models via SymPy.
+## 🐍 New: GSUA-CSB is now available for Python
+
+Every non-Simulink capability of this toolbox — global sensitivity analysis (Sobol, Jansen,
+Saltelli, and the toolbox's own Xiao method), uncertainty analysis and Monte Carlo filtering,
+multistart parameter estimation, practical identifiability analysis (including spectral-clustering
+detection of multiple global minima), range refinement, the namesake Confidence Sub-contour Box
+algorithm, profile likelihood, and composable Matplotlib plotting — has a Python port in
+[`python/`](python/), built on NumPy/SciPy/scikit-learn/SymPy. No MATLAB license required.
+
+```bash
+cd python && pip install -e ".[all]"
+```
+
+```python
+import gsua_csb as gc
+# gc.UserFunctionModel / gc.SymbolicODEModel, gc.design_matrix, gc.sensitivity_analysis,
+# gc.parameter_estimation, gc.identifiability_analysis, gc.confidence_subcontour_box, ...
+```
+
+- **[`python/README.md`](python/README.md)** — what's implemented, install options, design notes
+- **[`python/USERGUIDE.md`](python/USERGUIDE.md)** — worked examples for every capability
+- **[`python/examples/system_identification_cycle.py`](python/examples/system_identification_cycle.py)**
+  — the full semi-automated identification workflow, runnable end to end
+
+Simulink-backed models are intentionally not ported (no Python equivalent — call MATLAB directly
+via its Python Engine API instead); everything else targets full parity with the MATLAB toolbox
+below, including symbolic-ODE models via SymPy.
 
 **GSUA-CSB** (Global Sensitivity and Uncertainty Analysis — Confidence Sub-contour Box) is a MATLAB toolbox for
 validating mathematical models implemented with Symbolic Math Toolbox or Simulink. It works uniformly across
