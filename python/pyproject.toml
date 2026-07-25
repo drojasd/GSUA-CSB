@@ -4,7 +4,7 @@ build-backend = "hatchling.build"
 
 [project]
 name = "gsua-csb"
-version = "0.1.0"
+version = "0.2.0"
 description = "Global Sensitivity and Uncertainty Analysis - Confidence Subcontour Box: sensitivity analysis, uncertainty analysis, parameter estimation, and practical identifiability analysis for symbolic-ODE and user-defined models. Python port of the MATLAB GSUA-CSB toolbox."
 readme = "README.md"
 requires-python = ">=3.10"
@@ -21,7 +21,7 @@ keywords = [
     "system-identification",
 ]
 classifiers = [
-    "Development Status :: 3 - Alpha",
+    "Development Status :: 4 - Beta",
     "Intended Audience :: Science/Research",
     "License :: OSI Approved :: MIT License",
     "Programming Language :: Python :: 3",

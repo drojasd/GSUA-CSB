@@ -4,8 +4,9 @@ Python port of the [GSUA-CSB MATLAB toolbox](https://github.com/drojasd/GSUA-CSB
 analysis, uncertainty analysis, parameter estimation, and practical identifiability analysis
 (including multiple-global-minima detection) for symbolic-ODE and user-defined models.
 
-**Status: early/partial.** This is an in-progress port, not yet feature-complete with the MATLAB
-toolbox. See "What's implemented" below for the current state.
+**Status: full tier implemented.** Every non-Simulink MATLAB capability has a Python port -- see
+"What's implemented" below. Still young relative to the MATLAB toolbox's longer track record;
+report issues via the [GitHub repo](https://github.com/drojasd/GSUA-CSB/issues).
 
 ## Why a separate Python package, same repo
 
@@ -56,7 +57,7 @@ Each capability is exposed two ways:
 | Identifiability + multi-minima clustering (`sklearn`) | Done | `gsua_ia`, `gsua_dia` |
 | Range refinement, confidence sub-contour box | Done | `gsua_oatr`, `gsua_oatr2`, `gsua_csb` |
 | Profile likelihood | Done | `gsua_likelihood` |
-| Plotting (Matplotlib) | Planned | `gsua_plot` |
+| Plotting (Matplotlib, composable `plot_*` functions) | Done | `gsua_plot` |
 | Simulink models | **Not planned** — use the MATLAB Engine API instead | `sens_dataprep`, `sens_montecarlo` |
 
 ## Examples
