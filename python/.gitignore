@@ -1,0 +1,17 @@
+# Python build/cache artifacts
+__pycache__/
+*.py[cod]
+*.egg-info/
+.eggs/
+.pytest_cache/
+.mypy_cache/
+.ruff_cache/
+build/
+dist/
+htmlcov/
+.coverage
+.coverage.*
+
+# Virtual environments
+.venv/
+venv/

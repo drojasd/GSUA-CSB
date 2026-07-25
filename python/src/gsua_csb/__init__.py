@@ -1,0 +1,49 @@
+"""GSUA-CSB: sensitivity analysis, uncertainty analysis, parameter estimation, and practical
+identifiability analysis for symbolic-ODE and user-defined models.
+
+Python port of the MATLAB GSUA-CSB toolbox (https://github.com/drojasd/GSUA-CSB). This package
+exposes a clean, idiomatic API (:class:`Model`, :func:`costf`, :func:`median_ci`, ...) as the real
+implementation, plus ``gsua_*``-named aliases below for readers coming from the MATLAB toolbox or
+its citations, who want literal name parity rather than a lookup table.
+
+Not ported: Simulink-backed models (no Python equivalent -- use the MATLAB Engine API to call
+MATLAB directly instead of reimplementing Simulink). Everything else in the MATLAB toolbox is
+in scope; this is an early, partial release -- see the project README for what's implemented so far.
+"""
+
+from __future__ import annotations
+
+from ._costs import costf, costf_multi, coverage_metric, likecost, rcostf
+from ._model import Model, UserFunctionModel, build_range
+from ._stats import band_depth, median_ci
+
+__version__ = "0.1.0"
+
+# MATLAB-name-parity aliases -- same functions, for cross-reference with the MATLAB toolbox/citations.
+gsua_costf = costf
+gsua_rcostf = rcostf
+gsua_costfmulti = costf_multi
+gsua_likecost = likecost
+gsua_covmetric = coverage_metric
+gsua_medianci = median_ci
+gsua_depth = band_depth
+
+__all__ = [
+    "Model",
+    "UserFunctionModel",
+    "build_range",
+    "costf",
+    "rcostf",
+    "costf_multi",
+    "likecost",
+    "coverage_metric",
+    "median_ci",
+    "band_depth",
+    "gsua_costf",
+    "gsua_rcostf",
+    "gsua_costfmulti",
+    "gsua_likecost",
+    "gsua_covmetric",
+    "gsua_medianci",
+    "gsua_depth",
+]

@@ -4,6 +4,11 @@
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](LICENSE)
 [![DOI](https://zenodo.org/badge/205731654.svg)](https://zenodo.org/badge/latestdoi/205731654)
 
+> This repository contains the original **MATLAB toolbox** (this directory) and an in-progress
+> **Python port** in [`python/`](python/) — see [`python/README.md`](python/README.md) for what's
+> implemented so far. The Python port drops Simulink-backed models (no equivalent; use the MATLAB
+> Engine API instead) but otherwise targets full parity, including symbolic-ODE models via SymPy.
+
 **GSUA-CSB** (Global Sensitivity and Uncertainty Analysis — Confidence Sub-contour Box) is a MATLAB toolbox for
 validating mathematical models implemented with Symbolic Math Toolbox or Simulink. It works uniformly across
 three kinds of model definitions:
