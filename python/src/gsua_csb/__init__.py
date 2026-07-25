@@ -17,6 +17,7 @@ from ._costs import costf, costf_multi, coverage_metric, likecost, rcostf
 from ._csb import CSBResult, RangeRefinementResult, confidence_subcontour_box, range_refinement
 from ._estimation import PEResult, parameter_estimation
 from ._identifiability import ClusterInfo, IdentifiabilityResult, identifiability_analysis
+from ._likelihood import ProfileLikelihoodResult, profile_likelihood
 from ._model import Model, UserFunctionModel, build_range
 from ._sampling import design_matrix
 from ._sensitivity import SensitivityResult, sensitivity_analysis
@@ -48,6 +49,7 @@ gsua_dia = identifiability_analysis
 gsua_oatr = range_refinement
 gsua_oatr2 = range_refinement
 gsua_csb = confidence_subcontour_box
+gsua_likelihood = profile_likelihood
 
 __all__ = [
     "Model",
@@ -77,6 +79,8 @@ __all__ = [
     "range_refinement",
     "CSBResult",
     "confidence_subcontour_box",
+    "ProfileLikelihoodResult",
+    "profile_likelihood",
     "gsua_costf",
     "gsua_rcostf",
     "gsua_costfmulti",
@@ -94,4 +98,5 @@ __all__ = [
     "gsua_oatr",
     "gsua_oatr2",
     "gsua_csb",
+    "gsua_likelihood",
 ]

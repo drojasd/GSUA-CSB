@@ -55,7 +55,7 @@ Each capability is exposed two ways:
 | Parameter estimation (`scipy.optimize`) | Done | `gsua_pe` |
 | Identifiability + multi-minima clustering (`sklearn`) | Done | `gsua_ia`, `gsua_dia` |
 | Range refinement, confidence sub-contour box | Done | `gsua_oatr`, `gsua_oatr2`, `gsua_csb` |
-| Profile likelihood | Planned | `gsua_likelihood` |
+| Profile likelihood | Done | `gsua_likelihood` |
 | Plotting (Matplotlib) | Planned | `gsua_plot` |
 | Simulink models | **Not planned** — use the MATLAB Engine API instead | `sens_dataprep`, `sens_montecarlo` |
 
