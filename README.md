@@ -137,6 +137,7 @@ Y       = gsua_ua(M,T);           % uncertainty analysis
 | `gsua_plot` | Visualization function for sensitivity/uncertainty/identifiability results |
 | `gsua_MCF` | Monte-Carlo filtering plots (behavioral vs. non-behavioral parameter sets) |
 | `gsua_mtest` | Animate model output as one parameter is swept, saved as a GIF |
+| `gsua_covmetric` | Percentile-band (P5/P50/P95) coverage-accuracy and band-tightness metrics for `gsua_ua` results, on the same margin-normalized `gsua_costf` scale (below 1 = within tolerance) — the stopping signal for semi-automated identification |
 
 ### Persistence
 | Function | Description |

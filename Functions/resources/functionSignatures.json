@@ -323,6 +323,23 @@
     ]
   },
 
+  "gsua_covmetric": {
+    "inputs": [
+      {"name": "Y", "kind": "required", "type": ["double"]},
+      {"name": "ydata", "kind": "required", "type": ["double"]},
+      {"name": "margin", "kind": "namevalue", "type": ["numeric", "scalar"]},
+      {"name": "alpha", "kind": "namevalue", "type": ["numeric", "scalar"]},
+      {"name": "plevels", "kind": "namevalue", "type": ["numeric"]}
+    ],
+    "outputs": [
+      {"name": "cost_data", "type": ["double", "scalar"]},
+      {"name": "cost_band", "type": ["double", "scalar"]},
+      {"name": "P5", "type": ["double"]},
+      {"name": "P50", "type": ["double"]},
+      {"name": "P95", "type": ["double"]}
+    ]
+  },
+
   "gsua_MCF": {
     "inputs": [
       {"name": "T", "kind": "required", "type": ["table"]},
