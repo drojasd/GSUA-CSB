@@ -112,7 +112,10 @@ def main() -> None:
 
     # ---- Phase 3: Practical identifiability analysis ------------------------------------------
     section("Phase 3 -- Practical identifiability analysis")
-    ia = identifiability_analysis(model, pe.x, correction=True)
+    ia = identifiability_analysis(model, pe.x, cost=pe.cost, correction=True)
+    if ia.n_bad_fit_removed:
+        print(f"Dropped {ia.n_bad_fit_removed} multistart run(s) that converged to a much worse "
+              f"fit than the best one -- their parameters would have contaminated the statistics below.")
     for name, rng, idx in zip(ia.names, ia.range, ia.index):
         print(f"  {name:>2}: range=[{rng[0]:.3f}, {rng[1]:.3f}]  index={idx:.3f}")
     print("Correlation matrix:")
@@ -157,7 +160,7 @@ def main() -> None:
         model.fix(fix_idx)
 
         pe2 = parameter_estimation(model, xdata, ydata, n=8, solver="least_squares", seed=RNG.integers(1 << 30))
-        ia2 = identifiability_analysis(model, pe2.x, correction=True)
+        ia2 = identifiability_analysis(model, pe2.x, cost=pe2.cost, correction=True)
         print("\nAfter fixing:")
         for name, rng, idx in zip(ia2.names, ia2.range, ia2.index):
             print(f"  {name:>2}: range=[{rng[0]:.3f}, {rng[1]:.3f}]  index={idx:.3f}")

@@ -130,3 +130,57 @@ def test_fixed_parameter_does_not_produce_nan():
     assert np.isnan(result.correlation[0, 1])  # correlation against a zero-variance column is undefined
     assert result.correlation[1, 1] == 1.0  # diagonal stays well-defined
     assert np.all(np.isfinite(result.cluster.centers))
+
+
+def test_cost_filter_drops_bad_fit_runs_before_any_other_statistic():
+    # A well-identified parameter should NOT look poorly identified just because a handful of
+    # multistart runs failed to converge -- those runs' (effectively arbitrary) parameter values
+    # must never reach the correlation/interval/clustering computation at all.
+    rng = np.random.default_rng(0)
+    good_a = 5.0 + rng.normal(0, 0.01, size=95)
+    good_b = 5.0 + rng.normal(0, 0.01, size=95)
+    good_cost = rng.uniform(0.0010, 0.00105, size=95)  # all within cost_rtol=0.1 of each other
+    bad_a = rng.uniform(0, 10, size=5)
+    bad_b = rng.uniform(0, 10, size=5)
+    bad_cost = rng.uniform(50, 100, size=5)  # orders of magnitude worse than the good runs
+
+    estimates = np.column_stack([np.concatenate([good_a, bad_a]), np.concatenate([good_b, bad_b])])
+    cost = np.concatenate([good_cost, bad_cost])
+    model = _model()
+
+    filtered = identifiability_analysis(model, estimates, cost=cost)
+    unfiltered = identifiability_analysis(model, estimates)
+
+    assert filtered.n_bad_fit_removed == 5
+    # Filtered result should reflect only the tight cluster -> tiny interval, low index.
+    assert (filtered.range[0, 1] - filtered.range[0, 0]) < 0.5
+    assert filtered.index[0] < 0.3
+    # The unfiltered result, contaminated by the 5 bad-fit runs, should look distinctly worse.
+    assert unfiltered.index[0] > filtered.index[0]
+
+
+def test_cost_filter_no_op_when_all_costs_close():
+    rng = np.random.default_rng(1)
+    estimates = rng.uniform(0, 10, size=(50, 2))
+    cost = rng.uniform(0.1, 0.105, size=50)  # all within cost_rtol of each other
+    model = _model()
+    result = identifiability_analysis(model, estimates, cost=cost)
+    assert result.n_bad_fit_removed == 0
+
+
+def test_cost_filter_length_mismatch_raises():
+    model = _model()
+    estimates = np.zeros((10, 2))
+    with pytest.raises(ValueError, match="cost must have"):
+        identifiability_analysis(model, estimates, cost=np.zeros(9))
+
+
+def test_cost_filter_handles_near_zero_best_cost():
+    # A synthetic, near-noiseless fit can have best_cost ~ 0 -- the multiplicative tolerance alone
+    # would then be vacuously strict (threshold ~ 0), so cost_atol must keep the filter sane.
+    rng = np.random.default_rng(2)
+    estimates = rng.normal(5.0, 0.01, size=(20, 2))
+    cost = np.full(20, 1e-12)
+    model = _model()
+    result = identifiability_analysis(model, estimates, cost=cost)
+    assert result.n_bad_fit_removed == 0

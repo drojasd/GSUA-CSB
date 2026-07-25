@@ -19,6 +19,16 @@ core toolbox. This module implements the same idea (classic squared Mahalanobis 
 chi-squared critical value) directly instead of vendoring a third-party MATLAB file's exact
 percentile-table convention.
 
+One capability neither ``gsua_ia`` nor ``gsua_dia`` has: filtering repeated estimates by fit
+quality before computing statistics. A multistart run that converged to a bad local optimum still
+contributes its (essentially arbitrary) parameter values to the correlation matrix, confidence
+interval, and clustering -- which can make a genuinely well-identified parameter look poorly
+identified purely because an optimizer run failed, not because of real non-identifiability.
+Passing ``cost=`` (e.g. ``PEResult.cost``) screens those runs out *before* the multivariate
+parameter-space outlier check, since a bad-fit run's parameters are not meaningfully "in the right
+neighborhood but atypical" the way a parameter-space outlier is -- they are noise from a failed
+optimization and should not inform what "typical" looks like for the outlier check either.
+
 Multiple global minima: repeated estimations from a non-convex problem can land in distinct basins
 of attraction instead of scattering around one point. When ``cluster=True``, this runs
 ``sklearn.cluster.SpectralClustering`` on the normalized estimates for candidate counts
@@ -95,6 +105,8 @@ class IdentifiabilityResult:
         correlation: (Np, Np) correlation matrix among the (possibly outlier-filtered) estimates.
             Entries involving a fixed parameter are ``NaN`` (undefined: a fixed parameter has zero
             variance across repeated estimations), except the diagonal, which is always 1.
+        n_bad_fit_removed: Number of estimation runs dropped by the fit-quality filter (0 if
+            ``cost=None``).
         n_outliers_removed: Number of estimation runs dropped by outlier removal (0 if
             ``outlier=False``).
         cluster: Multiple-global-minima clustering result.
@@ -105,6 +117,7 @@ class IdentifiabilityResult:
     nominal: NDArray[np.float64]
     index: NDArray[np.float64]
     correlation: NDArray[np.float64]
+    n_bad_fit_removed: int
     n_outliers_removed: int
     cluster: ClusterInfo
 
@@ -112,6 +125,9 @@ class IdentifiabilityResult:
 def identifiability_analysis(
     model: Model,
     estimates: ArrayLike,
+    cost: ArrayLike | None = None,
+    cost_rtol: float = 0.1,
+    cost_atol: float = 1e-8,
     correction: bool = False,
     outlier: bool = False,
     outlier_alpha: float = 0.025,
@@ -128,6 +144,17 @@ def identifiability_analysis(
             interval is measured against/optionally clipped to.
         estimates: (N, Np) repeated parameter estimates, e.g. ``PEResult.x`` from
             :func:`gsua_csb.parameter_estimation` called with ``n > 1``.
+        cost: (N,) fit cost for each row of ``estimates``, e.g. ``PEResult.cost``. If given, runs
+            whose cost exceeds ``best_cost * (1 + cost_rtol) + cost_atol`` are dropped before any
+            other statistic is computed -- a run that converged to a bad local optimum shouldn't
+            contribute its (essentially arbitrary) parameters to the correlation matrix, interval,
+            or clustering. ``None`` (default) skips this filter, e.g. when ``estimates`` didn't
+            come from a scored multistart run.
+        cost_rtol: Relative tolerance above the best cost for the fit-quality filter. Default 0.1
+            (10%, matching this package's other margin-normalized-cost conventions).
+        cost_atol: Absolute tolerance added to the fit-quality threshold, so the filter doesn't
+            become vacuously strict when the best cost is at or near zero (e.g. a synthetic,
+            noiseless fit).
         correction: If True, clip the new confidence interval to ``model.range`` where it would
             otherwise extend beyond it.
         outlier: If True, remove multivariate outliers from ``estimates`` (via Mahalanobis
@@ -142,8 +169,22 @@ def identifiability_analysis(
 
     Returns:
         An :class:`IdentifiabilityResult`.
+
+    Raises:
+        ValueError: If ``cost`` is given and its length doesn't match ``estimates``.
     """
     X = np.atleast_2d(np.asarray(estimates, dtype=np.float64))
+
+    n_bad_fit_removed = 0
+    if cost is not None:
+        cost = np.atleast_1d(np.asarray(cost, dtype=np.float64))
+        if cost.shape[0] != X.shape[0]:
+            raise ValueError(f"cost must have {X.shape[0]} entries (one per row of estimates), got {cost.shape[0]}")
+        threshold = np.min(cost) * (1 + cost_rtol) + cost_atol
+        keep = cost <= threshold
+        n_bad_fit_removed = int((~keep).sum())
+        X = X[keep]
+
     n_outliers_removed = 0
     if outlier:
         X, keep = _remove_multivariate_outliers(X, alpha=outlier_alpha)
@@ -237,6 +278,7 @@ def identifiability_analysis(
         nominal=median_est,
         index=index,
         correlation=correlation,
+        n_bad_fit_removed=n_bad_fit_removed,
         n_outliers_removed=n_outliers_removed,
         cluster=cluster_info,
     )

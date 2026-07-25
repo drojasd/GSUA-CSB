@@ -145,11 +145,18 @@ answer.
 ```python
 from gsua_csb import identifiability_analysis
 
-ia = identifiability_analysis(model, pe.x, correction=True)
-ia.range         # (Np, 2) new confidence interval per parameter
-ia.index         # (Np,) identifiability index in [0, 1] -- 0 well identified, 1 poorly identified
-ia.correlation   # (Np, Np) correlation matrix among the repeated estimates
+ia = identifiability_analysis(model, pe.x, cost=pe.cost, correction=True)
+ia.range              # (Np, 2) new confidence interval per parameter
+ia.index              # (Np,) identifiability index in [0, 1] -- 0 well identified, 1 poorly identified
+ia.correlation        # (Np, Np) correlation matrix among the repeated estimates
+ia.n_bad_fit_removed  # runs dropped for converging to a much worse cost than the best one
 ```
+
+Pass `cost=pe.cost` whenever the repeated estimates came from `parameter_estimation` (or any other
+scored multistart run). A run that converged to a bad local optimum contributes essentially
+arbitrary parameter values — without this filter, those failed runs can make a genuinely
+well-identified parameter *look* poorly identified. `identifiability_analysis` drops any run whose
+cost exceeds `best_cost * (1 + cost_rtol)` (default 10% tolerance) before computing anything else.
 
 A high `index` or a strong pairwise `correlation` (e.g. `|r| > 0.9`) usually means two parameters
 are structurally entangled — the data constrains their *combination*, not either one individually.
