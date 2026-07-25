@@ -1,2 +1,215 @@
-<?xml version="1.0" encoding="UTF-8"?>
-<MATLABProject xmlns="http://www.mathworks.com/MATLABProjectFile"/>
+<deployment-project plugin="plugin.toolbox" plugin-version="1.0">
+  <configuration build-checksum="4175756961" file="D:/MATLAB Drive.source-of-truth-20260718T095207/Toolbox/GSUA-UCI.prj" location="D:/MATLAB Drive.source-of-truth-20260718T095207/Toolbox" name="GSUA-UCI" target="target.toolbox" target-name="Package Toolbox">
+    <param.appname>GSUA-CSB</param.appname>
+    <param.authnamewatermark>Carlos Mario Vélez &amp; Daniel Rojas</param.authnamewatermark>
+    <param.email>drojasd@eafit.edu.co</param.email>
+    <param.company>EAFIT</param.company>
+    <param.summary>Toolbox for Parameter estimation, Uncertainty and Sensitivity analysis and Confidence Subcontour box estimation</param.summary>
+    <param.description>Global Sensitivity and Uncertainty Analysis - Confidence Subcontour Box (GSUA-CSB) Toolbox is a product developed by Universidad EAFIT for command-line mathematical model validation in both of Simulink or Symbolic Math Toolbox environment . At present time, the toolbox allows to perform the following functions: To apply and visualize several variance-based sensitivity (SA) and uncertainty (UA) analysis, to estimate model parameters (PE) and to estimate a Confidence Subcontour Box (CSB) for previously estimated parameters.</param.description>
+    <param.screenshot>${PROJECT_ROOT}/screenshot.png</param.screenshot>
+    <param.version>1.7</param.version>
+    <param.output>${PROJECT_ROOT}/GSUA-CSB.mltbx</param.output>
+    <param.products.name>
+      <item>MATLAB</item>
+      <item>Simulink</item>
+      <item>Control System Toolbox</item>
+      <item>Optimization Toolbox</item>
+      <item>Symbolic Math Toolbox</item>
+      <item>Image Processing Toolbox</item>
+      <item>Statistics and Machine Learning Toolbox</item>
+      <item>Parallel Computing Toolbox</item>
+      <item>Global Optimization Toolbox</item>
+      <item>Simulink Design Optimization</item>
+    </param.products.name>
+    <param.products.id>
+      <item>1</item>
+      <item>2</item>
+      <item>3</item>
+      <item>6</item>
+      <item>15</item>
+      <item>17</item>
+      <item>19</item>
+      <item>80</item>
+      <item>90</item>
+      <item>127</item>
+    </param.products.id>
+    <param.products.version>
+      <item>25.2</item>
+      <item>25.2</item>
+      <item>25.2</item>
+      <item>25.2</item>
+      <item>25.2</item>
+      <item>25.2</item>
+      <item>25.2</item>
+      <item>25.2</item>
+      <item>25.2</item>
+      <item>25.2</item>
+    </param.products.version>
+    <param.platforms />
+    <param.guid>b23183a1-baa9-490f-94c1-a31dda53b0c3</param.guid>
+    <param.exclude.filters>% List files contained in your toolbox folder that you would like to exclude
+% from packaging.  Excludes should be listed relative to the toolbox folder.
+% Some examples of how to specify excludes are provided below:
+%
+% A single file in the toolbox folder:
+% .svn
+Par_Final.mat
+Estimations.mat
+screenshot.png
+.gitattributes
+.gitignore
+README.md
+deploymentLog.html
+demos.xml
+dpf.mlx
+% A single file in a subfolder of the toolbox folder:
+% example/.svn
+%
+% All files in a subfolder of the toolbox folder:
+% example/*
+Mat
+mlx functions
+slprj
+html
+docs
+MOPSO
+doc/GettingStarted_images - copia
+Functions/likelihoodCI.mat
+% All files of a certain name in all subfolders of the toolbox folder:
+% **/.svn
+**/.MATLABDriveTag
+%
+% All files matching a pattern in all subfolders of the toolbox folder:
+% **/*.bak
+**/*.slxc
+**/*.asv
+*.mltbx</param.exclude.filters>
+    <param.exclude.pcodedmfiles>true</param.exclude.pcodedmfiles>
+    <param.examples />
+    <param.demosxml />
+    <param.apps />
+    <param.registered.apps />
+    <param.docs />
+    <param.getting.started.guide>${PROJECT_ROOT}/doc/GettingStarted.mlx</param.getting.started.guide>
+    <param.matlabpath.excludes />
+    <param.javaclasspath.excludes />
+    <param.exported.on.package>false</param.exported.on.package>
+    <param.required.addons />
+    <param.matlab.project.id />
+    <param.matlab.project.name />
+    <param.release.start>R2017a</param.release.start>
+    <param.release.end>latest</param.release.end>
+    <param.release.current.only>false</param.release.current.only>
+    <param.compatiblity.windows>true</param.compatiblity.windows>
+    <param.compatiblity.macos>true</param.compatiblity.macos>
+    <param.compatiblity.linux>true</param.compatiblity.linux>
+    <param.compatiblity.matlabonline>true</param.compatiblity.matlabonline>
+    <param.installation.map />
+    <param.additional.sw.names />
+    <param.additional.sw.licenses />
+    <param.additional.sw.win.url />
+    <param.additional.sw.mac.url />
+    <param.additional.sw.linux.url />
+    <unset>
+      <param.output />
+      <param.platforms />
+      <param.exclude.pcodedmfiles />
+      <param.examples />
+      <param.demosxml />
+      <param.apps />
+      <param.registered.apps />
+      <param.docs />
+      <param.matlabpath.excludes />
+      <param.javaclasspath.excludes />
+      <param.exported.on.package />
+      <param.required.addons />
+      <param.matlab.project.id />
+      <param.matlab.project.name />
+      <param.release.current.only />
+      <param.compatiblity.windows />
+      <param.compatiblity.macos />
+      <param.compatiblity.linux />
+      <param.compatiblity.matlabonline />
+      <param.installation.map />
+      <param.additional.sw.names />
+      <param.additional.sw.licenses />
+      <param.additional.sw.win.url />
+      <param.additional.sw.mac.url />
+      <param.additional.sw.linux.url />
+    </unset>
+    <fileset.rootdir>
+      <file>${PROJECT_ROOT}</file>
+    </fileset.rootdir>
+    <fileset.rootfiles>
+      <file>${PROJECT_ROOT}/Add Funcs</file>
+      <file>${PROJECT_ROOT}/Examples</file>
+      <file>${PROJECT_ROOT}/Functions</file>
+      <file>${PROJECT_ROOT}/doc</file>
+      <file>${PROJECT_ROOT}/gsua_userguide.mlx</file>
+      <file>${PROJECT_ROOT}/progressbar</file>
+    </fileset.rootfiles>
+    <fileset.depfun.included />
+    <fileset.depfun.excluded />
+    <fileset.package />
+    <build-deliverables>
+      <file location="${PROJECT_ROOT}" name="GSUA-CSB.mltbx" optional="false">D:/MATLAB Drive.source-of-truth-20260718T095207/Toolbox/GSUA-CSB.mltbx</file>
+    </build-deliverables>
+    <workflow />
+    <matlab>
+      <root>C:/Program Files/MATLAB/R2025b</root>
+      <toolboxes>
+        <toolbox name="matlabcoder" />
+        <toolbox name="embeddedcoder" />
+        <toolbox name="gpucoder" />
+        <toolbox name="fixedpoint" />
+        <toolbox name="matlabhdlcoder" />
+        <toolbox name="neuralnetwork" />
+      </toolboxes>
+      <toolbox>
+        <matlabcoder>
+          <enabled>true</enabled>
+        </matlabcoder>
+      </toolbox>
+      <toolbox>
+        <embeddedcoder>
+          <enabled>true</enabled>
+        </embeddedcoder>
+      </toolbox>
+      <toolbox>
+        <gpucoder>
+          <enabled>true</enabled>
+        </gpucoder>
+      </toolbox>
+      <toolbox>
+        <fixedpoint>
+          <enabled>true</enabled>
+        </fixedpoint>
+      </toolbox>
+      <toolbox>
+        <matlabhdlcoder>
+          <enabled>true</enabled>
+        </matlabhdlcoder>
+      </toolbox>
+      <toolbox>
+        <neuralnetwork>
+          <enabled>true</enabled>
+        </neuralnetwork>
+      </toolbox>
+    </matlab>
+    <platform>
+      <unix>false</unix>
+      <mac>false</mac>
+      <windows>true</windows>
+      <win2k>false</win2k>
+      <winxp>false</winxp>
+      <vista>false</vista>
+      <linux>false</linux>
+      <solaris>false</solaris>
+      <osver>10.0</osver>
+      <os32>false</os32>
+      <os64>true</os64>
+      <arch>win64</arch>
+      <matlab>true</matlab>
+    </platform>
+  </configuration>
+</deployment-project>

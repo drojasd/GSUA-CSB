@@ -19,3 +19,6 @@ Par_Final.mat
 Estimations.mat
 ATable.mat
 Functions/likelihoodCI.mat
+
+# Version-stamped release builds (distributed as GitHub release assets, not source)
+/release/
