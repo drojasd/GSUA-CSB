@@ -14,6 +14,7 @@ in scope; this is an early, partial release -- see the project README for what's
 from __future__ import annotations
 
 from ._costs import costf, costf_multi, coverage_metric, likecost, rcostf
+from ._estimation import PEResult, parameter_estimation
 from ._model import Model, UserFunctionModel, build_range
 from ._sampling import design_matrix
 from ._sensitivity import SensitivityResult, sensitivity_analysis
@@ -39,6 +40,7 @@ gsua_dmatrix = design_matrix
 gsua_sa = sensitivity_analysis
 gsua_ua = uncertainty_analysis
 gsua_mcf = monte_carlo_filter
+gsua_pe = parameter_estimation
 
 __all__ = [
     "Model",
@@ -59,6 +61,8 @@ __all__ = [
     "MCFResult",
     "uncertainty_analysis",
     "monte_carlo_filter",
+    "PEResult",
+    "parameter_estimation",
     "gsua_costf",
     "gsua_rcostf",
     "gsua_costfmulti",
@@ -70,4 +74,5 @@ __all__ = [
     "gsua_sa",
     "gsua_ua",
     "gsua_mcf",
+    "gsua_pe",
 ]

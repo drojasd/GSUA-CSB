@@ -52,7 +52,7 @@ Each capability is exposed two ways:
 | Sampling / design matrix (`scipy.stats.qmc`) | Done | `gsua_dmatrix` |
 | Sensitivity analysis (Sobol, Jansen, Saltelli, Xiao, OAT) | Done | `gsua_sa` |
 | Uncertainty analysis + Monte Carlo filtering | Done | `gsua_ua`, `gsua_MCF` |
-| Parameter estimation (`scipy.optimize`) | Planned | `gsua_pe` |
+| Parameter estimation (`scipy.optimize`) | Done | `gsua_pe` |
 | Identifiability + multi-minima clustering (`sklearn`) | Planned | `gsua_ia`, `gsua_dia` |
 | Range refinement, confidence sub-contour box | Planned | `gsua_oatr`, `gsua_oatr2`, `gsua_csb` |
 | Profile likelihood | Planned | `gsua_likelihood` |
