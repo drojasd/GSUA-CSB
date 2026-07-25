@@ -16,6 +16,7 @@ from __future__ import annotations
 from ._costs import costf, costf_multi, coverage_metric, likecost, rcostf
 from ._model import Model, UserFunctionModel, build_range
 from ._sampling import design_matrix
+from ._sensitivity import SensitivityResult, sensitivity_analysis
 from ._stats import band_depth, median_ci
 
 __version__ = "0.1.0"
@@ -34,6 +35,7 @@ gsua_covmetric = coverage_metric
 gsua_medianci = median_ci
 gsua_depth = band_depth
 gsua_dmatrix = design_matrix
+gsua_sa = sensitivity_analysis
 
 __all__ = [
     "Model",
@@ -48,6 +50,8 @@ __all__ = [
     "median_ci",
     "band_depth",
     "design_matrix",
+    "SensitivityResult",
+    "sensitivity_analysis",
     "gsua_costf",
     "gsua_rcostf",
     "gsua_costfmulti",
@@ -56,4 +60,5 @@ __all__ = [
     "gsua_medianci",
     "gsua_depth",
     "gsua_dmatrix",
+    "gsua_sa",
 ]

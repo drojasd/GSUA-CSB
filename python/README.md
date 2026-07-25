@@ -23,8 +23,7 @@ pip install -e ".[dev]"
 ```
 
 Optional extras:
-- `.[symbolic]` — SymPy, for symbolic-ODE models (not yet implemented, see below)
-- `.[sensitivity]` — SALib, for the standard Sobol/Saltelli/Jansen sensitivity estimators
+- `.[symbolic]` — SymPy, for symbolic-ODE models
 - `.[all]` — everything above
 
 ## Design
@@ -51,7 +50,7 @@ Each capability is exposed two ways:
 | Distribution-free median CI, band depth | Done | `gsua_medianCI`, `gsua_depth` |
 | Symbolic-ODE models (SymPy + `scipy.integrate.solve_ivp`) | Done | `gsua_dpmat`, `gsua_odefun` |
 | Sampling / design matrix (`scipy.stats.qmc`) | Done | `gsua_dmatrix` |
-| Sensitivity analysis (SALib + custom Xiao method) | Planned | `gsua_sa` |
+| Sensitivity analysis (Sobol, Jansen, Saltelli, Xiao, OAT) | Done | `gsua_sa` |
 | Uncertainty analysis + Monte Carlo filtering | Planned | `gsua_ua`, `gsua_MCF` |
 | Parameter estimation (`scipy.optimize`) | Planned | `gsua_pe` |
 | Identifiability + multi-minima clustering (`sklearn`) | Planned | `gsua_ia`, `gsua_dia` |
