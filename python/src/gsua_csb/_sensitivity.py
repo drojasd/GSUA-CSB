@@ -32,6 +32,7 @@ from typing import Literal
 import numpy as np
 from numpy.typing import ArrayLike, NDArray
 
+from ._evalutils import eval_batch, nominal_output
 from ._model import Model
 
 SensMethod = Literal["sobol", "jansen", "saltelli", "xiao", "oat"]
@@ -65,35 +66,6 @@ class SensitivityResult:
     J: NDArray[np.float64]
 
 
-def _eval_batch(
-    model: Model, params: NDArray[np.float64], xdata: NDArray[np.float64] | None, output_index: int
-) -> NDArray[np.float64]:
-    """Evaluate a batch of parameter sets, collapsing to a plain (N, Nd) array.
-
-    Handles the shape variation across ``Model`` subclasses: a scalar-output model's
-    ``evaluate_batch`` returns (N,), a single-output time-series model returns (N, Nd), and a
-    multi-state model (e.g. ``SymbolicODEModel``) returns (N, n_states, Nd) -- ``output_index``
-    selects which state to analyze in the last case.
-    """
-    Y = np.asarray(model.evaluate_batch(params, xdata), dtype=np.float64)
-    if Y.ndim == 1:
-        return Y[:, None]
-    if Y.ndim == 3:
-        return Y[:, output_index, :]
-    return Y
-
-
-def _nominal_output(
-    model: Model, xdata: NDArray[np.float64] | None, output_index: int
-) -> NDArray[np.float64]:
-    y0 = np.asarray(model.evaluate(model.nominal, xdata), dtype=np.float64)
-    if y0.ndim == 0:
-        return y0[None]
-    if y0.ndim == 2:
-        return y0[output_index]
-    return y0
-
-
 def _oat(
     model: Model,
     M: NDArray[np.float64],
@@ -103,7 +75,7 @@ def _oat(
 ) -> SensitivityResult:
     N, Np = M.shape
     fixed = model.fixed
-    Y = _eval_batch(model, M, xdata, output_index)
+    Y = eval_batch(model, M, xdata, output_index)
     J = np.zeros(Np)
     nominal_rows = np.tile(model.nominal, (N, 1))
     for k in range(Np):
@@ -111,7 +83,7 @@ def _oat(
             continue
         M_oat = nominal_rows.copy()
         M_oat[:, k] = M[:, k]
-        Y_oat = _eval_batch(model, M_oat, xdata, output_index)
+        Y_oat = eval_batch(model, M_oat, xdata, output_index)
         J[k] = np.var(np.sum((Y_oat - y_exp) ** 2, axis=1))
     VT = np.sum(J)
     Si = J / VT if VT > 0 else np.zeros(Np)
@@ -171,7 +143,7 @@ def sensitivity_analysis(
     d = model.domain if xdata is None else np.asarray(xdata, dtype=np.float64)
 
     if y_exp is None:
-        y_exp = _nominal_output(model, d, output_index)
+        y_exp = nominal_output(model, d, output_index)
     else:
         y_exp = np.atleast_1d(np.asarray(y_exp, dtype=np.float64))
 
@@ -184,8 +156,8 @@ def sensitivity_analysis(
 
     A = M[: N // 2]
     B = M[N // 2 :]
-    YA = _eval_batch(model, A, d, output_index)
-    YB = _eval_batch(model, B, d, output_index)
+    YA = eval_batch(model, A, d, output_index)
+    YB = eval_batch(model, B, d, output_index)
     Y = np.vstack([YA, YB])
     JA = np.sum((YA - y_exp) ** 2, axis=1)
     JB = np.sum((YB - y_exp) ** 2, axis=1)
@@ -216,13 +188,13 @@ def sensitivity_analysis(
             continue
         ABi_k = A.copy()
         ABi_k[:, k] = B[:, k]
-        YABi_k = _eval_batch(model, ABi_k, d, output_index)
+        YABi_k = eval_batch(model, ABi_k, d, output_index)
         JABi_k = np.sum((YABi_k - y_exp) ** 2, axis=1)
 
         if method == "sobol":
             BAi_k = B.copy()
             BAi_k[:, k] = A[:, k]
-            YBAi_k = _eval_batch(model, BAi_k, d, output_index)
+            YBAi_k = eval_batch(model, BAi_k, d, output_index)
             JBAi_k = np.sum((YBAi_k - y_exp) ** 2, axis=1)
             Si_vec[k] = (np.mean(YA * YBAi_k, axis=0) - f02_vec) / V_vec
             STi_vec[k] = np.mean(YA * (YA - YABi_k), axis=0) / V_vec

@@ -18,6 +18,7 @@ from ._model import Model, UserFunctionModel, build_range
 from ._sampling import design_matrix
 from ._sensitivity import SensitivityResult, sensitivity_analysis
 from ._stats import band_depth, median_ci
+from ._uncertainty import MCFResult, UncertaintyResult, monte_carlo_filter, uncertainty_analysis
 
 __version__ = "0.1.0"
 
@@ -36,6 +37,8 @@ gsua_medianci = median_ci
 gsua_depth = band_depth
 gsua_dmatrix = design_matrix
 gsua_sa = sensitivity_analysis
+gsua_ua = uncertainty_analysis
+gsua_mcf = monte_carlo_filter
 
 __all__ = [
     "Model",
@@ -52,6 +55,10 @@ __all__ = [
     "design_matrix",
     "SensitivityResult",
     "sensitivity_analysis",
+    "UncertaintyResult",
+    "MCFResult",
+    "uncertainty_analysis",
+    "monte_carlo_filter",
     "gsua_costf",
     "gsua_rcostf",
     "gsua_costfmulti",
@@ -61,4 +68,6 @@ __all__ = [
     "gsua_depth",
     "gsua_dmatrix",
     "gsua_sa",
+    "gsua_ua",
+    "gsua_mcf",
 ]
