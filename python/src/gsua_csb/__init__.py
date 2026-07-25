@@ -19,6 +19,11 @@ from ._stats import band_depth, median_ci
 
 __version__ = "0.1.0"
 
+try:
+    from ._symbolic import SymbolicODEModel
+except ImportError:  # pragma: no cover - exercised only when the `symbolic` extra is absent
+    SymbolicODEModel = None  # type: ignore[assignment,misc]
+
 # MATLAB-name-parity aliases -- same functions, for cross-reference with the MATLAB toolbox/citations.
 gsua_costf = costf
 gsua_rcostf = rcostf
@@ -31,6 +36,7 @@ gsua_depth = band_depth
 __all__ = [
     "Model",
     "UserFunctionModel",
+    "SymbolicODEModel",
     "build_range",
     "costf",
     "rcostf",
