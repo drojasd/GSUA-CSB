@@ -1,0 +1,21 @@
+# MATLAB Drive / MATLAB project cache (internal, machine-specific)
+# Root-level resources/ only -- Functions/resources/ (functionSignatures.json) is kept.
+/resources/
+**/.MATLABDriveTag
+
+# Byte-identical duplicate of doc/GettingStarted_images/ (leftover copy-paste, "copia" = Spanish for "copy")
+doc/GettingStarted_images - copia/
+
+# Simulink compiled artifacts
+slprj/
+*.slxc
+
+# MATLAB autosave / backup files
+*.asv
+*.bak
+
+# Run artifacts from Functions/Examples scripts
+Par_Final.mat
+Estimations.mat
+ATable.mat
+Functions/likelihoodCI.mat

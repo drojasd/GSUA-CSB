@@ -1,0 +1,465 @@
+{
+  "_schemaVersion": "1.0.0",
+
+  "gsua_dataprep": {
+    "inputs": [
+      {"name": "p1", "kind": "required"},
+      {"name": "p2", "kind": "required"},
+      {"name": "p3", "kind": "ordered", "type": ["numeric"]},
+      {"name": "p4", "kind": "ordered"}
+    ],
+    "outputs": [
+      {"name": "T", "type": ["table"]},
+      {"name": "out1"}
+    ]
+  },
+
+  "gsua_dpmat": {
+    "inputs": [
+      {"name": "odes", "kind": "required"},
+      {"name": "vars", "kind": "required"},
+      {"name": "domain", "kind": "required", "type": ["numeric"]},
+      {"name": "modelName", "kind": "required", "type": ["char"]},
+      {"name": "range", "kind": "namevalue", "type": ["numeric"]},
+      {"name": "rMethod", "kind": "namevalue", "type": ["char", "choices={'range','percent','normal','std'}"]},
+      {"name": "nominal", "kind": "namevalue", "type": ["numeric"]},
+      {"name": "output", "kind": "namevalue", "type": ["numeric"]},
+      {"name": "opt", "kind": "namevalue"},
+      {"name": "solver", "kind": "namevalue", "type": ["char", "choices={'ode45','ode4'}"]}
+    ],
+    "outputs": [
+      {"name": "Table", "type": ["table"]},
+      {"name": "solver", "type": ["function_handle"]}
+    ]
+  },
+
+  "sens_dataprep": {
+    "inputs": [
+      {"name": "model", "kind": "required", "type": ["char"]},
+      {"name": "Ranges", "kind": "required"},
+      {"name": "ParIn", "kind": "required"},
+      {"name": "rMethod", "kind": "namevalue", "type": ["char", "choices={'range','percent','normal','std'}"]},
+      {"name": "modelkind", "kind": "namevalue", "type": ["char", "choices={'Dynamic','Static'}"]},
+      {"name": "nominal", "kind": "namevalue"},
+      {"name": "out_names", "kind": "namevalue", "type": ["cell"]},
+      {"name": "Step", "kind": "namevalue", "type": ["numeric"]},
+      {"name": "output", "kind": "namevalue", "type": ["numeric"]}
+    ],
+    "outputs": [
+      {"name": "ParT", "type": ["table"]},
+      {"name": "tOut", "type": ["double"]}
+    ]
+  },
+
+  "gsua_userdefined": {
+    "inputs": [
+      {"name": "func", "kind": "required", "type": ["char"]},
+      {"name": "Range", "kind": "required", "type": ["numeric"]},
+      {"name": "names", "kind": "namevalue", "type": ["cell"]},
+      {"name": "domain", "kind": "namevalue", "type": ["numeric"]},
+      {"name": "rMethod", "kind": "namevalue", "type": ["char", "choices={'range','percent','normal','std'}"]},
+      {"name": "nominal", "kind": "namevalue", "type": ["numeric"]},
+      {"name": "output", "kind": "namevalue"},
+      {"name": "out_names", "kind": "namevalue", "type": ["cell"]},
+      {"name": "vectorized", "kind": "namevalue", "type": ["logical"]},
+      {"name": "opt", "kind": "namevalue"}
+    ],
+    "outputs": [
+      {"name": "Table", "type": ["table"]},
+      {"name": "solver", "type": ["function_handle"]}
+    ]
+  },
+
+  "gsua_dmatrix": {
+    "inputs": [
+      {"name": "Table", "kind": "required", "type": ["table"]},
+      {"name": "N", "kind": "required", "type": ["numeric", "scalar"]},
+      {"name": "Method", "kind": "namevalue", "type": ["char", "choices={'LatinHypercube','Uniform','Sobol'}"]},
+      {"name": "Show", "kind": "namevalue", "type": ["char", "choices={'off','on'}"]}
+    ],
+    "outputs": [
+      {"name": "M", "type": ["double"]},
+      {"name": "T", "type": ["table"]}
+    ]
+  },
+
+  "gsua_sa": {
+    "inputs": [
+      {"name": "M", "kind": "required", "type": ["numeric"]},
+      {"name": "ParT", "kind": "required", "type": ["table"]},
+      {"name": "ynom", "kind": "namevalue", "type": ["numeric"]},
+      {"name": "SensMethod", "kind": "namevalue", "type": ["char", "choices={'brute-force','Jansen','Sobol','OAT','Saltelli','Xiao'}"]},
+      {"name": "parallel", "kind": "namevalue", "type": ["logical"]},
+      {"name": "xdata", "kind": "namevalue", "type": ["numeric"]},
+      {"name": "xAlpha", "kind": "namevalue", "type": ["numeric", "scalar"]},
+      {"name": "bandwidth", "kind": "namevalue", "type": ["numeric"]}
+    ],
+    "outputs": [
+      {"name": "ParT", "type": ["table"]},
+      {"name": "Y", "type": ["double"]},
+      {"name": "J", "type": ["double"]}
+    ]
+  },
+
+  "gsua_ua": {
+    "inputs": [
+      {"name": "M", "kind": "required", "type": ["numeric"]},
+      {"name": "T", "kind": "required", "type": ["table"]},
+      {"name": "xdata", "kind": "namevalue", "type": ["numeric"]},
+      {"name": "ynom", "kind": "namevalue", "type": ["numeric"]},
+      {"name": "parallel", "kind": "namevalue", "type": ["logical"]}
+    ],
+    "outputs": [
+      {"name": "y", "type": ["double"]}
+    ]
+  },
+
+  "gsua_pe": {
+    "inputs": [
+      {"name": "Table", "kind": "required", "type": ["table"]},
+      {"name": "xdata", "kind": "required", "type": ["numeric"]},
+      {"name": "ydata", "kind": "required", "type": ["numeric"]},
+      {"name": "N", "kind": "namevalue", "type": ["numeric", "scalar"]},
+      {"name": "Multistart", "kind": "namevalue", "type": ["numeric", "scalar"]},
+      {"name": "ipoint", "kind": "namevalue", "type": ["numeric"]},
+      {"name": "solver", "kind": "namevalue", "type": ["char", "choices={'lsqc','lsqn','ga','particle','psearch','surrogate','annealing','fmincon'}"]},
+      {"name": "opt", "kind": "namevalue"},
+      {"name": "Show", "kind": "namevalue", "type": ["char", "choices={'off','on','on2'}"]},
+      {"name": "A", "kind": "namevalue"},
+      {"name": "B", "kind": "namevalue"},
+      {"name": "Aeq", "kind": "namevalue"},
+      {"name": "Beq", "kind": "namevalue"},
+      {"name": "nonlcon", "kind": "namevalue"},
+      {"name": "margin", "kind": "namevalue", "type": ["numeric", "scalar"]},
+      {"name": "alpha", "kind": "namevalue", "type": ["numeric", "scalar"]},
+      {"name": "save", "kind": "namevalue", "type": ["logical"]},
+      {"name": "timer", "kind": "namevalue", "type": ["logical"]}
+    ],
+    "outputs": [
+      {"name": "Table", "type": ["table"]},
+      {"name": "res", "type": ["double"]},
+      {"name": "IP", "type": ["double"]}
+    ]
+  },
+
+  "gsua_ia": {
+    "inputs": [
+      {"name": "T", "kind": "required", "type": ["table"]},
+      {"name": "T_est", "kind": "required", "type": ["double"]},
+      {"name": "correction", "kind": "ordered", "type": ["logical"]},
+      {"name": "outlier", "kind": "ordered", "type": ["logical"]},
+      {"name": "show", "kind": "ordered", "type": ["logical"]},
+      {"name": "cluster", "kind": "ordered", "type": ["logical"]},
+      {"name": "maxK", "kind": "ordered", "type": ["numeric", "scalar"]},
+      {"name": "silThreshold", "kind": "ordered", "type": ["numeric", "scalar"]}
+    ],
+    "outputs": [
+      {"name": "T", "type": ["table"]},
+      {"name": "clusterInfo", "type": ["struct"]}
+    ]
+  },
+
+  "gsua_dia": {
+    "inputs": [
+      {"name": "T", "kind": "required", "type": ["table"]},
+      {"name": "T_est", "kind": "required", "type": ["double"]},
+      {"name": "outlier", "kind": "ordered", "type": ["logical"]},
+      {"name": "cluster", "kind": "ordered", "type": ["logical"]},
+      {"name": "maxK", "kind": "ordered", "type": ["numeric", "scalar"]},
+      {"name": "silThreshold", "kind": "ordered", "type": ["numeric", "scalar"]}
+    ],
+    "outputs": [
+      {"name": "T", "type": ["table"]},
+      {"name": "clusterInfo", "type": ["struct"]}
+    ]
+  },
+
+  "gsua_medianCI": {
+    "inputs": [
+      {"name": "X", "kind": "required", "type": ["double"]},
+      {"name": "alpha", "kind": "ordered", "type": ["numeric", "scalar"]}
+    ],
+    "outputs": [
+      {"name": "CI_lower", "type": ["double"]},
+      {"name": "CI_upper", "type": ["double"]}
+    ]
+  },
+
+  "gsua_oatr": {
+    "inputs": [
+      {"name": "ParT", "kind": "required", "type": ["table"]},
+      {"name": "lim", "kind": "namevalue", "type": ["numeric", "scalar"]},
+      {"name": "parallel", "kind": "namevalue", "type": ["logical"]},
+      {"name": "correct", "kind": "namevalue", "type": ["logical"]},
+      {"name": "show", "kind": "namevalue", "type": ["logical"]},
+      {"name": "titerlimit", "kind": "namevalue", "type": ["numeric", "scalar"]}
+    ],
+    "outputs": [
+      {"name": "ParT", "type": ["table"]}
+    ]
+  },
+
+  "gsua_oatr2": {
+    "inputs": [
+      {"name": "ParT", "kind": "required", "type": ["table"]},
+      {"name": "lim", "kind": "namevalue", "type": ["numeric", "scalar"]},
+      {"name": "parallel", "kind": "namevalue", "type": ["logical"]},
+      {"name": "correct", "kind": "namevalue", "type": ["logical"]},
+      {"name": "show", "kind": "namevalue", "type": ["logical"]}
+    ],
+    "outputs": [
+      {"name": "ParT", "type": ["table"]}
+    ]
+  },
+
+  "gsua_csb": {
+    "inputs": [
+      {"name": "Par", "kind": "required", "type": ["table"]},
+      {"name": "N", "kind": "required", "type": ["numeric", "scalar"]},
+      {"name": "ynom", "kind": "namevalue", "type": ["numeric"]},
+      {"name": "reps", "kind": "namevalue", "type": ["numeric", "scalar"]},
+      {"name": "select", "kind": "namevalue", "type": ["numeric", "scalar"]},
+      {"name": "lim", "kind": "namevalue", "type": ["numeric", "scalar"]},
+      {"name": "stop", "kind": "namevalue", "type": ["numeric", "scalar"]},
+      {"name": "parallel", "kind": "namevalue", "type": ["logical"]},
+      {"name": "correct", "kind": "namevalue", "type": ["logical"]},
+      {"name": "protect", "kind": "namevalue", "type": ["logical"]},
+      {"name": "breaking", "kind": "namevalue", "type": ["numeric", "scalar"]},
+      {"name": "show", "kind": "namevalue", "type": ["logical"]},
+      {"name": "switch", "kind": "namevalue", "type": ["numeric", "scalar"]},
+      {"name": "stretch", "kind": "namevalue", "type": ["numeric", "scalar"]}
+    ],
+    "outputs": [
+      {"name": "ParU", "type": ["table"]},
+      {"name": "New_range", "type": ["double"]},
+      {"name": "J_test", "type": ["double"]},
+      {"name": "Y_test", "type": ["double"]},
+      {"name": "sup", "type": ["double"]},
+      {"name": "condition", "type": ["double"]}
+    ]
+  },
+
+  "gsua_likelihood": {
+    "inputs": [
+      {"name": "T", "kind": "required", "type": ["table"]},
+      {"name": "xdata", "kind": "required", "type": ["numeric"]},
+      {"name": "ydata", "kind": "required", "type": ["numeric"]},
+      {"name": "alpha", "kind": "required", "type": ["numeric", "scalar"]},
+      {"name": "step", "kind": "required", "type": ["numeric", "scalar"]},
+      {"name": "margin", "kind": "required", "type": ["numeric", "scalar"]},
+      {"name": "tolerance1", "kind": "required", "type": ["numeric", "scalar"]},
+      {"name": "tolerance2", "kind": "required", "type": ["numeric", "scalar"]},
+      {"name": "limit", "kind": "required", "type": ["numeric", "scalar"]},
+      {"name": "reps", "kind": "required", "type": ["numeric", "scalar"]},
+      {"name": "show", "kind": "required", "type": ["logical"]},
+      {"name": "parallel", "kind": "required", "type": ["logical"]},
+      {"name": "saver", "kind": "required", "type": ["logical"]},
+      {"name": "pars", "kind": "required", "type": ["numeric"]}
+    ],
+    "outputs": [
+      {"name": "Tfinal", "type": ["table"]}
+    ]
+  },
+
+  "gsua_eval": {
+    "inputs": [
+      {"name": "par", "kind": "required", "type": ["double"]},
+      {"name": "Table", "kind": "required", "type": ["table"]},
+      {"name": "xdata", "kind": "ordered", "type": ["numeric"]},
+      {"name": "ydata", "kind": "ordered", "type": ["numeric"]},
+      {"name": "parallel", "kind": "ordered", "type": ["logical"]},
+      {"name": "show", "kind": "ordered", "type": ["logical"]}
+    ],
+    "outputs": [
+      {"name": "y", "type": ["double"]},
+      {"name": "xdata", "type": ["double"]}
+    ]
+  },
+
+  "gsua_deval": {
+    "inputs": [
+      {"name": "par", "kind": "required", "type": ["double"]},
+      {"name": "Table2", "kind": "required", "type": ["table"]},
+      {"name": "xdata", "kind": "required", "type": ["numeric"]}
+    ],
+    "outputs": [
+      {"name": "y", "type": ["double"]}
+    ]
+  },
+
+  "gsua_pardeval": {
+    "inputs": [
+      {"name": "M", "kind": "required", "type": ["double"]},
+      {"name": "Table2", "kind": "required", "type": ["table"]},
+      {"name": "xdata", "kind": "required", "type": ["numeric"]},
+      {"name": "parallel", "kind": "required", "type": ["logical"]},
+      {"name": "init", "kind": "ordered", "type": ["numeric"]}
+    ],
+    "outputs": [
+      {"name": "y", "type": ["double"]}
+    ]
+  },
+
+  "gsua_intrp": {
+    "inputs": [
+      {"name": "sol", "kind": "required"},
+      {"name": "xint", "kind": "required", "type": ["numeric"]},
+      {"name": "idx", "kind": "required", "type": ["numeric"]},
+      {"name": "extra", "kind": "ordered", "type": ["numeric", "scalar"]}
+    ],
+    "outputs": [
+      {"name": "Sxint", "type": ["double"]}
+    ]
+  },
+
+  "gsua_plot": {
+    "inputs": [
+      {"name": "plot_type", "kind": "required", "type": ["char"]},
+      {"name": "p1", "kind": "required"},
+      {"name": "p2", "kind": "ordered"},
+      {"name": "p3", "kind": "ordered"},
+      {"name": "p4", "kind": "ordered"},
+      {"name": "p5", "kind": "ordered"}
+    ]
+  },
+
+  "gsua_MCF": {
+    "inputs": [
+      {"name": "T", "kind": "required", "type": ["table"]},
+      {"name": "M", "kind": "required", "type": ["double"]},
+      {"name": "Y", "kind": "required", "type": ["double"]},
+      {"name": "y_exp", "kind": "required", "type": ["double"]},
+      {"name": "tIn", "kind": "ordered", "type": ["numeric", "scalar"]},
+      {"name": "tOut", "kind": "ordered", "type": ["numeric"]}
+    ],
+    "outputs": [
+      {"name": "Jsup", "type": ["cell"]},
+      {"name": "Jinf", "type": ["cell"]}
+    ]
+  },
+
+  "gsua_mtest": {
+    "inputs": [
+      {"name": "name", "kind": "required", "type": ["char"]},
+      {"name": "T", "kind": "required", "type": ["table"]},
+      {"name": "simvals", "kind": "required", "type": ["double"]},
+      {"name": "xdata", "kind": "required", "type": ["numeric"]},
+      {"name": "gname", "kind": "required", "type": ["char"]},
+      {"name": "pause", "kind": "required", "type": ["numeric", "scalar"]}
+    ]
+  },
+
+  "gsua_save": {
+    "inputs": [
+      {"name": "T", "kind": "required", "type": ["table"]},
+      {"name": "filename", "kind": "ordered", "type": ["char"]}
+    ]
+  },
+
+  "gsua_load": {
+    "inputs": [
+      {"name": "T", "kind": "required", "type": ["table"]}
+    ],
+    "outputs": [
+      {"name": "T", "type": ["table"]}
+    ]
+  },
+
+  "gsua_ref": {
+    "inputs": [
+      {"name": "est", "kind": "required", "type": ["double"]},
+      {"name": "table", "kind": "required", "type": ["table"]},
+      {"name": "xdata", "kind": "required", "type": ["numeric"]},
+      {"name": "ydata", "kind": "required", "type": ["numeric"]},
+      {"name": "exe", "kind": "required", "type": ["numeric"]}
+    ],
+    "outputs": [
+      {"name": "optim", "type": ["table"]}
+    ]
+  },
+
+  "gsua_depth": {
+    "inputs": [
+      {"name": "x", "kind": "required", "type": ["double"]},
+      {"name": "parallel", "kind": "ordered", "type": ["logical"]}
+    ],
+    "outputs": [
+      {"name": "depth", "type": ["double"]},
+      {"name": "idx", "type": ["double"]}
+    ]
+  },
+
+  "gsua_timer": {
+    "inputs": [
+      {"name": "rem_compute", "kind": "required", "type": ["numeric", "scalar"]},
+      {"name": "init", "kind": "required", "type": ["numeric"]}
+    ],
+    "outputs": [
+      {"name": "t1", "type": ["double"]}
+    ]
+  },
+
+  "gsua_costf": {
+    "inputs": [
+      {"name": "inputs", "kind": "required", "type": ["numeric", "scalar"]},
+      {"name": "regulator", "kind": "required", "type": ["double"]},
+      {"name": "len", "kind": "required", "type": ["numeric", "scalar"]},
+      {"name": "ydata", "kind": "required", "type": ["double"]},
+      {"name": "yfunction", "kind": "required", "type": ["double"]},
+      {"name": "alpha", "kind": "required", "type": ["numeric", "scalar"]}
+    ],
+    "outputs": [
+      {"name": "cos", "type": ["double", "scalar"]}
+    ]
+  },
+
+  "gsua_rcostf": {
+    "inputs": [
+      {"name": "ydata", "kind": "required", "type": ["double"]},
+      {"name": "yfunction", "kind": "required", "type": ["double"]},
+      {"name": "margin", "kind": "ordered", "type": ["numeric", "scalar"]},
+      {"name": "alpha", "kind": "ordered", "type": ["numeric", "scalar"]}
+    ],
+    "outputs": [
+      {"name": "cos", "type": ["double", "scalar"]}
+    ]
+  },
+
+  "gsua_costfMulti": {
+    "inputs": [
+      {"name": "ydata", "kind": "required", "type": ["double"]},
+      {"name": "yfunction", "kind": "required", "type": ["double"]},
+      {"name": "margin", "kind": "ordered", "type": ["numeric", "scalar"]},
+      {"name": "parallel", "kind": "ordered", "type": ["logical"]},
+      {"name": "alpha", "kind": "ordered", "type": ["numeric", "scalar"]}
+    ],
+    "outputs": [
+      {"name": "cos", "type": ["double"]}
+    ]
+  },
+
+  "gsua_likecost": {
+    "inputs": [
+      {"name": "ydata", "kind": "required", "type": ["double"]},
+      {"name": "ynom", "kind": "required", "type": ["double"]},
+      {"name": "margin", "kind": "required", "type": ["numeric", "scalar"]}
+    ],
+    "outputs": [
+      {"name": "cost", "type": ["double"]}
+    ]
+  },
+
+  "sens_montecarlo": {
+    "inputs": [
+      {"name": "Par", "kind": "required", "type": ["table"]},
+      {"name": "M", "kind": "required", "type": ["double"]},
+      {"name": "xdata", "kind": "required", "type": ["numeric"]},
+      {"name": "parallel", "kind": "required", "type": ["logical"]},
+      {"name": "init", "kind": "ordered", "type": ["numeric"]}
+    ],
+    "outputs": [
+      {"name": "Y", "type": ["double"]},
+      {"name": "t", "type": ["double"]}
+    ]
+  }
+}
