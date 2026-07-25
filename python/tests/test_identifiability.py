@@ -106,3 +106,27 @@ def test_clustering_rejects_single_unimodal_basin():
     model = _model()
     result = identifiability_analysis(model, estimates, cluster=True, seed=0)
     assert result.cluster.num_clusters == 1
+
+
+def test_fixed_parameter_does_not_produce_nan():
+    # A parameter with lb==ub (fixed, e.g. via Model.fix()) has zero range width and, since every
+    # repeated estimation holds it at the same value, zero variance -- both the normalization and
+    # a correlation against it are mathematically undefined (0/0). This must not poison the rest
+    # of the result with NaN cascades (the original motivating case: identifiability_analysis
+    # called on repeated estimates right after Model.fix() during the corrective-action step of
+    # the semi-automation identification cycle).
+    model = _model()
+    model.range[1] = [4.0, 4.0]  # fix 'b' at 4.0, matching what Model.fix() would do
+    rng = np.random.default_rng(7)
+    a = rng.uniform(2, 8, size=100)
+    b = np.full(100, 4.0)
+    estimates = np.column_stack([a, b])
+
+    result = identifiability_analysis(model, estimates, cluster=True, seed=0)
+
+    assert np.isfinite(result.index[0])  # free parameter 'a' unaffected
+    assert result.index[1] == 0.0  # fixed parameter reports index 0, not NaN
+    np.testing.assert_allclose(result.range[1], [4.0, 4.0])
+    assert np.isnan(result.correlation[0, 1])  # correlation against a zero-variance column is undefined
+    assert result.correlation[1, 1] == 1.0  # diagonal stays well-defined
+    assert np.all(np.isfinite(result.cluster.centers))

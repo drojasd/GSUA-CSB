@@ -89,8 +89,12 @@ class IdentifiabilityResult:
         nominal: (Np,) median of the (possibly outlier-filtered) estimates.
         index: (Np,) identifiability index per parameter, in ``[0, 1]`` -- ``0`` well identified,
             ``1`` poorly identified. Combines interval width, mean correlation with other
-            parameters, and count of strong (``|r| > 0.5``) correlations.
+            parameters, and count of strong (``|r| > 0.5``) correlations. Always ``0`` for a fixed
+            parameter (``model.fixed``) -- "fixed" means "not being estimated," not "poorly
+            estimated."
         correlation: (Np, Np) correlation matrix among the (possibly outlier-filtered) estimates.
+            Entries involving a fixed parameter are ``NaN`` (undefined: a fixed parameter has zero
+            variance across repeated estimations), except the diagonal, which is always 1.
         n_outliers_removed: Number of estimation runs dropped by outlier removal (0 if
             ``outlier=False``).
         cluster: Multiple-global-minima clustering result.
@@ -148,20 +152,36 @@ def identifiability_analysis(
     lb0 = model.range[:, 0]
     ub0 = model.range[:, 1]
     width0 = ub0 - lb0
+    Np = X.shape[1]
+    free_mask = width0 > 0
 
-    normalized = (X - lb0) / width0  # (N, Np)
-    correlation = np.corrcoef(X, rowvar=False)
-    correlation = np.atleast_2d(correlation)
+    # A fixed parameter has zero range width and (if it stays fixed across every repeated
+    # estimation, as gsua_pe/parameter_estimation guarantee) zero variance -- both the
+    # normalization below and a correlation against it are mathematically undefined (0/0), not
+    # just numerically unstable. Compute everything only over the free columns and leave fixed
+    # ones at well-defined defaults (0 normalized position, NaN correlation, 0 identifiability
+    # index -- "fixed" means "not being estimated", not "poorly estimated").
+    normalized = np.zeros_like(X)
+    normalized[:, free_mask] = (X[:, free_mask] - lb0[free_mask]) / width0[free_mask]
+
+    correlation = np.full((Np, Np), np.nan)
+    np.fill_diagonal(correlation, 1.0)
+    if free_mask.sum() > 1:
+        free_idx = np.where(free_mask)[0]
+        correlation[np.ix_(free_idx, free_idx)] = np.corrcoef(X[:, free_idx], rowvar=False)
 
     lb, ub = median_ci(X.T, alpha=ci_alpha)
     if correction:
         lb = np.where(lb < lb0, lb0, lb)
         ub = np.where(ub > ub0, ub0, ub)
 
-    Np = X.shape[1]
-    boxin = (ub - lb) / width0
-    corrin = np.mean(np.abs(correlation), axis=0)
-    extrin = np.sum(np.abs(correlation) > 0.5, axis=0) / Np
+    boxin = np.zeros(Np)
+    boxin[free_mask] = (ub[free_mask] - lb[free_mask]) / width0[free_mask]
+    corrin = np.zeros(Np)
+    extrin = np.zeros(Np)
+    with np.errstate(invalid="ignore"):
+        corrin[free_mask] = np.nanmean(np.abs(correlation[:, free_mask]), axis=0)
+        extrin[free_mask] = np.nansum(np.abs(correlation[:, free_mask]) > 0.5, axis=0) / Np
     index = (2 * boxin + corrin + extrin) / 4
 
     median_est = np.median(X, axis=0)

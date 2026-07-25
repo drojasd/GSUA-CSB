@@ -59,6 +59,19 @@ Each capability is exposed two ways:
 | Plotting (Matplotlib) | Planned | `gsua_plot` |
 | Simulink models | **Not planned** — use the MATLAB Engine API instead | `sens_dataprep`, `sens_montecarlo` |
 
+## Examples
+
+[`examples/system_identification_cycle.py`](examples/system_identification_cycle.py) — a runnable,
+narrated worked example of the toolbox's semi-automation system-identification cycle (reachability
+check → multistart estimation → practical identifiability analysis → confidence-interval thinness
+check → corrective action → repeat), on a deliberately non-identifiable model (`y = a*b*exp(-k*t)`,
+where only the product `a*b` is data-grounded). This is one of the toolbox's strongest
+contributions for automating system identification, so it's worth running directly:
+
+```bash
+python examples/system_identification_cycle.py
+```
+
 ## Testing
 
 ```bash
