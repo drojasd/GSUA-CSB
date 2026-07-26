@@ -155,8 +155,22 @@ ia.n_bad_fit_removed  # runs dropped for converging to a much worse cost than th
 Pass `cost=pe.cost` whenever the repeated estimates came from `parameter_estimation` (or any other
 scored multistart run). A run that converged to a bad local optimum contributes essentially
 arbitrary parameter values — without this filter, those failed runs can make a genuinely
-well-identified parameter *look* poorly identified. `identifiability_analysis` drops any run whose
-cost exceeds `best_cost * (1 + cost_rtol)` (default 10% tolerance) before computing anything else.
+well-identified parameter *look* poorly identified. By default (`cost_method="rtol"`),
+`identifiability_analysis` drops any run whose cost exceeds `best_cost * (1 + cost_rtol)` (default
+10%) before computing anything else. A fixed tolerance is a somewhat arbitrary answer to a
+genuinely data-dependent question, so an alternative is available:
+
+```python
+ia = identifiability_analysis(model, pe.x, cost=pe.cost, cost_method="gap")
+```
+
+`cost_method="gap"` instead finds the largest jump in the *sorted* costs (in log space) and cuts
+there — the automated version of reading a "waterfall plot" by eye: a cluster of converged runs,
+a jump, then a scattered tail of failures. It only cuts if that jump is at least `cost_gap_ratio`
+(default 3x) larger than the typical gap between sorted costs, so a smooth continuum of similar
+costs is left untouched rather than sliced arbitrarily. Either method respects `min_keep` (default
+3): whatever the cutoff decides, at least `min_keep` of the best-cost runs always survive, so a
+too-aggressive filter can't silently collapse the analysis down to a single degenerate point.
 
 A high `index` or a strong pairwise `correlation` (e.g. `|r| > 0.9`) usually means two parameters
 are structurally entangled — the data constrains their *combination*, not either one individually.
@@ -178,6 +192,15 @@ of scattering around one point. `cluster=True` runs spectral clustering across c
 counts and keeps the split only if its mean silhouette score clears `sil_threshold` — a low score
 means the "best" split found isn't actually well separated, so the estimates are treated as one
 basin.
+
+When a genuine multi-cluster split is found, `ia.range`/`ia.correlation`/`ia.index`/`ia.nominal`
+are computed from the **dominant (largest) cluster's points only** — pooling separated basins into
+one confidence interval or correlation isn't a meaningful summary. The other basins are still
+fully available via `ia.cluster.centers`. If `outlier=True` is combined with `cluster=True`,
+outlier removal runs *after* clustering and is scoped to that dominant cluster only: running
+Mahalanobis-distance outlier detection *before* clustering would treat a genuine second basin as
+"outliers" relative to the pooled mean/covariance and risk deleting it before clustering ever gets
+a chance to find it.
 
 ## 7. Range refinement and the Confidence Sub-contour Box
 

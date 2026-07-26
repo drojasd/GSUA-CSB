@@ -184,3 +184,80 @@ def test_cost_filter_handles_near_zero_best_cost():
     model = _model()
     result = identifiability_analysis(model, estimates, cost=cost)
     assert result.n_bad_fit_removed == 0
+
+
+def test_cost_method_gap_detects_natural_break():
+    # No rtol to tune -- the "gap" method should find the same good/bad split on its own by
+    # locating the largest jump in sorted (log) cost.
+    rng = np.random.default_rng(9)
+    good_a = 5.0 + rng.normal(0, 0.01, size=20)
+    good_b = 5.0 + rng.normal(0, 0.01, size=20)
+    good_cost = rng.uniform(0.0010, 0.0011, size=20)
+    bad_a = rng.uniform(0, 10, size=5)
+    bad_b = rng.uniform(0, 10, size=5)
+    bad_cost = rng.uniform(10, 20, size=5)
+    estimates = np.column_stack([np.concatenate([good_a, bad_a]), np.concatenate([good_b, bad_b])])
+    cost = np.concatenate([good_cost, bad_cost])
+    model = _model()
+    result = identifiability_analysis(model, estimates, cost=cost, cost_method="gap")
+    assert result.n_bad_fit_removed == 5
+
+
+def test_cost_method_gap_keeps_everything_without_a_clear_jump():
+    rng = np.random.default_rng(11)
+    estimates = rng.uniform(0, 10, size=(15, 2))
+    cost = np.linspace(1.0, 1.5, 15)  # smooth continuum, no gap
+    model = _model()
+    result = identifiability_analysis(model, estimates, cost=cost, cost_method="gap")
+    assert result.n_bad_fit_removed == 0
+
+
+def test_unknown_cost_method_raises():
+    model = _model()
+    estimates = np.zeros((5, 2))
+    with pytest.raises(ValueError, match="Unknown cost_method"):
+        identifiability_analysis(model, estimates, cost=np.zeros(5), cost_method="bogus")
+
+
+def test_min_keep_floor_prevents_degenerate_filter():
+    # A geometric cost spread means a 10% rtol would keep only the single best-cost run --
+    # min_keep should force the filter to leave at least that many runs instead.
+    rng = np.random.default_rng(10)
+    estimates = rng.uniform(0, 10, size=(10, 2))
+    cost = np.array([1.0 * (1.5**i) for i in range(10)])
+    model = _model()
+    result = identifiability_analysis(model, estimates, cost=cost, cost_rtol=0.1, min_keep=4)
+    assert result.n_bad_fit_removed == 6  # kept exactly the min_keep=4 best-cost runs
+
+
+def test_min_keep_not_triggered_when_filter_already_lenient():
+    rng = np.random.default_rng(12)
+    estimates = rng.uniform(0, 10, size=(20, 2))
+    cost = rng.uniform(1.0, 1.02, size=20)  # all within rtol of each other
+    model = _model()
+    result = identifiability_analysis(model, estimates, cost=cost, min_keep=3)
+    assert result.n_bad_fit_removed == 0
+
+
+def test_outlier_removal_after_clustering_does_not_destroy_minor_cluster():
+    # Regression test for the fix: outlier removal now runs AFTER clustering (and only within the
+    # dominant cluster), so a genuine but smaller second basin must survive even with
+    # outlier=True -- the old order (global Mahalanobis outlier removal before clustering) risked
+    # treating the minor basin as outliers relative to the pooled mean/covariance and deleting it
+    # before clustering ever got a chance to find it.
+    rng = np.random.default_rng(8)
+    dominant = rng.normal([2.0, 2.0], 0.1, size=(90, 2))
+    minor = rng.normal([8.0, 8.0], 0.1, size=(10, 2))
+    estimates = np.vstack([dominant, minor])
+    model = _model()
+
+    result = identifiability_analysis(model, estimates, cluster=True, outlier=True, seed=0)
+
+    assert result.cluster.num_clusters == 2
+    dominant_size = int(np.max(result.cluster.cluster_sizes))
+    assert result.cluster.dominant_cluster == int(np.argmax(result.cluster.cluster_sizes))
+    assert dominant_size >= 80  # the larger basin survived essentially intact
+    # Outlier removal was scoped to the dominant cluster only -- it cannot have removed more
+    # points than that cluster contained, which would be the signature of the old bug (the whole
+    # minor cluster getting swept up as "outliers" relative to the global pooled distribution).
+    assert result.n_outliers_removed < dominant_size
