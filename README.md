@@ -150,8 +150,9 @@ Y       = gsua_ua(M,T);           % uncertainty analysis
 ### Practical identifiability & confidence ranges
 | Function | Description |
 |----------|-------------|
-| `gsua_ia` | Practical identifiability analysis with diagnostic plots — including optional spectral-clustering detection of **multiple global minima** among repeated estimation runs |
-| `gsua_dia` | Headless (no-plot) counterpart of `gsua_ia`, same clustering support |
+| `gsua_ia` | Practical identifiability analysis with diagnostic plots — including optional spectral-clustering detection of **multiple global minima** among repeated estimation runs and optional fit-quality (`'cost'`) filtering of failed multistart runs before any statistic is computed |
+| `gsua_dia` | Headless (no-plot) counterpart of `gsua_ia`, same clustering and fit-quality-filtering support |
+| `gsua_costcutoff` | Shared fit-quality filter behind `gsua_ia`/`gsua_dia`'s `'cost'` option (fixed-tolerance or automatic-gap cutoff, with a minimum-runs floor) |
 | `gsua_medianCI` | Distribution-free confidence interval for the median |
 | `gsua_oatr` / `gsua_oatr2` | Once-at-a-time range expansion/reduction |
 | `gsua_csb` | Uncertainty-based confidence sub-contour box estimation |

@@ -1,10 +1,11 @@
-function [T,clusterInfo] = gsua_ia(T,T_est,correction,outlier,show,cluster,maxK,silThreshold)
+function [T,clusterInfo] = gsua_ia(T,T_est,varargin)
 %GSUA_IA Practical identifiability analysis with diagnostic plots
 %
 %   T = gsua_ia(T,T_est)
 %   T = gsua_ia(T,T_est,correction,outlier,show)
 %   [T,clusterInfo] = gsua_ia(T,T_est,correction,outlier,show,cluster)
 %   [T,clusterInfo] = gsua_ia(T,T_est,correction,outlier,show,cluster,maxK,silThreshold)
+%   [T,clusterInfo] = gsua_ia(...,'cost',cost,'CostMethod','gap')
 %
 %   Analyzes practical parameter identifiability from a set of repeated
 %   estimations: normalized CDFs and boxplots per parameter, a
@@ -29,6 +30,41 @@ function [T,clusterInfo] = gsua_ia(T,T_est,correction,outlier,show,cluster,maxK,
 %   unimodal than confidently multimodal. Requires Statistics and Machine
 %   Learning Toolbox.
 %
+%   Fit-quality filtering ('cost'):
+%   A repeated-estimation run that converged to a much worse cost than
+%   the best one contributes essentially arbitrary parameter values --
+%   left in, it can make a genuinely well-identified parameter look
+%   poorly identified purely because an optimizer run failed. Passing
+%   'cost' (e.g. the res output of gsua_pe, one entry per column of
+%   T_est) screens those runs out before anything else is computed. See
+%   GSUA_COSTCUTOFF for the two available methods ('rtol'/'gap') and the
+%   minKeep safety floor.
+%
+%   Clustering runs BEFORE outlier removal, on purpose: global
+%   Mahalanobis-distance outlier detection assumes one unimodal
+%   population, so running it first would treat a genuine second basin
+%   as "outliers" relative to the pooled mean/covariance across both
+%   basins and could delete it before clustering ever finds it. When a
+%   genuine multi-cluster split is found, every plot and statistic below
+%   (ECDFs, boxplots, the correlation heatmap, T.Range/T.index) reflects
+%   the dominant (largest) cluster's points only -- pooling separated
+%   basins into one interval or correlation isn't meaningful -- except
+%   the "Candidate global minima" plot, which by design overlays all
+%   clusters on the full (cost-filtered) sample. Outlier removal, if
+%   requested, is scoped to the dominant cluster only, where the
+%   unimodal assumption behind Mahalanobis distance is actually valid.
+%
+%   Note on outlier=true: the bundled DetectMultVarOutliers utility
+%   (Add Funcs/AntonSemechko-Multivariate-Outliers-.../) defaults to
+%   assuming up to roughly half the sample could be contaminated, which
+%   makes it considerably more aggressive than a plain Mahalanobis cutoff
+%   on data that is actually clean and tightly clustered -- confirmed to
+%   remove the large majority of a low-noise synthetic single cluster in
+%   testing, independent of this function's cluster/outlier ordering.
+%   This is a pre-existing characteristic of that third-party utility,
+%   not something introduced here; inspect T.Est after the call if
+%   outlier=true results look surprising.
+%
 %   Inputs:
 %     T            <-- summary table from gsua_dataprep
 %     T_est        <-- Np x N matrix, one column per repeated parameter
@@ -37,7 +73,7 @@ function [T,clusterInfo] = gsua_ia(T,T_est,correction,outlier,show,cluster,maxK,
 %                      original T.Range when it would otherwise expand
 %                      beyond it. Default: false
 %     outlier      <-- (optional, logical) remove multivariate outliers
-%                      from T_est before computing statistics. Default: false
+%                      before computing statistics. Default: false
 %     show         <-- (optional, logical) plot the identifiability index
 %                      scatter, correlation graph, and (if cluster is
 %                      true) the clustering diagnostic plots. Default: false
@@ -48,20 +84,34 @@ function [T,clusterInfo] = gsua_ia(T,T_est,correction,outlier,show,cluster,maxK,
 %     silThreshold <-- (optional) minimum mean silhouette score required
 %                      to accept a multi-cluster split over a single
 %                      basin. Default: 0.5
+%     'cost'         <-- (optional, paired) 1xN fit cost, one per column
+%                        of T_est. Default: [] (no filtering)
+%     'CostMethod'   <-- (optional, paired) 'rtol' (default) or 'gap'
+%     'CostRtol'     <-- (optional, paired) Default: 0.1
+%     'CostAtol'     <-- (optional, paired) Default: 1e-8
+%     'CostGapRatio' <-- (optional, paired) Default: 3
+%     'MinKeep'      <-- (optional, paired) Default: 3
 %
 %   Outputs:
 %     T           <-- same table with T.Range replaced by the new
 %                     confidence interval, T.Nominal set to the median
-%                     estimate, and T.index set to the per-parameter
+%                     estimate, T.index set to the per-parameter
 %                     identifiability index (0 = well identified, 1 =
-%                     poorly identified)
+%                     poorly identified), and T.Est set to the estimates
+%                     actually used to compute the above (after cost
+%                     filtering, cluster restriction, and outlier
+%                     removal have all been applied -- may be a subset
+%                     of the input T_est)
 %     clusterInfo <-- struct with fields NumClusters, Idx (1xN cluster
 %                     label per estimation run), Centers (NumClusters x
 %                     Np candidate global minima, one row per cluster,
 %                     each the per-cluster median of T_est), ClusterSize
-%                     (estimation count per cluster), and Silhouette
-%                     (mean silhouette score of the chosen split). Empty
-%                     struct with NumClusters = 1 when cluster is false.
+%                     (estimation count per cluster), Silhouette (mean
+%                     silhouette score of the chosen split), and Dominant
+%                     (index of the largest cluster, the one T.Range/
+%                     T.index reflect when NumClusters > 1). Single-basin
+%                     default (NumClusters = 1, Dominant = 1) when
+%                     cluster is false or no split beat silThreshold.
 %
 %   Example:
 %     [T,ci] = gsua_ia(T,Table.Estlsqc,false,false,true,true);
@@ -70,116 +120,59 @@ function [T,clusterInfo] = gsua_ia(T,T_est,correction,outlier,show,cluster,maxK,
 %         disp(ci.Centers)
 %     end
 %
-%   See also GSUA_DIA, GSUA_PE, GSUA_MEDIANCI.
+%   See also GSUA_DIA, GSUA_PE, GSUA_MEDIANCI, GSUA_COSTCUTOFF.
 
-if nargin<8
-    silThreshold=0.5;
+p = inputParser;
+addRequired(p,'T');
+addRequired(p,'T_est');
+addOptional(p,'correction',false);
+addOptional(p,'outlier',false);
+addOptional(p,'show',false);
+addOptional(p,'cluster',false);
+addOptional(p,'maxK',5);
+addOptional(p,'silThreshold',0.5);
+addParameter(p,'cost',[]);
+addParameter(p,'CostMethod','rtol');
+addParameter(p,'CostRtol',0.1);
+addParameter(p,'CostAtol',1e-8);
+addParameter(p,'CostGapRatio',3);
+addParameter(p,'MinKeep',3);
+parse(p,T,T_est,varargin{:});
+
+correction=p.Results.correction;
+outlier=p.Results.outlier;
+show=p.Results.show;
+cluster=p.Results.cluster;
+maxK=p.Results.maxK;
+silThreshold=p.Results.silThreshold;
+cost=p.Results.cost;
+
+% --- Fit-quality filtering (BEFORE anything else, including clustering/outliers) ---
+if ~isempty(cost)
+    keepCost=gsua_costcutoff(cost,p.Results.CostMethod,p.Results.CostRtol, ...
+        p.Results.CostAtol,p.Results.CostGapRatio,p.Results.MinKeep);
+    nBadFit=sum(~keepCost);
+    if nBadFit>0
+        disp([num2str(nBadFit) ' run(s) dropped by the fit-quality filter (converged to a much worse cost than the best one)'])
+    end
+    T_est=T_est(:,keepCost);
 end
-if nargin<7
-    maxK=5;
-end
-if nargin<6
-    cluster=false;
-end
-if nargin<5
-    show=false;
-end
-if nargin<4
-    outlier=false;
-end
-if nargin <3
-    correction=false;
-end
-if outlier
-    disp('Removing outliers...')
-    [~,~,RD,chi_crt]=DetectMultVarOutliers(T_est');
-    id_in=RD<chi_crt(4);
-    T_est=T_est(:,id_in);
-    disp(num2str(sum(id_in))+" outliers were removed")
-end
-T.Est=T_est;
-T.Nominal=T.Est(:,1);
+
 D1 = floor(sqrt(size(T,1))); % Number of rows of subplot
 D2 = D1+ceil((size(T,1)-D1^2)/D1);
-figure('Name','CDF Range')
+
+NormalizedAll=zeros(size(T,1),size(T_est,2));
 for i=1:size(T,1)
-subplot(D1,D2,i)
-ecdf(T.Est(i,:),'Bounds','on')
-title(T.Properties.RowNames{i})
+    NormalizedAll(i,:)=(T_est(i,:)-T.Range(i,1))/(T.Range(i,2)-T.Range(i,1));
 end
 
-Normalized=zeros(size(T,1),size(T.Est,2));
-for i=1:size(T,1)
-    Normalized(i,:)=(T.Est(i,:)-T.Range(i,1))/(T.Range(i,2)-T.Range(i,1));
-end
-nnominal=(T.Nominal-T.Range(:,1))./(T.Range(:,2)-T.Range(:,1));
-figure('Name','Normalized Practical identifiability')
-clf
-boxplot(Normalized','Labels',T.Properties.RowNames,'LabelOrientation','inline')
-h = findobj(gca, 'type', 'text');
-set(h, 'Interpreter', 'tex','FontWeight','bold');
-
-B = filloutliers(Normalized','center','median');
-indicator=max(B,[],1)-min(B,[],1);
-[~,index]=sort(indicator,'descend');
-nn=B(:,index);
-names=T.Properties.RowNames(index);
-figure('Name','Sorted parameter range')
-clf
-boxplot(nn,'Labels',names,'LabelOrientation','inline')
-h = findobj(gca, 'type', 'text');
-set(h, 'Interpreter', 'tex','FontWeight','bold');
-hold on
-nnominal=nnominal(index);
-plot(nnominal,'.','MarkerSize',20,'Color','black')
-
-figure('Name','Correlation')
-RHO = corr(T.Est');
-imagesc(RHO)
-xticks(1:size(T,1))
-xticklabels(T.Properties.RowNames)
-%xtickangle(60)
-yticks(1:size(T,1))
-yticklabels(T.Properties.RowNames)
-clim([-1 1])
-colormap jet
-colorbar
-% figure('Name','NPI without outliers')
-% clf
-% boxplot(B,'Labels',T.Properties.RowNames,'LabelOrientation','inline')
-% 
-
-x=T.Est;
-med=median(x,2);
-% N=size(x,2);
-% desv=std(x,[],2);
-
-% lb = med-1.96*sqrt(pi/2)*desv/sqrt(N);
-% up = med+1.96*sqrt(pi/2)*desv/sqrt(N);
-
-[lb, up] = gsua_medianCI(x, 0.05);
-
-if (any(lb(lb<T.Range(:,1))))||(any(up(up>T.Range(:,2))))
-    %action=input('Replace out ranges by estimation ranges? (true,false): ');
-    action=correction;
-    if action
-        lb(lb<T.Range(:,1))= T.Range(lb<T.Range(:,1),1);
-        up(up>T.Range(:,2))= T.Range(up>T.Range(:,2),2);
-    end
-end
-
-
-boxin=(up-lb)./(T.Range(:,2)-T.Range(:,1));
-len=length(boxin);
-corrin=sum(abs(RHO))/len;
-extrin=sum(abs(RHO)>0.5)/len;
-ind=(2*boxin'+corrin+extrin)/4;
-[~,idx]=sort(ind,'descend');
-
-clusterInfo=struct('NumClusters',1,'Idx',ones(1,size(T_est,2)),'Centers',med','ClusterSize',size(T_est,2),'Silhouette',[]);
+% --- Clustering runs BEFORE outlier removal -- see header comment for why ---
+clusterInfo=struct('NumClusters',1,'Idx',ones(1,size(T_est,2)),'Centers',median(T_est,2)', ...
+    'ClusterSize',size(T_est,2),'Silhouette',[],'Dominant',1);
+statT_est=T_est; % point set stats/plots below are computed from; narrows to the dominant cluster if found
+X=NormalizedAll'; % one row per estimation run, one column per parameter (used below and by cluster plots)
 if cluster
-    Nruns=size(Normalized,2);
-    X=Normalized'; % one row per estimation run, one column per parameter
+    Nruns=size(NormalizedAll,2);
     kmax=min(maxK,Nruns-1);
     if kmax>=2
         try
@@ -199,9 +192,12 @@ if cluster
                 centers(k,:)=median(T_est(:,cIdx==k),2)';
                 clusterSize(k)=sum(cIdx==k);
             end
-            clusterInfo=struct('NumClusters',bestK,'Idx',cIdx,'Centers',centers,'ClusterSize',clusterSize,'Silhouette',bestSil);
+            [~,dominant]=max(clusterSize);
+            clusterInfo=struct('NumClusters',bestK,'Idx',cIdx,'Centers',centers, ...
+                'ClusterSize',clusterSize,'Silhouette',bestSil,'Dominant',dominant);
             disp(['Detected ' num2str(bestK) ' candidate global minima (mean silhouette ' num2str(bestSil,3) ')'])
             disp(['Cluster sizes (of ' num2str(Nruns) ' runs): ' num2str(clusterSize)])
+            statT_est=T_est(:,cIdx==dominant);
         else
             disp(['No confident multi-cluster split found (best mean silhouette ' num2str(bestSil,3) ' < ' num2str(silThreshold) ')'])
             disp('Treating estimations as a single basin (1 candidate global minimum)')
@@ -210,6 +206,80 @@ if cluster
         warning('Not enough estimation runs to test clustering (need at least 3 for maxK>=2)')
     end
 end
+
+% --- Outlier removal AFTER clustering, scoped to the dominant cluster ---
+if outlier
+    disp('Removing outliers...')
+    [~,~,RD,chi_crt]=DetectMultVarOutliers(statT_est');
+    id_in=RD<chi_crt(4);
+    statT_est=statT_est(:,id_in);
+    disp(num2str(sum(id_in))+" outliers were removed")
+end
+
+% --- Everything below is computed from statT_est (final filtered set) ---
+Normalized=zeros(size(T,1),size(statT_est,2));
+for i=1:size(T,1)
+    Normalized(i,:)=(statT_est(i,:)-T.Range(i,1))/(T.Range(i,2)-T.Range(i,1));
+end
+nnominal=(statT_est(:,1)-T.Range(:,1))./(T.Range(:,2)-T.Range(:,1));
+
+RHO = corr(statT_est');
+
+med=median(statT_est,2);
+[lb, up] = gsua_medianCI(statT_est, 0.05);
+
+if (any(lb(lb<T.Range(:,1))))||(any(up(up>T.Range(:,2))))
+    action=correction;
+    if action
+        lb(lb<T.Range(:,1))= T.Range(lb<T.Range(:,1),1);
+        up(up>T.Range(:,2))= T.Range(up>T.Range(:,2),2);
+    end
+end
+
+boxin=(up-lb)./(T.Range(:,2)-T.Range(:,1));
+len=length(boxin);
+corrin=sum(abs(RHO))/len;
+extrin=sum(abs(RHO)>0.5)/len;
+ind=(2*boxin'+corrin+extrin)/4;
+[~,idx]=sort(ind,'descend');
+
+% --- Plots ---
+figure('Name','CDF Range')
+for i=1:size(T,1)
+subplot(D1,D2,i)
+ecdf(statT_est(i,:),'Bounds','on')
+title(T.Properties.RowNames{i})
+end
+
+figure('Name','Normalized Practical identifiability')
+clf
+boxplot(Normalized','Labels',T.Properties.RowNames,'LabelOrientation','inline')
+h = findobj(gca, 'type', 'text');
+set(h, 'Interpreter', 'tex','FontWeight','bold');
+
+B = filloutliers(Normalized','center','median');
+indicator=max(B,[],1)-min(B,[],1);
+[~,index]=sort(indicator,'descend');
+nn=B(:,index);
+names=T.Properties.RowNames(index);
+figure('Name','Sorted parameter range')
+clf
+boxplot(nn,'Labels',names,'LabelOrientation','inline')
+h = findobj(gca, 'type', 'text');
+set(h, 'Interpreter', 'tex','FontWeight','bold');
+hold on
+nnominal_sorted=nnominal(index);
+plot(nnominal_sorted,'.','MarkerSize',20,'Color','black')
+
+figure('Name','Correlation')
+imagesc(RHO)
+xticks(1:size(T,1))
+xticklabels(T.Properties.RowNames)
+yticks(1:size(T,1))
+yticklabels(T.Properties.RowNames)
+clim([-1 1])
+colormap jet
+colorbar
 
 if show
 
@@ -220,8 +290,6 @@ if show
         scatter3(boxin(i),corrin(i),extrin(i),60,ind(i),'filled','DisplayName',T.Properties.RowNames{i})
     end
     colormap jet
-    % b=colorbar('Location','eastoutside');
-    % b.Label.String = 'Identifiability Index';
     legend('NumColumns',2','Orientation','vertical')
     xlabel('Interval Index')
     ylabel('Correlation Index')
@@ -232,10 +300,10 @@ if show
     G=graph((abs(RHO)>0.5)-eye(len),T.Properties.RowNames);
     G.Nodes.Weights=ind';
     G.Nodes.NodeColors = ind';
-    p=plot(G);
-    p.NodeCData = G.Nodes.NodeColors;
-    p.NodeFontSize=12;
-    p.MarkerSize=7;
+    p2=plot(G);
+    p2.NodeCData = G.Nodes.NodeColors;
+    p2.NodeFontSize=12;
+    p2.MarkerSize=7;
     colormap jet
     a = colorbar;
     a.Label.String = 'Identifiability Index';
@@ -255,7 +323,7 @@ if show
 
         figure('Name','Candidate global minima')
         clf
-        boxplot(Normalized','Labels',T.Properties.RowNames,'LabelOrientation','inline')
+        boxplot(NormalizedAll','Labels',T.Properties.RowNames,'LabelOrientation','inline')
         hold on
         markers={'o','s','^','d','v','p','h'};
         for k=1:clusterInfo.NumClusters
@@ -268,6 +336,7 @@ if show
     end
 end
 
+T.Est=statT_est;
 T.Range=[lb,up];
 T.index=ind';
 T.Nominal=med;
@@ -283,16 +352,4 @@ if cluster
     end
 end
 
-
-% indicator=[max(B,[],1)-min(B,[],1)];
-% [~,index]=sort(indicator);
-% nn=B(:,index);
-% names=T.Properties.RowNames(index);
-% val=median(nn,1);
-% nn=[nn-val];
-% nnominal=nnominal(index)'-val;
-% figure('Name','Sorted parameter range')
-% boxplot(nn,'Labels',names,'LabelOrientation','inline')
-% hold on
-% plot(nnominal,'Marker','*','MarkerSize',2)
 end
