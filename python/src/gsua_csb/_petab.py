@@ -10,25 +10,43 @@ more immediately, a source of externally-validated test problems instead of only
 
 Scope -- this is deliberately not a general PEtab importer (there is no full PEtab implementation
 in Python outside the reference `petab <https://github.com/PEtab-dev/PEtab>`_ library itself, which
-this module does not depend on or wrap). Supported, and confirmed against the two benchmark models
-this was built and tested against (``Perelson_Science1996``, ``Boehm_JProteomeRes2014``):
+this module does not depend on or wrap). Supported, and confirmed against the benchmark models this
+was built and tested against (``Perelson_Science1996``, ``Boehm_JProteomeRes2014``,
+``Giordano_Nature2020``, ``Okuonghae_ChaosSolitonsFractals2020``, ``Bertozzi_PNAS2020``):
 
 - Exactly one problem, one SBML model, one condition/measurement/observable file set.
-- Exactly one simulation condition, with no condition-table parameter overrides (i.e. the SBML
-  model's own initial values are used as-is) and no preequilibration.
+- One or more simulation conditions, no preequilibration (a non-empty
+  ``preequilibrationConditionId`` column raises). A single-condition problem returns one
+  :class:`PEtabProblem`; a multi-condition problem (e.g. one model fit jointly across several
+  regions or intervention scenarios, common in epidemiology PEtab files) returns a
+  ``{conditionId: PEtabProblem}`` dict, one independent model per condition.
+- Condition-table overrides (a column per overridden species or parameter id, common for
+  region/scenario-specific dynamics): a numeric cell fixes that target at that literal value for
+  the condition; a cell containing another parameter's id (string) makes that referenced
+  parameter -- with its own ``parameters.tsv`` bounds, free or fixed -- the thing being
+  estimated/fixed for that target, in that condition (e.g. Bertozzi's ``I0_`` column holding
+  ``"I0_CA"``/``"I0_NY"``: the same SBML parameter position, a different estimated quantity per
+  region). If the override target feeds an SBML ``<initialAssignment>`` and is itself a reference
+  to a *free* parameter, the initial condition is computed once from that parameter's PEtab
+  ``nominalValue`` (see :func:`gsua_csb.parse_sbml`'s docstring -- the same pre-existing limitation
+  as any other parameter feeding an initial assignment, just also reachable through a condition
+  override now).
 - ``observableFormula`` as an algebraic expression of species and constant SBML parameters (a bare
   species name, as in Perelson, or a derived multi-species expression, as in Boehm) -- no
-  ``observableParameters`` placeholder substitution, since neither confirmed benchmark uses it.
-- Parameters: every PEtab parameter table row whose ID matches an SBML constant parameter becomes
-  part of the returned :class:`gsua_csb.Model` (free if ``estimate=1``, using ``lowerBound``/
-  ``upperBound``/``nominalValue`` directly -- these are always given on the *linear* scale in the
-  PEtab format regardless of ``parameterScale``, which only affects how an optimizer's *own* search
-  space is transformed; fixed at ``nominalValue`` if ``estimate=0``). Rows with no matching SBML
-  parameter (typically noise-model parameters like a measurement's standard deviation) are skipped
-  -- this importer does not estimate noise-model parameters, only the dynamical ones.
+  ``observableParameters`` placeholder substitution, since no confirmed benchmark uses it.
+- Parameters: every PEtab parameter table row whose ID matches an SBML constant parameter (either
+  directly, or indirectly through a condition-table override, see above) becomes part of the
+  returned :class:`gsua_csb.Model` (free if ``estimate=1``, using ``lowerBound``/``upperBound``/
+  ``nominalValue`` directly -- these are always given on the *linear* scale in the PEtab format
+  regardless of ``parameterScale``, which only affects how an optimizer's *own* search space is
+  transformed; fixed at ``nominalValue`` if ``estimate=0``). Rows with no matching SBML parameter
+  and no condition-table reference (typically noise-model parameters like a measurement's standard
+  deviation) are skipped -- this importer does not estimate noise-model parameters, only the
+  dynamical ones.
 - Species initial conditions are always treated as fixed (not estimated), from :func:`gsua_csb.
-  parse_sbml`'s ``initial_conditions`` (literal or evaluated from an ``<initialAssignment>`` at
-  nominal parameter values -- see that function's docstring for the scope this inherits).
+  parse_sbml`'s ``initial_conditions`` (literal, evaluated from an ``<initialAssignment>`` at
+  nominal/overridden parameter values, or a direct condition-table override -- see that function's
+  docstring for the scope this inherits).
 
 ``observableTransformation`` (e.g. ``log10``, common for viral-load-scale data) is reported as
 metadata but not applied -- the returned model simulates in linear (untransformed) space, and
@@ -61,7 +79,8 @@ from ._symbolic import SymbolicODEModel
 
 @dataclass
 class PEtabProblem:
-    """Result of :func:`load_petab`.
+    """Result of :func:`load_petab` for a single simulation condition (:func:`load_petab` returns
+    a ``{conditionId: PEtabProblem}`` dict instead when the PEtab problem has more than one).
 
     Attributes:
         model: A :class:`gsua_csb.UserFunctionModel` wrapping ODE simulation + observable
@@ -84,56 +103,63 @@ class PEtabProblem:
     observable_transformation: list[str]
 
 
-def load_petab(yaml_path: str) -> PEtabProblem:
-    """Load a PEtab problem (YAML + SBML + TSV tables) into a :class:`PEtabProblem`.
+def _resolve_condition_overrides(
+    cond_row, override_cols: list[str], param_table, condition_id: str
+) -> tuple[dict[str, float], dict[str, str]]:
+    """Split one condition-table row's override cells into literal values and free-parameter
+    aliases (see the module docstring for the two forms an override cell can take)."""
+    import pandas as pd
 
-    Args:
-        yaml_path: Path to the PEtab problem's YAML configuration file. Every file it references
-            is resolved relative to its directory.
+    literal: dict[str, float] = {}
+    free_aliases: dict[str, str] = {}
+    for col in override_cols:
+        cell = cond_row[col]
+        if pd.isna(cell):
+            continue
+        try:
+            literal[col] = float(cell)
+            continue
+        except (TypeError, ValueError):
+            pass
+        ref_id = str(cell)
+        if ref_id not in param_table.index:
+            raise ValueError(
+                f"Condition {condition_id!r} column {col!r} references parameter {ref_id!r}, "
+                "which has no entry in the PEtab parameter table"
+            )
+        row = param_table.loc[ref_id]
+        if int(row["estimate"]) == 1:
+            free_aliases[col] = ref_id
+        else:
+            literal[col] = float(row["nominalValue"])
+    return literal, free_aliases
 
-    Returns:
-        A :class:`PEtabProblem`.
 
-    Raises:
-        ImportError: If the ``petab`` extra (``python-libsbml``, ``pandas``, ``PyYAML``) is not
-            installed.
-        ValueError: If the problem uses a structure outside this loader's scope (multiple
-            problems/conditions, condition-table parameter overrides, etc. -- see the module
-            docstring) or references a parameter not defined anywhere.
-    """
-    try:
-        import pandas as pd
-        import yaml
-    except ImportError as exc:  # pragma: no cover - exercised only without the petab extra
-        raise ImportError("load_petab requires the 'petab' extra: pip install gsua-csb[petab]") from exc
+def _load_condition_problem(
+    sbml_path,
+    condition_id: str,
+    literal_overrides: dict[str, float],
+    free_aliases: dict[str, str],
+    param_table,
+    observables,
+    measurements,
+) -> PEtabProblem:
+    """Build one :class:`PEtabProblem` for a single condition, given its resolved overrides."""
+    # Free-parameter aliases still need a numeric stand-in for initial-assignment recomputation
+    # (see parse_sbml's docstring on this pre-existing limitation for any parameter feeding one).
+    sbml_overrides = dict(literal_overrides)
+    for col, ref_id in free_aliases.items():
+        sbml_overrides[col] = float(param_table.loc[ref_id, "nominalValue"])
+    ode_sys = parse_sbml(sbml_path, overrides=sbml_overrides)
 
-    yaml_path = Path(yaml_path)
-    base = yaml_path.parent
-    with open(yaml_path) as f:
-        config = yaml.safe_load(f)
-
-    if len(config["problems"]) != 1:
-        raise ValueError("load_petab only supports a single-problem PEtab file (see module docstring)")
-    problem = config["problems"][0]
-    for key in ("sbml_files", "condition_files", "measurement_files", "observable_files"):
-        if len(problem[key]) != 1:
-            raise ValueError(f"load_petab only supports exactly one {key[:-1]} (got {len(problem[key])})")
-
-    ode_sys = parse_sbml(base / problem["sbml_files"][0])
-
-    conditions = pd.read_csv(base / problem["condition_files"][0], sep="\t")
-    if len(conditions) != 1:
-        raise ValueError("load_petab only supports a single simulation condition (see module docstring)")
-    extra_cols = set(conditions.columns) - {"conditionId", "conditionName"}
-    if extra_cols:
+    unmatched = (set(literal_overrides) | set(free_aliases)) - set(ode_sys.state_names) - set(
+        ode_sys.param_names
+    )
+    if unmatched:
         raise ValueError(
-            f"Condition-table parameter overrides are not supported (found columns {sorted(extra_cols)})"
+            f"Condition {condition_id!r} overrides columns {sorted(unmatched)}, which match no "
+            "species or parameter in the SBML model"
         )
-    condition_id = conditions["conditionId"].iloc[0]
-
-    param_table = pd.read_csv(base / (config["parameter_file"] if isinstance(config["parameter_file"], str)
-                                       else config["parameter_file"][0]), sep="\t")
-    param_table = param_table.set_index("parameterId")
 
     free_state_names = ode_sys.state_names
     n_states = len(free_state_names)
@@ -144,27 +170,39 @@ def load_petab(yaml_path: str) -> PEtabProblem:
     param_ub: list[float] = []
     param_nom: list[float] = []
     for name in ode_sys.param_names:
-        if name not in param_table.index:
+        if name in free_aliases:
+            ref_id = free_aliases[name]
+            row = param_table.loc[ref_id]
+            kept_param_names.append(ref_id)
+            param_nom.append(float(row["nominalValue"]))
+            param_lb.append(float(row["lowerBound"]))
+            param_ub.append(float(row["upperBound"]))
+        elif name in literal_overrides:
+            kept_param_names.append(name)
+            param_nom.append(literal_overrides[name])
+            param_lb.append(literal_overrides[name])
+            param_ub.append(literal_overrides[name])
+        elif name in param_table.index:
+            row = param_table.loc[name]
+            kept_param_names.append(name)
+            nominal = float(row["nominalValue"])
+            param_nom.append(nominal)
+            if int(row["estimate"]) == 1:
+                param_lb.append(float(row["lowerBound"]))
+                param_ub.append(float(row["upperBound"]))
+            else:
+                param_lb.append(nominal)
+                param_ub.append(nominal)
+        else:
             warnings.warn(
                 f"SBML parameter {name!r} has no entry in the PEtab parameter table; using its "
                 f"SBML nominal value ({ode_sys.param_values[name]}) as a fixed constant.",
-                stacklevel=2,
+                stacklevel=3,
             )
             kept_param_names.append(name)
             param_lb.append(ode_sys.param_values[name])
             param_ub.append(ode_sys.param_values[name])
             param_nom.append(ode_sys.param_values[name])
-            continue
-        row = param_table.loc[name]
-        kept_param_names.append(name)
-        nominal = float(row["nominalValue"])
-        param_nom.append(nominal)
-        if int(row["estimate"]) == 1:
-            param_lb.append(float(row["lowerBound"]))
-            param_ub.append(float(row["upperBound"]))
-        else:
-            param_lb.append(nominal)
-            param_ub.append(nominal)
 
     names = free_state_names + kept_param_names
     lb = np.concatenate([ic_values, np.array(param_lb)])
@@ -172,26 +210,31 @@ def load_petab(yaml_path: str) -> PEtabProblem:
     nominal = np.concatenate([ic_values, np.array(param_nom)])
     model_range = np.column_stack([lb, ub])
 
-    observables = pd.read_csv(base / problem["observable_files"][0], sep="\t").set_index("observableId")
     obs_symtab = {name: sym for name, sym in zip(ode_sys.state_names, ode_sys.state_vars)}
     obs_symtab.update({name: sym for name, sym in zip(ode_sys.param_names, ode_sys.params)})
     observable_names = list(observables.index)
     observable_transformation = [
         str(observables.loc[oid].get("observableTransformation", "lin")) for oid in observable_names
     ]
+    derived_subs = {obs_symtab.get(name, sp.Symbol(name)): expr for name, expr in ode_sys.derived.items()}
     obs_funcs = []
     for oid in observable_names:
         formula = str(observables.loc[oid, "observableFormula"])
         expr = sp.sympify(formula, locals=obs_symtab)
+        if derived_subs:
+            # An observableFormula can name an assignment-rule-defined "reporter" species directly
+            # (e.g. Giordano's observable_CurrentCases = CurrentDiagnosedInfected, a derived
+            # aggregate with no ODE of its own) rather than a real state -- resolve it the same way
+            # parse_sbml already resolves such references internally.
+            expr = expr.subs(derived_subs)
         obs_funcs.append(sp.lambdify(list(ode_sys.state_vars) + list(ode_sys.params), expr, modules="numpy"))
 
-    measurements = pd.read_csv(base / problem["measurement_files"][0], sep="\t")
-    measurements = measurements[measurements["simulationConditionId"] == condition_id]
-    xdata = np.array(sorted(measurements["time"].unique()), dtype=np.float64)
+    cond_measurements = measurements[measurements["simulationConditionId"] == condition_id]
+    xdata = np.array(sorted(cond_measurements["time"].unique()), dtype=np.float64)
     time_index = {t: i for i, t in enumerate(xdata)}
     ydata = np.full((len(observable_names), len(xdata)), np.nan)
     obs_index = {oid: i for i, oid in enumerate(observable_names)}
-    for _, row in measurements.iterrows():
+    for _, row in cond_measurements.iterrows():
         ydata[obs_index[row["observableId"]], time_index[row["time"]]] = row["measurement"]
 
     ode_model = SymbolicODEModel(
@@ -230,3 +273,85 @@ def load_petab(yaml_path: str) -> PEtabProblem:
         observable_names=observable_names,
         observable_transformation=observable_transformation,
     )
+
+
+def load_petab(yaml_path: str) -> PEtabProblem | dict[str, PEtabProblem]:
+    """Load a PEtab problem (YAML + SBML + TSV tables) into one or more :class:`PEtabProblem`.
+
+    Args:
+        yaml_path: Path to the PEtab problem's YAML configuration file. Every file it references
+            is resolved relative to its directory.
+
+    Returns:
+        A single :class:`PEtabProblem` if the problem has exactly one simulation condition, or a
+        ``{conditionId: PEtabProblem}`` dict if it has more than one (see the module docstring).
+
+    Raises:
+        ImportError: If the ``petab`` extra (``python-libsbml``, ``pandas``, ``PyYAML``) is not
+            installed.
+        ValueError: If the problem uses a structure outside this loader's scope (multiple
+            problems, preequilibration, an unresolvable condition-table override -- see the module
+            docstring) or references a parameter not defined anywhere.
+    """
+    try:
+        import pandas as pd
+        import yaml
+    except ImportError as exc:  # pragma: no cover - exercised only without the petab extra
+        raise ImportError("load_petab requires the 'petab' extra: pip install gsua-csb[petab]") from exc
+
+    yaml_path = Path(yaml_path)
+    base = yaml_path.parent
+    with open(yaml_path) as f:
+        config = yaml.safe_load(f)
+
+    if len(config["problems"]) != 1:
+        raise ValueError("load_petab only supports a single-problem PEtab file (see module docstring)")
+    problem = config["problems"][0]
+    for key in ("sbml_files", "condition_files", "measurement_files", "observable_files"):
+        if len(problem[key]) != 1:
+            raise ValueError(f"load_petab only supports exactly one {key[:-1]} (got {len(problem[key])})")
+
+    sbml_path = base / problem["sbml_files"][0]
+
+    conditions = pd.read_csv(base / problem["condition_files"][0], sep="\t")
+    override_cols = [c for c in conditions.columns if c not in ("conditionId", "conditionName")]
+
+    param_table = pd.read_csv(base / (config["parameter_file"] if isinstance(config["parameter_file"], str)
+                                       else config["parameter_file"][0]), sep="\t")
+    param_table = param_table.set_index("parameterId")
+
+    observables = pd.read_csv(base / problem["observable_files"][0], sep="\t").set_index("observableId")
+
+    measurements = pd.read_csv(base / problem["measurement_files"][0], sep="\t")
+    if "preequilibrationConditionId" in measurements.columns:
+        preeq = measurements["preequilibrationConditionId"].dropna().astype(str).str.strip()
+        if (preeq != "").any():
+            raise ValueError("Preequilibration is not supported (see module docstring)")
+
+    condition_ids_with_data = set(measurements["simulationConditionId"])
+
+    results: dict[str, PEtabProblem] = {}
+    for _, cond_row in conditions.iterrows():
+        condition_id = str(cond_row["conditionId"])
+        if condition_id not in condition_ids_with_data:
+            # A condition can legitimately have zero measurements -- e.g. a forward-projection
+            # "what if" scenario in an epidemiology PEtab file, alongside the one condition that
+            # was actually fit to data. Nothing to estimate or evaluate against, so skip it rather
+            # than raise; the PEtab problem itself is otherwise perfectly well-formed.
+            warnings.warn(
+                f"Condition {condition_id!r} has no measurements; skipping (see module docstring)",
+                stacklevel=2,
+            )
+            continue
+        literal_overrides, free_aliases = _resolve_condition_overrides(
+            cond_row, override_cols, param_table, condition_id
+        )
+        results[condition_id] = _load_condition_problem(
+            sbml_path, condition_id, literal_overrides, free_aliases, param_table, observables, measurements
+        )
+
+    if not results:
+        raise ValueError("No simulation condition in this PEtab problem has any measurements")
+    if len(results) == 1:
+        return next(iter(results.values()))
+    return results

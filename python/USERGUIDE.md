@@ -107,12 +107,32 @@ formula (which can be a derived expression of multiple species, not just a bare 
 so it plugs directly into `parameter_estimation`, `sensitivity_analysis`, `identifiability_analysis`,
 and everything else in this guide with no special-casing.
 
-This is a scoped importer, not a general PEtab implementation — one problem, one SBML model, one
-simulation condition, no condition-table parameter overrides. See the `parse_sbml`/`load_petab`
-docstrings for the exact SBML feature subset supported (compartments, assignment rules, and
-initial assignments are all handled; rate rules, events, and multi-condition problems are not).
-Verified against two real benchmarks: `Boehm_JProteomeRes2014` (which exercises every supported
-feature at once) matches its own published reference simulation to ~1e-7 relative error.
+This is a scoped importer, not a general PEtab implementation — one problem, one SBML model. A
+problem with more than one simulation condition (e.g. the same model fit jointly across several
+regions or intervention scenarios, common in epidemiology PEtab files) returns a
+`{conditionId: PEtabProblem}` dict instead of a bare `PEtabProblem`; a condition with no
+measurements at all (a forward-projection "what if" scenario alongside the one condition actually
+fit to data) is skipped with a warning rather than raising. Condition-table overrides are
+supported: a literal numeric cell fixes that target for the condition, and a cell naming another
+parameter table row makes *that* parameter — free or fixed, with its own bounds — the thing
+estimated for that target in that condition (e.g. a region-specific transmission rate). See the
+`parse_sbml`/`load_petab` docstrings for the exact SBML feature subset supported (compartments,
+assignment rules including chained ones, function definitions, `piecewise`/`&&`/`||`, and initial
+assignments — including one deriving a constant parameter from others — are all handled; rate
+rules, events, and preequilibration are not).
+
+Verified against five real benchmarks: `Boehm_JProteomeRes2014` (every supported systems-biology
+SBML feature at once) and `Giordano_Nature2020` (an epidemiology model exercising function
+definitions, time-dependent piecewise assignment rules, and an assignment-rule-defined "reporter"
+species used directly as an observable) both match their own published reference simulation to
+~1e-4 relative error or better; `Bertozzi_PNAS2020` (two regions, each with condition-table
+parameter-reference overrides) matches to ~1e-7. `Okuonghae_ChaosSolitonsFractals2020` (literal
+condition-table overrides) has no published reference simulation to check against but produces
+finite, plausibly-scaled output. `Perelson_Science1996`'s own reference simulation does not match a
+simulation at its `nominalValue` parameters (~45% error, wrong qualitative shape) even though the
+import mechanism is the same one validated to high precision on the other four — most likely that
+reference file corresponds to different (e.g. fitted) parameter values, not an importer bug, but
+this is unconfirmed; see the test suite for the full investigation.
 
 ## 2. Sampling a design matrix
 
