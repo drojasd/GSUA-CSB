@@ -181,6 +181,63 @@ def plot_identifiability_correlation(
     return ax
 
 
+def plot_identifiability_graph(
+    ia: "IdentifiabilityResult", ax: "Axes | None" = None, threshold: float = 0.5, cmap: str = "jet"
+) -> "Axes":
+    """Network view of strong pairwise correlations from a practical identifiability analysis.
+
+    MATLAB equivalent: ``gsua_ia``'s "Identifiability graph" figure. An edge is drawn between two
+    parameters when ``|correlation| > threshold``; node color ("heat") is the identifiability
+    index. A cluster of parameters all connected to each other reads as "these are entangled --
+    the data constrains some combination of them, not each individually" (the toolbox's namesake
+    example: a two-parameter product `a*b` in a model where only the product is identifiable).
+
+    If ``ia.correlation_reliable`` is ``False`` (too few points fed ``ia.correlation`` -- see
+    :func:`gsua_csb.identifiability_analysis`), every entry is ``NaN`` and no edges are drawn: the
+    graph renders as isolated nodes rather than the complete graph a naive reading of ``NaN``-free
+    but degenerate 2-point correlations (always exactly +-1) would otherwise produce.
+
+    Args:
+        ia: Result from :func:`gsua_csb.identifiability_analysis`.
+        ax: Axes to draw on. A new figure/axes is created if not given.
+        threshold: Minimum ``|correlation|`` to draw an edge. Default 0.5, matching
+            ``identifiability_analysis``'s own "strong correlation" convention (``extrin``).
+        cmap: Colormap name for node color. Default ``"jet"``, matching the MATLAB original.
+
+    Returns:
+        The Axes drawn on.
+    """
+    import matplotlib.pyplot as plt
+    from matplotlib.collections import LineCollection
+
+    if ax is None:
+        _, ax = plt.subplots()
+
+    n = len(ia.names)
+    angles = 2 * np.pi * np.arange(n) / max(n, 1)
+    pos = np.column_stack([np.cos(angles), np.sin(angles)])
+
+    with np.errstate(invalid="ignore"):
+        strong = np.abs(ia.correlation) > threshold
+    np.fill_diagonal(strong, False)
+    edges = [(pos[i], pos[j]) for i, j in zip(*np.where(np.triu(strong, k=1)))]
+    if edges:
+        ax.add_collection(LineCollection(edges, colors="gray", linewidths=1.0, zorder=1))
+
+    sc = ax.scatter(pos[:, 0], pos[:, 1], c=ia.index, cmap=cmap, s=250, zorder=2, edgecolors="black")
+    for i, name in enumerate(ia.names):
+        ax.annotate(name, pos[i], textcoords="offset points", xytext=(0, 10), ha="center", fontsize=9)
+
+    plt.colorbar(sc, ax=ax, label="Identifiability Index")
+    ax.set_xlim(-1.4, 1.4)
+    ax.set_ylim(-1.4, 1.4)
+    ax.set_aspect("equal")
+    ax.axis("off")
+    title = "Strong correlations" if ia.correlation_reliable else "Strong correlations (undefined -- too few points)"
+    ax.set_title(title)
+    return ax
+
+
 def plot_identifiability_index(ia: "IdentifiabilityResult", ax: "Axes | None" = None) -> "Axes":
     """Horizontal bar chart of the per-parameter identifiability index, sorted ascending.
 

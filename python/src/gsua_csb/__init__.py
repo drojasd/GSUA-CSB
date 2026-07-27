@@ -22,6 +22,7 @@ from ._likelihood import ProfileLikelihoodResult, profile_likelihood
 from ._model import Model, UserFunctionModel, build_range
 from ._plotting import (
     plot_identifiability_correlation,
+    plot_identifiability_graph,
     plot_identifiability_index,
     plot_mcf,
     plot_sensitivity_area,
@@ -105,6 +106,7 @@ __all__ = [
     "plot_sensitivity_bar",
     "plot_sensitivity_area",
     "plot_identifiability_correlation",
+    "plot_identifiability_graph",
     "plot_identifiability_index",
     "plot_mcf",
     "gsua_costf",

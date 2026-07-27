@@ -58,10 +58,23 @@ multi-cluster split is found, every downstream summary statistic (``range``, ``c
 pooling a median or a correlation across separated basins isn't a meaningful summary either -- and
 ``outlier=True``, if also requested, is scoped to that single cluster, where the unimodal
 assumption behind Mahalanobis distance is actually valid.
+
+Scoping statistics to the dominant cluster can leave very few points feeding ``range``/
+``correlation`` -- a real, observed case, not a hypothetical: two basins with two runs each is a
+perfectly legitimate clustering outcome. Correlation from that few points is not merely noisy but
+trivially degenerate (any 2 points correlate at exactly +-1, regardless of any real relationship),
+which would make ``correlation``/``index`` report every parameter as maximally, spuriously
+"strongly correlated" with every other -- visually, a plotted identifiability graph (nodes =
+parameters, edges = ``|correlation| > 0.5``, see :func:`gsua_csb.plot_identifiability_graph`) would
+render as a complete graph. Below ``min_corr_n`` points, ``correlation`` is left ``NaN`` and
+``index`` falls back to the interval-width term alone (see ``correlation_reliable`` on
+:class:`IdentifiabilityResult`) -- the graph then correctly renders with no edges at all, rather
+than a spurious claim of universal strong correlation.
 """
 
 from __future__ import annotations
 
+import warnings
 from dataclasses import dataclass
 from typing import Literal
 
@@ -188,12 +201,19 @@ class IdentifiabilityResult:
         nominal: (Np,) median of the (possibly filtered) estimates used for ``range``.
         index: (Np,) identifiability index per parameter, in ``[0, 1]`` -- ``0`` well identified,
             ``1`` poorly identified. Combines interval width, mean correlation with other
-            parameters, and count of strong (``|r| > 0.5``) correlations. Always ``0`` for a fixed
-            parameter (``model.fixed``) -- "fixed" means "not being estimated," not "poorly
-            estimated."
+            parameters, and count of strong (``|r| > 0.5``) correlations -- unless
+            ``correlation_reliable`` is ``False``, in which case it's interval width alone. Always
+            ``0`` for a fixed parameter (``model.fixed``) -- "fixed" means "not being estimated,"
+            not "poorly estimated."
         correlation: (Np, Np) correlation matrix among the estimates used for ``range``. Entries
             involving a fixed parameter are ``NaN`` (undefined: a fixed parameter has zero variance
-            across repeated estimations), except the diagonal, which is always 1.
+            across repeated estimations), except the diagonal, which is always 1. Every entry is
+            ``NaN`` when ``correlation_reliable`` is ``False``.
+        correlation_reliable: ``False`` when fewer than ``min_corr_n`` points fed ``range``
+            (typically: a small dominant cluster) -- correlation from very few points is not just
+            noisy but trivially degenerate (2 points always correlate at exactly +-1), so
+            ``correlation`` is left undefined and ``index`` falls back to interval width alone
+            rather than silently averaging in a number that looks meaningful but isn't.
         n_bad_fit_removed: Number of estimation runs dropped by the fit-quality filter (0 if
             ``cost=None``).
         n_outliers_removed: Number of estimation runs dropped by outlier removal (0 if
@@ -206,6 +226,7 @@ class IdentifiabilityResult:
     nominal: NDArray[np.float64]
     index: NDArray[np.float64]
     correlation: NDArray[np.float64]
+    correlation_reliable: bool
     n_bad_fit_removed: int
     n_outliers_removed: int
     cluster: ClusterInfo
@@ -216,22 +237,29 @@ def _summary_stats(
     model: Model,
     correction: bool,
     ci_alpha: float,
-) -> tuple[NDArray[np.float64], NDArray[np.float64], NDArray[np.float64], NDArray[np.float64]]:
-    """Compute (range, nominal, index, correlation) from a single (presumed-unimodal) point set."""
+    min_corr_n: int,
+) -> tuple[NDArray[np.float64], NDArray[np.float64], NDArray[np.float64], NDArray[np.float64], bool]:
+    """Compute (range, nominal, index, correlation, correlation_reliable) from a single
+    (presumed-unimodal) point set."""
     lb0 = model.range[:, 0]
     ub0 = model.range[:, 1]
     width0 = ub0 - lb0
     Np = X.shape[1]
     free_mask = width0 > 0
 
-    # A fixed parameter has zero range width and (if it stays fixed across every repeated
-    # estimation, as gsua_pe/parameter_estimation guarantee) zero variance -- correlation against
-    # it is mathematically undefined (0/0), not just numerically unstable. Leave fixed parameters
-    # at well-defined defaults (NaN correlation, 0 identifiability index -- "fixed" means "not
-    # being estimated", not "poorly estimated").
+    # Correlation from very few points isn't just numerically unstable, it's trivially degenerate:
+    # with exactly 2 points, every pairwise correlation is exactly +-1 regardless of any real
+    # relationship (two points always define a line) -- so a small dominant cluster (a real,
+    # observed case: identifiability_analysis(cluster=True) can legitimately isolate a 2-point
+    # basin) would otherwise report every parameter as maximally "strongly correlated" with every
+    # other, and plot_identifiability_graph would render a spurious complete graph. Below
+    # min_corr_n points, report correlation as undefined (NaN, like an already-fixed parameter)
+    # rather than a number that looks meaningful but isn't, and drop the correlation-based index
+    # terms rather than silently averaging in noise -- see correlation_reliable.
+    correlation_reliable = X.shape[0] >= min_corr_n
     correlation = np.full((Np, Np), np.nan)
     np.fill_diagonal(correlation, 1.0)
-    if free_mask.sum() > 1:
+    if correlation_reliable and free_mask.sum() > 1:
         free_idx = np.where(free_mask)[0]
         correlation[np.ix_(free_idx, free_idx)] = np.corrcoef(X[:, free_idx], rowvar=False)
 
@@ -242,15 +270,20 @@ def _summary_stats(
 
     boxin = np.zeros(Np)
     boxin[free_mask] = (ub[free_mask] - lb[free_mask]) / width0[free_mask]
-    corrin = np.zeros(Np)
-    extrin = np.zeros(Np)
-    with np.errstate(invalid="ignore"):
-        corrin[free_mask] = np.nanmean(np.abs(correlation[:, free_mask]), axis=0)
-        extrin[free_mask] = np.nansum(np.abs(correlation[:, free_mask]) > 0.5, axis=0) / Np
-    index = (2 * boxin + corrin + extrin) / 4
+    if correlation_reliable:
+        corrin = np.zeros(Np)
+        extrin = np.zeros(Np)
+        with np.errstate(invalid="ignore"):
+            corrin[free_mask] = np.nanmean(np.abs(correlation[:, free_mask]), axis=0)
+            extrin[free_mask] = np.nansum(np.abs(correlation[:, free_mask]) > 0.5, axis=0) / Np
+        index = (2 * boxin + corrin + extrin) / 4
+    else:
+        # Fall back to the interval-width term alone -- still a meaningful signal on its own,
+        # just not averaged together with a correlation estimate that isn't trustworthy yet.
+        index = boxin.copy()
 
     median_est = np.median(X, axis=0)
-    return np.column_stack([lb, ub]), median_est, index, correlation
+    return np.column_stack([lb, ub]), median_est, index, correlation, correlation_reliable
 
 
 def identifiability_analysis(
@@ -269,6 +302,7 @@ def identifiability_analysis(
     max_k: int = 5,
     sil_threshold: float = 0.5,
     ci_alpha: float = 0.05,
+    min_corr_n: int = 5,
     seed: int | None = None,
 ) -> IdentifiabilityResult:
     """Analyze practical parameter identifiability from a set of repeated estimations.
@@ -312,6 +346,11 @@ def identifiability_analysis(
         sil_threshold: Minimum mean silhouette score required to accept a multi-cluster split over
             a single basin.
         ci_alpha: Significance level for the median confidence interval. Default 0.05 (95% CI).
+        min_corr_n: Minimum number of points (after cost filtering, clustering, and outlier
+            removal) required to report a correlation matrix / correlation-based index terms.
+            Below this, correlation is trivially degenerate rather than just noisy (e.g. exactly 2
+            points always correlate at +-1, regardless of any real relationship) -- see
+            :attr:`IdentifiabilityResult.correlation_reliable`. Default 5.
         seed: Seed for ``SpectralClustering``'s stochastic eigensolver, for reproducibility.
 
     Returns:
@@ -405,7 +444,16 @@ def identifiability_analysis(
         stats_source, keep = _remove_multivariate_outliers(stats_source, alpha=outlier_alpha)
         n_outliers_removed = int((~keep).sum())
 
-    rng, nominal, index, correlation = _summary_stats(stats_source, model, correction, ci_alpha)
+    rng, nominal, index, correlation, correlation_reliable = _summary_stats(
+        stats_source, model, correction, ci_alpha, min_corr_n
+    )
+    if not correlation_reliable:
+        warnings.warn(
+            f"Only {stats_source.shape[0]} point(s) fed the final statistics (< min_corr_n="
+            f"{min_corr_n}); correlation is undefined at this sample size and is reported as NaN "
+            "-- index falls back to interval width alone.",
+            stacklevel=2,
+        )
 
     return IdentifiabilityResult(
         names=list(model.names),
@@ -413,6 +461,7 @@ def identifiability_analysis(
         nominal=nominal,
         index=index,
         correlation=correlation,
+        correlation_reliable=correlation_reliable,
         n_bad_fit_removed=n_bad_fit_removed,
         n_outliers_removed=n_outliers_removed,
         cluster=cluster_info,

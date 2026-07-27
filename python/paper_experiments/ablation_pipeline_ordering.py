@@ -28,15 +28,25 @@ Two deliberately different regimes, both real data:
 
 import time
 import warnings
+from pathlib import Path
 
 import numpy as np
 
-from gsua_csb import UserFunctionModel, design_matrix, identifiability_analysis, load_petab, parameter_estimation
+from gsua_csb import (
+    UserFunctionModel,
+    design_matrix,
+    identifiability_analysis,
+    load_petab,
+    parameter_estimation,
+    plot_identifiability_graph,
+)
 from gsua_csb._identifiability import _remove_multivariate_outliers
 
 warnings.filterwarnings("ignore")
 
 SEED = 0
+FIGDIR = Path(__file__).parent / "figures"
+FIGDIR.mkdir(exist_ok=True)
 
 
 def finite_initial_points(model, xdata, n, seed, oversample=4):
@@ -107,12 +117,52 @@ def run_ablation(label, model, xdata, ydata, n, safe_starts=False):
     for i in np.where(~model.fixed)[0]:
         print(f"    {model.names[i]:<20} CI [{new_result.range[i,0]:.4g}, {new_result.range[i,1]:.4g}]"
               f"  (original range {model.range[i].tolist()})  index={new_result.index[i]:.4f}")
-    return new_result, old_result
+    print(f"\n  correlation_reliable (NEW pipeline, min_corr_n default): {new_result.correlation_reliable}")
+    return new_result, old_result, X, pe.cost
+
+
+def save_graph_before_after(label, model, X, cost):
+    """The dominant-cluster-size gap, in one figure: correlation computed naively from however
+    many points landed in the dominant cluster (min_corr_n=1 -- the pre-fix behavior, since the
+    old code had no floor at all) vs. with the min_corr_n floor active (default 5). A 2-point
+    dominant cluster (a real, observed outcome here) makes every pairwise correlation exactly +-1
+    regardless of any real relationship -- naive computation renders a spurious complete graph;
+    the floor correctly reports it as undefined instead (no edges).
+    """
+    import matplotlib.pyplot as plt
+
+    naive = identifiability_analysis(
+        model, X, cost=cost, cost_method="rtol", cost_rtol=0.1, cluster=True, max_k=5,
+        sil_threshold=0.5, outlier=True, outlier_alpha=0.025, min_corr_n=1, seed=SEED,
+    )
+    fixed = identifiability_analysis(
+        model, X, cost=cost, cost_method="rtol", cost_rtol=0.1, cluster=True, max_k=5,
+        sil_threshold=0.5, outlier=True, outlier_alpha=0.025, min_corr_n=5, seed=SEED,
+    )
+    print(f"\n  dominant cluster size: {int(np.max(fixed.cluster.cluster_sizes))}")
+    print(f"  naive (min_corr_n=1) correlation_reliable: {naive.correlation_reliable}")
+    print(f"  floored (min_corr_n=5) correlation_reliable: {fixed.correlation_reliable}")
+
+    fig, axes = plt.subplots(1, 2, figsize=(12, 5.5))
+    plot_identifiability_graph(naive, ax=axes[0])
+    axes[0].set_title("Before fix (min_corr_n=1): naive correlation")
+    plot_identifiability_graph(fixed, ax=axes[1])
+    axes[1].set_title("After fix (min_corr_n=5): flagged unreliable")
+    fig.suptitle(f"{label}: dominant-cluster correlation degeneracy")
+    fig.tight_layout()
+    out = FIGDIR / f"{label}_correlation_graph_before_after.png"
+    fig.savefig(out, dpi=150)
+    plt.close(fig)
+    print(f"  saved {out}")
 
 
 # --- Boehm_JProteomeRes2014 (systems biology, 6 free params) ---
 boehm = load_petab("tests/data/petab/Boehm_JProteomeRes2014/Boehm_JProteomeRes2014.yaml")
-run_ablation("Boehm_JProteomeRes2014", boehm.model, boehm.xdata, boehm.ydata, n=60)
+boehm_new, boehm_old, boehm_X, boehm_cost = run_ablation(
+    "Boehm_JProteomeRes2014", boehm.model, boehm.xdata, boehm.ydata, n=60
+)
+if boehm_new.cluster.num_clusters > 1:
+    save_graph_before_after("Boehm_JProteomeRes2014", boehm.model, boehm_X, boehm_cost)
 
 # --- Bertozzi_PNAS2020, California condition (epidemiology, 3 free params) ---
 # Only y_I_CA is measured in this condition (y_I_NY row is all-NaN); wrap the model down to the

@@ -261,3 +261,72 @@ def test_outlier_removal_after_clustering_does_not_destroy_minor_cluster():
     # points than that cluster contained, which would be the signature of the old bug (the whole
     # minor cluster getting swept up as "outliers" relative to the global pooled distribution).
     assert result.n_outliers_removed < dominant_size
+
+
+def test_correlation_undefined_below_min_corr_n():
+    # A tiny dominant cluster (2 points) makes correlation trivially degenerate -- any 2 points
+    # correlate at exactly +-1 regardless of any real relationship -- so it must be reported as
+    # undefined (NaN) rather than a number that looks meaningful but isn't.
+    model = _model()
+    estimates = np.array([[1.0, 2.0], [1.1, 2.2], [1.2, 2.4]])  # perfectly correlated, n=3 < default min_corr_n=5
+
+    result = identifiability_analysis(model, estimates)
+
+    assert result.correlation_reliable is False
+    assert np.all(np.isnan(result.correlation[~np.eye(2, dtype=bool)]))
+    # Falls back to interval width alone -- still finite, not NaN-poisoned.
+    assert np.all(np.isfinite(result.index))
+
+
+def test_correlation_reliable_once_min_corr_n_met():
+    rng = np.random.default_rng(3)
+    a = rng.normal(5.0, 0.1, size=10)
+    b = 2 * a + rng.normal(0, 0.01, size=10)  # strongly correlated
+    model = _model()
+
+    result = identifiability_analysis(model, np.column_stack([a, b]), min_corr_n=5)
+
+    assert result.correlation_reliable is True
+    assert abs(result.correlation[0, 1]) > 0.9
+
+
+def test_min_corr_n_is_configurable():
+    model = _model()
+    estimates = np.array([[1.0, 2.0], [1.1, 2.2], [1.2, 2.4]])
+
+    result = identifiability_analysis(model, estimates, min_corr_n=3)
+
+    assert result.correlation_reliable is True
+    assert not np.any(np.isnan(result.correlation))
+
+
+def test_plot_identifiability_graph_no_edges_when_correlation_unreliable():
+    pytest.importorskip("matplotlib")
+    from gsua_csb import plot_identifiability_graph
+
+    model = _model()
+    estimates = np.array([[1.0, 2.0], [1.1, 2.2]])  # n=2, below default min_corr_n
+    result = identifiability_analysis(model, estimates)
+
+    ax = plot_identifiability_graph(result)
+    # No LineCollection with actual edges should be added when correlation is undefined.
+    from matplotlib.collections import LineCollection
+    edge_collections = [c for c in ax.collections if isinstance(c, LineCollection)]
+    assert len(edge_collections) == 0
+
+
+def test_plot_identifiability_graph_draws_edges_for_strong_correlation():
+    pytest.importorskip("matplotlib")
+    from gsua_csb import plot_identifiability_graph
+
+    rng = np.random.default_rng(4)
+    a = rng.normal(5.0, 0.1, size=10)
+    b = 2 * a + rng.normal(0, 0.01, size=10)
+    model = _model()
+    result = identifiability_analysis(model, np.column_stack([a, b]), min_corr_n=5)
+
+    ax = plot_identifiability_graph(result)
+    from matplotlib.collections import LineCollection
+    edge_collections = [c for c in ax.collections if isinstance(c, LineCollection)]
+    assert len(edge_collections) == 1
+    assert len(edge_collections[0].get_segments()) == 1  # one edge between the two params

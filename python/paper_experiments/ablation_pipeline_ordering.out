@@ -2,13 +2,15 @@
 ######################################################################
 # Boehm_JProteomeRes2014: 16 params, 6 free, N=60
 ######################################################################
-multistart PE done in 57.5s
+multistart PE done in 57.8s
 cost range: min=1367 max=1.48e+05 median=5.595e+04
+    ...<5 lines>...
+    ...<4 lines>...
 
 === NEW pipeline (cost filter -> cluster -> outlier) ===
   runs in: 60, bad-fit removed: 56, outliers removed: 0
   clusters found: 2, sizes: [2, 2], silhouette: 0.976685389540628
-  identifiability index (mean, free params): 0.3447
+  identifiability index (mean, free params): 0.0019
   CI width (mean, normalized, free params): 0.0019
 
 === OLD pipeline (outlier -> cluster, no cost filter) ===
@@ -18,17 +20,24 @@ cost range: min=1367 max=1.48e+05 median=5.595e+04
   CI width (mean, normalized, free params): 0.3554
 
   per-parameter (NEW pipeline), free params only:
-    Epo_degradation_BaF3 CI [0.03024, 0.03235]  (original range [1e-05, 100000.0])  index=0.3438
-    k_exp_hetero         CI [9.342e-05, 0.0006362]  (original range [1e-05, 100000.0])  index=0.3438
-    k_exp_homo           CI [3.529e+04, 3.554e+04]  (original range [1e-05, 100000.0])  index=0.3450
-    k_imp_hetero         CI [0.01543, 0.0163]  (original range [1e-05, 100000.0])  index=0.3438
-    k_imp_homo           CI [0.01586, 0.01894]  (original range [1e-05, 100000.0])  index=0.3438
-    k_phos               CI [8171, 9077]  (original range [1e-05, 100000.0])  index=0.3483
+    Epo_degradation_BaF3 CI [0.03024, 0.03235]  (original range [1e-05, 100000.0])  index=0.0000
+    k_exp_hetero         CI [9.342e-05, 0.0006362]  (original range [1e-05, 100000.0])  index=0.0000
+    k_exp_homo           CI [3.529e+04, 3.554e+04]  (original range [1e-05, 100000.0])  index=0.0025
+    k_imp_hetero         CI [0.01543, 0.0163]  (original range [1e-05, 100000.0])  index=0.0000
+    k_imp_homo           CI [0.01586, 0.01894]  (original range [1e-05, 100000.0])  index=0.0000
+    k_phos               CI [8171, 9077]  (original range [1e-05, 100000.0])  index=0.0091
+
+  correlation_reliable (NEW pipeline, min_corr_n default): False
+
+  dominant cluster size: 2
+  naive (min_corr_n=1) correlation_reliable: True
+  floored (min_corr_n=5) correlation_reliable: False
+  saved D:\MATLAB Drive.source-of-truth-20260718T095207\Toolbox\python\paper_experiments\figures\Boehm_JProteomeRes2014_correlation_graph_before_after.png
 
 ######################################################################
 # Bertozzi_PNAS2020 (u_CA): 7 params, 3 free, N=60
 ######################################################################
-multistart PE done in 1.2s
+multistart PE done in 1.3s
 cost range: min=3.237e+05 max=3.237e+05 median=3.237e+05
 
 === NEW pipeline (cost filter -> cluster -> outlier) ===
@@ -47,3 +56,5 @@ cost range: min=3.237e+05 max=3.237e+05 median=3.237e+05
     gamma_CA             CI [0.03903, 0.03903]  (original range [0.01, 0.2])  index=0.1373
     I0_CA                CI [456.8, 740.9]  (original range [100.0, 1000.0])  index=0.2987
     R0_CA                CI [2.624, 3.534]  (original range [1.5, 5.0])  index=0.2702
+
+  correlation_reliable (NEW pipeline, min_corr_n default): True
