@@ -256,6 +256,19 @@ Mahalanobis-distance outlier detection *before* clustering would treat a genuine
 "outliers" relative to the pooled mean/covariance and risk deleting it before clustering ever gets
 a chance to find it.
 
+A genuine multi-cluster split can leave very few points in the dominant cluster — two well-
+separated basins with two runs each is a perfectly legitimate outcome, not a hypothetical. Any 2
+points correlate at exactly ±1 regardless of any real relationship, so `ia.correlation`/`ia.index`
+would otherwise report every parameter as maximally, spuriously "strongly correlated" with every
+other. Below `min_corr_n` points (default 5), `ia.correlation` is left `NaN`,
+`ia.correlation_reliable` is `False`, and `ia.index` falls back to interval width alone rather than
+averaging in a number that looks meaningful but isn't:
+
+```python
+ia = identifiability_analysis(model, pe.x, cluster=True, min_corr_n=5)
+ia.correlation_reliable   # False if the dominant cluster is too small to trust a correlation from
+```
+
 ## 7. Range refinement and the Confidence Sub-contour Box
 
 ```python
@@ -302,6 +315,12 @@ plot_identifiability_correlation(ia, ax=axes[2])
 fig.tight_layout()
 ```
 
+`plot_identifiability_graph(ia)` draws the same correlation structure as a network instead of a
+heatmap: nodes are parameters (colored by `ia.index`), and an edge connects two parameters whose
+`|correlation| > 0.5` — a cluster of mutually-connected parameters reads as "the data constrains
+some combination of these, not each individually." When `ia.correlation_reliable` is `False`, it
+renders as isolated nodes rather than a misleading fully-connected graph.
+
 Also available: `plot_sensitivity_area` (time-dependent indices, stacked), `plot_identifiability_index`
 (sorted index bar chart), and `plot_mcf` (prior/low/high ECDF panels, one per free parameter).
 
@@ -341,7 +360,7 @@ Every function below is also available under its idiomatic Python name (e.g. `co
 | `gsua_oatr`, `gsua_oatr2` | `range_refinement` |
 | `gsua_csb` | `confidence_subcontour_box` |
 | `gsua_likelihood` | `profile_likelihood` |
-| `gsua_plot` | `plot_uncertainty`, `plot_sensitivity_bar`, `plot_sensitivity_area`, `plot_identifiability_correlation`, `plot_identifiability_index`, `plot_mcf` |
+| `gsua_plot` | `plot_uncertainty`, `plot_sensitivity_bar`, `plot_sensitivity_area`, `plot_identifiability_correlation`, `plot_identifiability_graph`, `plot_identifiability_index`, `plot_mcf` |
 | `gsua_dpmat`, `gsua_odefun` | `SymbolicODEModel` |
 | `gsua_userdefined` | `UserFunctionModel` |
 
