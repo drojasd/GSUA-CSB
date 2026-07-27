@@ -40,6 +40,15 @@ try:
 except ImportError:  # pragma: no cover - exercised only when the `symbolic` extra is absent
     SymbolicODEModel = None  # type: ignore[assignment,misc]
 
+try:
+    from ._petab import PEtabProblem, load_petab
+    from ._sbml import SBMLODESystem, parse_sbml
+except ImportError:  # pragma: no cover - exercised only when the `petab` extra is absent
+    PEtabProblem = None  # type: ignore[assignment,misc]
+    load_petab = None  # type: ignore[assignment,misc]
+    SBMLODESystem = None  # type: ignore[assignment,misc]
+    parse_sbml = None  # type: ignore[assignment,misc]
+
 # MATLAB-name-parity aliases -- same functions, for cross-reference with the MATLAB toolbox/citations.
 gsua_costf = costf
 gsua_rcostf = rcostf
@@ -116,4 +125,8 @@ __all__ = [
     "gsua_oatr2",
     "gsua_csb",
     "gsua_likelihood",
+    "SBMLODESystem",
+    "parse_sbml",
+    "PEtabProblem",
+    "load_petab",
 ]

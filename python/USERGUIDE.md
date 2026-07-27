@@ -80,6 +80,40 @@ model = SymbolicODEModel(
 The parameter vector is `[initial_conditions..., true_params...]`, matching the `names`/`range`
 order above. `model.evaluate(params, xdata)` returns an `(n_states, len(xdata))` array.
 
+### Importing a model from PEtab
+
+Requires the `petab` extra (`pip install -e ".[petab]"`, or `.[all]`). [PEtab](https://petab.readthedocs.io/)
+is a community format (SBML + a few TSV tables) for specifying "fit this model to this data"
+problems, used across the systems-biology tooling ecosystem (AMICI/pyPESTO, COPASI, Data2Dynamics),
+with a curated collection of real published models and data:
+[Benchmark-Models-PEtab](https://github.com/Benchmarking-Initiative/Benchmark-Models-PEtab).
+
+```python
+from gsua_csb import load_petab
+
+problem = load_petab("Boehm_JProteomeRes2014/Boehm_JProteomeRes2014.yaml")
+problem.model             # a Model, ready for sensitivity_analysis/parameter_estimation/etc.
+problem.xdata              # measurement time points
+problem.ydata              # (n_observables, len(xdata)) measurement values
+problem.observable_names   # e.g. ['pSTAT5A_rel', 'pSTAT5B_rel', 'rSTAT5A_rel']
+
+sim = problem.model.evaluate(problem.model.nominal, problem.xdata)  # (n_observables, len(xdata))
+```
+
+The returned `model` handles everything transparently: species initial conditions and SBML
+parameters become `names`/`range`/`nominal` (free if PEtab marks them `estimate=1`, fixed
+otherwise), and `evaluate()` internally simulates the ODE system and applies each observable's
+formula (which can be a derived expression of multiple species, not just a bare species name) —
+so it plugs directly into `parameter_estimation`, `sensitivity_analysis`, `identifiability_analysis`,
+and everything else in this guide with no special-casing.
+
+This is a scoped importer, not a general PEtab implementation — one problem, one SBML model, one
+simulation condition, no condition-table parameter overrides. See the `parse_sbml`/`load_petab`
+docstrings for the exact SBML feature subset supported (compartments, assignment rules, and
+initial assignments are all handled; rate rules, events, and multi-condition problems are not).
+Verified against two real benchmarks: `Boehm_JProteomeRes2014` (which exercises every supported
+feature at once) matches its own published reference simulation to ~1e-7 relative error.
+
 ## 2. Sampling a design matrix
 
 ```python

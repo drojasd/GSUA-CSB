@@ -25,6 +25,8 @@ pip install -e ".[dev]"
 
 Optional extras:
 - `.[symbolic]` — SymPy, for symbolic-ODE models
+- `.[petab]` — `python-libsbml` + `pandas` + `PyYAML`, for importing [PEtab](https://petab.readthedocs.io/)
+  parameter-estimation problems (SBML + TSV) directly into a `Model` (see `load_petab`)
 - `.[all]` — everything above
 
 ## Design
@@ -58,6 +60,7 @@ Each capability is exposed two ways:
 | Range refinement, confidence sub-contour box | Done | `gsua_oatr`, `gsua_oatr2`, `gsua_csb` |
 | Profile likelihood | Done | `gsua_likelihood` |
 | Plotting (Matplotlib, composable `plot_*` functions) | Done | `gsua_plot` |
+| PEtab problem import (`load_petab`, scoped SBML→SymPy via `parse_sbml`) | Done | *(new capability, no MATLAB equivalent)* |
 | Simulink models | **Not planned** — use the MATLAB Engine API instead | `sens_dataprep`, `sens_montecarlo` |
 
 ## Examples

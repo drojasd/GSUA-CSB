@@ -36,7 +36,8 @@ dependencies = [
 
 [project.optional-dependencies]
 symbolic = ["sympy>=1.12"]
-all = ["gsua-csb[symbolic]"]
+petab = ["gsua-csb[symbolic]", "python-libsbml>=5.19", "pandas>=1.5", "PyYAML>=6.0"]
+all = ["gsua-csb[symbolic,petab]"]
 dev = ["pytest>=7.4", "pytest-cov>=4.1"]
 
 [project.urls]
