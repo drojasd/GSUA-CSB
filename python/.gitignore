@@ -19,3 +19,5 @@ venv/
 # Paper draft (not ready for public view yet)
 paper.md
 paper.bib
+paper_methods.md
+paper_methods.bib
