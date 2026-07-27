@@ -93,3 +93,52 @@ def test_initial_points_row_count_mismatch_raises(ydata):
     model = _model()
     with pytest.raises(ValueError, match="initial_points must have"):
         parameter_estimation(model, XDATA, ydata, n=2, initial_points=np.array([[1.5, 0.3]]))
+
+
+def test_log_scale_recovers_true_parameter_and_returns_natural_units():
+    # A parameter whose true value sits many orders of magnitude below its bound's upper end --
+    # the Okuonghae failure mode (theta: bound [1e-13, 1000], true value 2e-12). log_scale=True
+    # searches in log10 space internally, but initial_points and the returned x must stay in
+    # natural/linear units -- the transform is an internal search-space detail, not a public
+    # contract change.
+    true_k = 5e-6
+    xdata = np.linspace(0.1, 1.0, 10)
+
+    def f(p, d):
+        # linear in k (well-conditioned regardless of k's magnitude) and rescaled by 1e6 so the
+        # output -- and hence the residual/cost -- is O(1), not O(k): otherwise least_squares'
+        # default absolute tolerances would call an answer 2x off from the truth "converged" simply
+        # because the residual is tiny in absolute terms too.
+        return p[0] * d * 1e6
+
+    model = UserFunctionModel(
+        func=f, names=["k"], range=np.array([[1e-8, 1e3]]), domain=xdata, log_scale=[True]
+    )
+    ydata = f(np.array([true_k]), xdata)
+
+    # A starting point given in natural units, far from the truth but in the right ballpark on a
+    # log scale -- exercises the initial_points -> log10 search-space -> natural-units round trip.
+    result = parameter_estimation(
+        model, xdata, ydata, n=1, solver="least_squares", initial_points=np.array([[1e-3]])
+    )
+    np.testing.assert_allclose(result.x[0, 0], true_k, rtol=1e-6)
+    assert result.cost[0] < 1e-3
+
+
+def test_log_scale_nonpositive_lower_bound_raises():
+    model = UserFunctionModel(
+        func=lambda p, d: p[0] * d, names=["k"], range=np.array([[0.0, 10.0]]), domain=XDATA,
+        log_scale=[True],
+    )
+    with pytest.raises(ValueError, match="strictly positive lower bound"):
+        parameter_estimation(model, XDATA, np.zeros_like(XDATA), n=1)
+
+
+def test_log_scale_defaults_to_all_false_and_matches_prior_behavior(ydata):
+    # No log_scale given -- must reproduce the exact pre-log_scale behavior (linear-space search).
+    model = _model()
+    assert not np.any(model.log_scale)
+    result = parameter_estimation(
+        model, XDATA, ydata, n=1, solver="least_squares", initial_points=np.array([[1.5, 0.3]])
+    )
+    np.testing.assert_allclose(result.x[0], TRUE_PARAMS, atol=1e-3)

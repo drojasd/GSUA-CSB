@@ -201,3 +201,26 @@ def test_load_petab_okuonghae_literal_condition_overrides():
     assert problem.model.fixed[problem.model.names.index("delta")]
     sim = problem.model.evaluate(problem.model.nominal, problem.xdata)
     assert np.all(np.isfinite(sim))
+
+
+def test_load_petab_populates_log_scale_from_parameter_scale():
+    # Okuonghae's parameter table marks every free parameter parameterScale=log10 (theta's bound
+    # is [1e-13, 1000] with true value 2e-12 -- exactly the case log_scale exists for). Fixed
+    # parameters (delta, eps, both condition-overridden to a literal 0) and species initial
+    # conditions must NOT be marked log_scale -- their scale is moot since they're never searched,
+    # and eps/delta are 0 anyway (log10(0) is undefined).
+    problem = load_petab(
+        DATA_DIR / "Okuonghae_ChaosSolitonsFractals2020" / "Okuonghae_ChaosSolitonsFractals2020.yaml"
+    )
+    model = problem.model
+    free_names = [n for n, f in zip(model.names, model.fixed) if not f]
+    assert set(free_names) == {
+        "transmission_rate_effective", "gamma_a", "gamma_0", "gamma_i", "psi", "theta", "d_0",
+        "d_D", "sigma", "nu", "alpha", "exposed_start", "asymptomatic_start", "symptomatic_start",
+    }
+    for name in free_names:
+        assert model.log_scale[model.names.index(name)], f"{name} should be log_scale"
+    for name in ("delta", "eps"):
+        assert not model.log_scale[model.names.index(name)]
+    # Every fixed parameter -- species initial conditions plus delta/eps -- must be log_scale=False.
+    assert not np.any(model.log_scale[model.fixed])

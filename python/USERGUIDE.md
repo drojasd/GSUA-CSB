@@ -145,6 +145,15 @@ M = design_matrix(model, n=500, method="latin_hypercube", seed=0)  # (500, n_par
 `method` is `"latin_hypercube"` (default, stratified), `"sobol"` (low-discrepancy), or `"uniform"`.
 Fixed parameters are held constant in every row rather than sampled.
 
+A free parameter spanning many orders of magnitude (common for rate constants in epidemiology/
+systems-biology models — e.g. one PEtab benchmark's bound is `[1e-13, 1000]` with a true value of
+`2e-12`) needs `Model.log_scale` set for that position: linear-uniform sampling over such a bound
+puts effectively all its mass in the top decade, so the true value is essentially never sampled
+anywhere close to. `load_petab` sets this automatically from PEtab's `parameterScale` column; for a
+model built by hand, pass `log_scale=[...]` to `UserFunctionModel`/`SymbolicODEModel`. Both
+`design_matrix` and `parameter_estimation` respect it (search happens in log10 space internally;
+every value you pass in or get back — `initial_points`, `pe.x` — stays in natural/linear units).
+
 ## 3. Global sensitivity analysis
 
 ```python

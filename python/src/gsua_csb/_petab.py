@@ -38,8 +38,13 @@ was built and tested against (``Perelson_Science1996``, ``Boehm_JProteomeRes2014
   directly, or indirectly through a condition-table override, see above) becomes part of the
   returned :class:`gsua_csb.Model` (free if ``estimate=1``, using ``lowerBound``/``upperBound``/
   ``nominalValue`` directly -- these are always given on the *linear* scale in the PEtab format
-  regardless of ``parameterScale``, which only affects how an optimizer's *own* search space is
-  transformed; fixed at ``nominalValue`` if ``estimate=0``). Rows with no matching SBML parameter
+  regardless of ``parameterScale``; fixed at ``nominalValue`` if ``estimate=0``). A free
+  parameter's ``parameterScale`` (``"log10"`` or otherwise) is read and becomes that position's
+  :attr:`Model.log_scale`, so :func:`gsua_csb.design_matrix`/:func:`gsua_csb.parameter_estimation`
+  sample and search it in log space -- essential, not optional, for the epidemiology/systems-
+  biology rate constants this importer routinely encounters, which can span many orders of
+  magnitude (e.g. Okuonghae's ``theta``: bound ``[1e-13, 1000]``, true value ``2e-12`` -- linear-
+  uniform sampling essentially never lands anywhere near it). Rows with no matching SBML parameter
   and no condition-table reference (typically noise-model parameters like a measurement's standard
   deviation) are skipped -- this importer does not estimate noise-model parameters, only the
   dynamical ones.
@@ -169,6 +174,7 @@ def _load_condition_problem(
     param_lb: list[float] = []
     param_ub: list[float] = []
     param_nom: list[float] = []
+    param_log_scale: list[bool] = []
     for name in ode_sys.param_names:
         if name in free_aliases:
             ref_id = free_aliases[name]
@@ -177,11 +183,13 @@ def _load_condition_problem(
             param_nom.append(float(row["nominalValue"]))
             param_lb.append(float(row["lowerBound"]))
             param_ub.append(float(row["upperBound"]))
+            param_log_scale.append(str(row.get("parameterScale", "lin")) == "log10")
         elif name in literal_overrides:
             kept_param_names.append(name)
             param_nom.append(literal_overrides[name])
             param_lb.append(literal_overrides[name])
             param_ub.append(literal_overrides[name])
+            param_log_scale.append(False)  # fixed for this condition -- scale is moot
         elif name in param_table.index:
             row = param_table.loc[name]
             kept_param_names.append(name)
@@ -190,9 +198,11 @@ def _load_condition_problem(
             if int(row["estimate"]) == 1:
                 param_lb.append(float(row["lowerBound"]))
                 param_ub.append(float(row["upperBound"]))
+                param_log_scale.append(str(row.get("parameterScale", "lin")) == "log10")
             else:
                 param_lb.append(nominal)
                 param_ub.append(nominal)
+                param_log_scale.append(False)  # fixed -- scale is moot
         else:
             warnings.warn(
                 f"SBML parameter {name!r} has no entry in the PEtab parameter table; using its "
@@ -203,12 +213,14 @@ def _load_condition_problem(
             param_lb.append(ode_sys.param_values[name])
             param_ub.append(ode_sys.param_values[name])
             param_nom.append(ode_sys.param_values[name])
+            param_log_scale.append(False)  # fixed -- scale is moot
 
     names = free_state_names + kept_param_names
     lb = np.concatenate([ic_values, np.array(param_lb)])
     ub = np.concatenate([ic_values, np.array(param_ub)])
     nominal = np.concatenate([ic_values, np.array(param_nom)])
     model_range = np.column_stack([lb, ub])
+    log_scale = np.concatenate([np.zeros(n_states, dtype=bool), np.array(param_log_scale, dtype=bool)])
 
     obs_symtab = {name: sym for name, sym in zip(ode_sys.state_names, ode_sys.state_vars)}
     obs_symtab.update({name: sym for name, sym in zip(ode_sys.param_names, ode_sys.params)})
@@ -264,6 +276,7 @@ def _load_condition_problem(
         nominal=nominal,
         domain=xdata,
         output_names=observable_names,
+        log_scale=log_scale,
     )
 
     return PEtabProblem(

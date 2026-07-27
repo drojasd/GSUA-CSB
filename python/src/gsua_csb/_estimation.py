@@ -81,7 +81,10 @@ def parameter_estimation(
 
     Args:
         model: The model to fit. ``model.range`` supplies optimizer bounds; fixed parameters
-            (``model.fixed``) are excluded from the search and held at ``model.nominal``.
+            (``model.fixed``) are excluded from the search and held at ``model.nominal``. A free
+            parameter with ``model.log_scale`` set is searched in log10 space internally (see
+            :attr:`Model.log_scale`) -- transparent to the caller: ``initial_points`` (if given) and
+            every entry of the returned ``PEResult.x`` are always in natural/linear units.
         xdata: Points to evaluate the model at (passed to ``model.evaluate``).
         ydata: Reference data to fit against, same shape as ``model.evaluate(params, xdata)``.
         n: Number of independent estimation attempts (multistart). Each attempt gets its own
@@ -89,7 +92,8 @@ def parameter_estimation(
             minimum attempt doesn't silently win.
         solver: Which `scipy.optimize` backend to use -- see the module docstring for the mapping
             to MATLAB's solvers.
-        initial_points: (n, Np) starting points, one row per attempt. Defaults to
+        initial_points: (n, Np) starting points (natural/linear units, regardless of
+            ``model.log_scale``), one row per attempt. Defaults to
             :func:`gsua_csb.design_matrix(model, n, seed=seed)`, matching MATLAB's default
             behavior of generating a fresh design matrix when no ``ipoint`` is given.
         margin: For ``solver`` in ``{"minimize", "differential_evolution", "dual_annealing"}``:
@@ -107,7 +111,8 @@ def parameter_estimation(
         A :class:`PEResult`.
 
     Raises:
-        ValueError: If ``solver`` is not one of the four supported values.
+        ValueError: If ``solver`` is not one of the four supported values, or a free,
+            ``log_scale`` parameter has a lower bound that isn't strictly positive.
     """
     if solver not in _VALID_SOLVERS:
         raise ValueError(f"Unknown solver: {solver!r}, expected one of {sorted(_VALID_SOLVERS)}")
@@ -116,8 +121,27 @@ def parameter_estimation(
     solver_kwargs = dict(solver_kwargs or {})
 
     free_idx = np.where(~model.fixed)[0]
-    lb = model.range[free_idx, 0]
-    ub = model.range[free_idx, 1]
+    lb_natural = model.range[free_idx, 0]
+    ub_natural = model.range[free_idx, 1]
+
+    # log_scale (see Model.log_scale) means this free parameter is searched in log10 space, not
+    # linear -- essential for a parameter spanning many orders of magnitude (e.g. a PEtab
+    # parameterScale="log10" rate constant): a linear-space local optimizer cannot traverse that
+    # many orders of magnitude in a reasonable number of steps, regardless of starting point.
+    log_scale = np.asarray(getattr(model, "log_scale", np.zeros(model.n_params, dtype=bool)), dtype=bool)
+    free_log = log_scale[free_idx]
+    if np.any(free_log):
+        bad = free_idx[free_log][lb_natural[free_log] <= 0]
+        if bad.size:
+            raise ValueError(
+                "log_scale parameters must have a strictly positive lower bound; failed for "
+                f"{[model.names[i] for i in bad]}"
+            )
+    with np.errstate(divide="ignore", invalid="ignore"):
+        # np.where evaluates both branches eagerly, so log10 of a non-log-scale bound (which may
+        # legitimately be <= 0) still runs -- its result is simply never selected.
+        lb = np.where(free_log, np.log10(lb_natural), lb_natural)
+        ub = np.where(free_log, np.log10(ub_natural), ub_natural)
 
     if initial_points is None:
         initial_points = design_matrix(model, n, seed=seed)
@@ -126,17 +150,22 @@ def parameter_estimation(
         if initial_points.shape[0] != n:
             raise ValueError(f"initial_points must have {n} rows (n={n}), got {initial_points.shape[0]}")
 
-    def full_params(p_free: NDArray[np.float64]) -> NDArray[np.float64]:
+    def to_search_space(x0_free_natural: NDArray[np.float64]) -> NDArray[np.float64]:
+        with np.errstate(divide="ignore", invalid="ignore"):
+            return np.where(free_log, np.log10(x0_free_natural), x0_free_natural)
+
+    def full_params(p_search: NDArray[np.float64]) -> NDArray[np.float64]:
+        p_free_natural = np.where(free_log, 10.0**p_search, p_search)
         full = model.nominal.copy()
-        full[free_idx] = p_free
+        full[free_idx] = p_free_natural
         return full
 
-    def residual(p_free: NDArray[np.float64]) -> NDArray[np.float64]:
-        y = model.evaluate(full_params(p_free), xdata)
+    def residual(p_search: NDArray[np.float64]) -> NDArray[np.float64]:
+        y = model.evaluate(full_params(p_search), xdata)
         return np.ravel(np.asarray(y, dtype=np.float64) - ydata)
 
-    def cost(p_free: NDArray[np.float64]) -> float:
-        y = model.evaluate(full_params(p_free), xdata)
+    def cost(p_search: NDArray[np.float64]) -> float:
+        y = model.evaluate(full_params(p_search), xdata)
         if margin == 0:
             return float(np.mean((ydata - np.asarray(y, dtype=np.float64)) ** 2))
         return rcostf(ydata, y, margin=margin, alpha=alpha)
@@ -145,7 +174,7 @@ def parameter_estimation(
     results_cost = np.full(n, np.inf)
 
     for i in range(n):
-        x0_free = initial_points[i, free_idx]
+        x0_free = to_search_space(initial_points[i, free_idx])
 
         if solver == "least_squares":
             sol = least_squares(residual, x0_free, bounds=(lb, ub), **solver_kwargs)

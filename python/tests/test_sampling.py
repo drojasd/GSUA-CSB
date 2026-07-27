@@ -63,3 +63,41 @@ def test_latin_hypercube_stratified_per_dimension():
         strata = np.floor((col - lo) / (hi - lo) * n).astype(int)
         strata = np.clip(strata, 0, n - 1)
         assert sorted(strata) == list(range(n))
+
+
+def test_log_scale_samples_span_every_decade():
+    # A parameter spanning many orders of magnitude, sampled linearly, would put ~99% of its mass
+    # in the top decade -- the exact failure mode this exists to fix (see Okuonghae's `theta`,
+    # bound [1e-13, 1000], true value 2e-12: 1000 linear draws never got within 12 orders of
+    # magnitude of it). log_scale=True must instead spread samples evenly across every decade.
+    model = UserFunctionModel(
+        func=lambda p: p, names=["a"], range=np.array([[1e-8, 1e4]]), log_scale=[True]
+    )
+    M = design_matrix(model, 200, method="latin_hypercube", seed=0)
+    log_draws = np.log10(M[:, 0])
+    # 12 decades in [1e-8, 1e4]; every decade should have gotten at least one sample out of 200.
+    decade_counts = np.histogram(log_draws, bins=12, range=(-8, 4))[0]
+    assert np.all(decade_counts > 0)
+
+
+def test_log_scale_output_stays_within_natural_bounds():
+    model = UserFunctionModel(
+        func=lambda p: p, names=["a", "b"], range=np.array([[1e-5, 1e3], [0.0, 10.0]]),
+        log_scale=[True, False],
+    )
+    M = design_matrix(model, 50, seed=0)
+    assert np.all(M[:, 0] >= 1e-5) and np.all(M[:, 0] <= 1e3)
+    assert np.all(M[:, 1] >= 0.0) and np.all(M[:, 1] <= 10.0)
+
+
+def test_log_scale_nonpositive_lower_bound_raises():
+    model = UserFunctionModel(
+        func=lambda p: p, names=["a"], range=np.array([[0.0, 10.0]]), log_scale=[True]
+    )
+    with pytest.raises(ValueError, match="strictly positive lower bound"):
+        design_matrix(model, 5)
+
+
+def test_log_scale_defaults_to_all_false():
+    model = _model()
+    np.testing.assert_array_equal(model.log_scale, [False, False, False])

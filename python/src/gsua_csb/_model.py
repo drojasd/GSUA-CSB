@@ -79,6 +79,18 @@ class Model(ABC):
         output_names: Names of the model's output signal(s). ``CustomProperties.Vars`` in MATLAB.
         domain: Evaluation domain (e.g. a time span), or ``None`` for domain-less (scalar) models.
             ``CustomProperties.Domain`` in MATLAB.
+        log_scale: (Np,) bool mask -- True where a free parameter should be *sampled and searched*
+            in log10 space rather than linear space (no MATLAB equivalent; new capability). Only
+            meaningful for free parameters (``~fixed``) with a strictly positive lower bound; a
+            fixed parameter's scale is irrelevant since it is never sampled or optimized.
+            :func:`gsua_csb.design_matrix` and :func:`gsua_csb.parameter_estimation` both respect
+            this. All ``False`` (the previous, only behavior) unless a concrete class sets it
+            otherwise -- see :func:`gsua_csb.load_petab`, which populates it automatically from
+            PEtab's ``parameterScale`` column, the format's own signal that a parameter spanning
+            many orders of magnitude (extremely common for epidemiology/systems-biology rate
+            constants) needs log-space sampling to be searchable at all: linear-uniform sampling
+            over e.g. ``[1e-13, 1000]`` essentially never lands anywhere near a true value like
+            ``2e-12``, and a linear-space local optimizer cannot traverse that distance either.
     """
 
     names: list[str]
@@ -86,6 +98,7 @@ class Model(ABC):
     nominal: NDArray[np.float64]
     output_names: list[str]
     domain: NDArray[np.float64] | None
+    log_scale: NDArray[np.bool_]
 
     @property
     def n_params(self) -> int:
@@ -182,6 +195,7 @@ class UserFunctionModel(Model):
             :meth:`evaluate_batch` calls it directly instead of looping. Mirrors MATLAB's
             ``vectorized`` flag (``Kind == 2`` when true).
         opt: Extra keyword arguments passed to ``func`` on every call (mirrors ``CustomProperties.copt``).
+        log_scale: (Np,) bool mask, or ``None`` (default: all ``False``) -- see :attr:`Model.log_scale`.
     """
 
     def __init__(
@@ -194,6 +208,7 @@ class UserFunctionModel(Model):
         output_names: Sequence[str] = ("out",),
         vectorized: bool = False,
         opt: dict | None = None,
+        log_scale: ArrayLike | None = None,
     ) -> None:
         self._func = func
         self.names = list(names)
@@ -209,6 +224,13 @@ class UserFunctionModel(Model):
         self.output_names = list(output_names)
         self.vectorized = vectorized
         self.opt = opt or {}
+        self.log_scale = (
+            np.zeros(len(self.names), dtype=bool)
+            if log_scale is None
+            else np.asarray(log_scale, dtype=bool)
+        )
+        if self.log_scale.shape != (len(self.names),):
+            raise ValueError(f"log_scale must have shape ({len(self.names)},), got {self.log_scale.shape}")
 
     def evaluate(self, params: NDArray[np.float64], xdata: ArrayLike | None = None) -> NDArray[np.float64]:
         d = self.domain if xdata is None else np.asarray(xdata, dtype=np.float64)

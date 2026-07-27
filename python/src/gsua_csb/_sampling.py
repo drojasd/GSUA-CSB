@@ -38,9 +38,17 @@ def design_matrix(
     value in every row rather than passed through a sampler -- a degenerate (zero-width) dimension
     would either error or waste sampler budget for no informational gain.
 
+    A free factor with ``model.log_scale[i]`` set is sampled in log10 space (the design is
+    stratified/scrambled in log10(range), then exponentiated back), not linear space -- essential,
+    not cosmetic, for a factor spanning many orders of magnitude: linear-uniform sampling over e.g.
+    ``[1e-13, 1000]`` puts effectively all its mass above 1, so a true value like ``2e-12`` is
+    essentially never sampled anywhere close to (a real, observed case -- see
+    :func:`gsua_csb.load_petab`, which sets ``log_scale`` automatically from PEtab's
+    ``parameterScale`` column).
+
     Args:
-        model: Source of parameter ranges (``model.range``) and which factors are fixed
-            (``model.fixed``).
+        model: Source of parameter ranges (``model.range``), which factors are fixed
+            (``model.fixed``), and which free factors use log-scale sampling (``model.log_scale``).
         n: Number of samples (rows).
         method: ``"latin_hypercube"`` (default) -- stratified space-filling design via
             ``scipy.stats.qmc.LatinHypercube``. ``"uniform"`` -- independent uniform draws per
@@ -52,7 +60,8 @@ def design_matrix(
         (n, Np) design matrix, one row per sample, columns ordered as ``model.names``.
 
     Raises:
-        ValueError: If ``method`` is not one of the three supported values.
+        ValueError: If ``method`` is not one of the three supported values, or a free,
+            log-scale factor has a lower bound that isn't strictly positive.
     """
     lower = model.range[:, 0]
     upper = model.range[:, 1]
@@ -62,6 +71,16 @@ def design_matrix(
     M = np.tile(lower, (n, 1))
     if n_free == 0:
         return M
+
+    log_scale = np.asarray(getattr(model, "log_scale", np.zeros(model.n_params, dtype=bool)), dtype=bool)
+    free_log = log_scale[free]
+    if np.any(free_log):
+        bad_idx = np.where(free)[0][free_log & (lower[free] <= 0)]
+        if bad_idx.size:
+            raise ValueError(
+                "log_scale factors must have a strictly positive lower bound; failed for "
+                f"{[model.names[i] for i in bad_idx]}"
+            )
 
     rng = np.random.default_rng(seed)
     if method == "latin_hypercube":
@@ -73,5 +92,12 @@ def design_matrix(
     else:
         raise ValueError(f"Unknown design method: {method!r}")
 
-    M[:, free] = qmc.scale(u, lower[free], upper[free])
+    with np.errstate(divide="ignore", invalid="ignore"):
+        # np.where evaluates both branches eagerly, so log10 of a non-log-scale dimension's bound
+        # (which may legitimately be <= 0) still runs -- its result is simply never selected.
+        lo_free = np.where(free_log, np.log10(lower[free]), lower[free])
+        hi_free = np.where(free_log, np.log10(upper[free]), upper[free])
+    scaled = qmc.scale(u, lo_free, hi_free)
+    scaled[:, free_log] = 10.0 ** scaled[:, free_log]
+    M[:, free] = scaled
     return M
