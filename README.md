@@ -144,7 +144,7 @@ Y       = gsua_ua(M,T);           % uncertainty analysis
 |----------|-------------|
 | `gsua_sa` | Global sensitivity analysis (Xiao, Sobol, Jansen, Saltelli, brute-force, OAT methods) |
 | `gsua_ua` | Uncertainty analysis via Monte-Carlo simulation, with automatic Monte-Carlo filtering |
-| `gsua_pe` | Parameter estimation (lsqcurvefit, lsqnonlin, ga, particleswarm, patternsearch, surrogateopt, simulannealbnd, fmincon) |
+| `gsua_pe` | Parameter estimation (lsqcurvefit, lsqnonlin, ga, particleswarm, patternsearch, surrogateopt, simulannealbnd, fmincon). The correlation-penalized multi-objective cost path (`'margin'` ≠ 0/1, i.e. `gsua_costf`) is NaN-tolerant per output row — a signal with its own gaps (`NaN` in `ydata`) no longer blinds other, fully-populated rows in the same joint fit |
 | `gsua_likelihood` | Profile-likelihood confidence intervals for each parameter |
 
 ### Practical identifiability & confidence ranges
@@ -176,6 +176,7 @@ Y       = gsua_ua(M,T);           % uncertainty analysis
 
 ### Internal helpers
 `gsua_costf`, `gsua_rcostf`, `gsua_costfMulti`, `gsua_likecost` (objective/cost functions for optimizers),
+`gsua_corr2omitnan` (NaN-tolerant `corr2`, used by `gsua_costf`),
 `gsua_intrp` (ODE solution interpolation), `gsua_timer` (progress reporting), `gsua_depth` (band depth ranking),
 `gsua_odefun` (symbolic-to-function-handle ODE conversion), `gsua_ref` (range-adequacy refinement),
 `sens_montecarlo` (Simulink Monte-Carlo evaluation engine).

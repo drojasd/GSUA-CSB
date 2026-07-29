@@ -148,7 +148,12 @@ end
              if margin ~= 1 && margin>0
                  inputs=size(ydata,1);
                  len=length(xdata);
-                 regulator=sum((ydata-ydata*margin).^2,2)/len;
+                 % omitnan + per-row non-NaN count (not the fixed len) so a row with
+                 % gappy real-world data isn't silently deflated relative to a
+                 % fully-populated row, and a NaN doesn't propagate into regulator
+                 % (which would poison gsua_costf's cost for every row, not just the
+                 % gappy one).
+                 regulator=sum((ydata-ydata*margin).^2,2,'omitnan')./sum(~isnan(ydata),2);
                  obj=@(pars) gsua_costf(inputs,regulator,len,ydata,gsua_deval(pars,T,xdata),costAlpha);
              else
                  if margin <0

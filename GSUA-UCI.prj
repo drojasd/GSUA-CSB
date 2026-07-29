@@ -7,7 +7,7 @@
     <param.summary>Toolbox for Parameter estimation, Uncertainty and Sensitivity analysis and Confidence Subcontour box estimation</param.summary>
     <param.description>Global Sensitivity and Uncertainty Analysis - Confidence Subcontour Box (GSUA-CSB) Toolbox is a product developed by Universidad EAFIT for command-line mathematical model validation in both of Simulink or Symbolic Math Toolbox environment . At present time, the toolbox allows to perform the following functions: To apply and visualize several variance-based sensitivity (SA) and uncertainty (UA) analysis, to estimate model parameters (PE) and to estimate a Confidence Subcontour Box (CSB) for previously estimated parameters.</param.description>
     <param.screenshot>${PROJECT_ROOT}/screenshot.png</param.screenshot>
-    <param.version>1.8</param.version>
+    <param.version>1.9</param.version>
     <param.output>${PROJECT_ROOT}/GSUA-CSB.mltbx</param.output>
     <param.products.name>
       <item>MATLAB</item>
