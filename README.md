@@ -144,7 +144,7 @@ Y       = gsua_ua(M,T);           % uncertainty analysis
 |----------|-------------|
 | `gsua_sa` | Global sensitivity analysis (Xiao, Sobol, Jansen, Saltelli, brute-force, OAT methods) |
 | `gsua_ua` | Uncertainty analysis via Monte-Carlo simulation, with automatic Monte-Carlo filtering |
-| `gsua_pe` | Parameter estimation (lsqcurvefit, lsqnonlin, ga, particleswarm, patternsearch, surrogateopt, simulannealbnd, fmincon). The correlation-penalized multi-objective cost path (`'margin'` ≠ 0/1, i.e. `gsua_costf`) is NaN-tolerant per output row — a signal with its own gaps (`NaN` in `ydata`) no longer blinds other, fully-populated rows in the same joint fit |
+| `gsua_pe` | Parameter estimation (lsqcurvefit, lsqnonlin, ga, particleswarm, patternsearch, surrogateopt, simulannealbnd, fmincon). The correlation-penalized multi-objective cost path (`'margin'` ≠ 0/1, i.e. `gsua_costf`) is NaN-tolerant per output row — a signal with its own gaps (`NaN` in `ydata`) no longer blinds other, fully-populated rows in the same joint fit. When that path is used, `T`'s `Margin`/`Alpha` `CustomProperties` are recorded automatically for later recovery by `gsua_noisefloor` |
 | `gsua_likelihood` | Profile-likelihood confidence intervals for each parameter |
 
 ### Practical identifiability & confidence ranges
@@ -153,6 +153,7 @@ Y       = gsua_ua(M,T);           % uncertainty analysis
 | `gsua_ia` | Practical identifiability analysis with diagnostic plots — including optional spectral-clustering detection of **multiple global minima** among repeated estimation runs and optional fit-quality (`'cost'`) filtering of failed multistart runs before any statistic is computed |
 | `gsua_dia` | Headless (no-plot) counterpart of `gsua_ia`, same clustering and fit-quality-filtering support |
 | `gsua_costcutoff` | Shared fit-quality filter behind `gsua_ia`/`gsua_dia`'s `'cost'` option (fixed-tolerance or automatic-gap cutoff, with a minimum-runs floor) |
+| `gsua_noisefloor` | Noise-calibrated fit-acceptance threshold via parametric bootstrap — replaces the scale-dependent `res < 1.5*res(1)` idiom with a cutoff on the `gsua_costf` cost scale derived from the data's own observation noise (Poisson / quasi-Poisson (default) / global-NB dispersion models, chosen for count-like or cumulative fitted outputs). Recovers `'margin'`/`'alpha'` from `gsua_pe`'s `T` automatically, or accepts explicit overrides |
 | `gsua_medianCI` | Distribution-free confidence interval for the median |
 | `gsua_oatr` / `gsua_oatr2` | Once-at-a-time range expansion/reduction |
 | `gsua_csb` | Uncertainty-based confidence sub-contour box estimation |

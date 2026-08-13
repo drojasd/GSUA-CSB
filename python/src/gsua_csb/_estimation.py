@@ -57,12 +57,22 @@ class PEResult:
             actually minimized (MSE, or the margin-normalized :func:`gsua_csb.rcostf` cost if
             ``margin`` was given).
         solver: The solver used.
+        margin: The ``margin`` this call was made with -- recorded so a downstream noise-floor
+            calibration (:func:`gsua_csb.noise_floor`) can recompute the identical ``rcostf``
+            regulator without the caller having to re-specify (and risk mismatching) it. Only
+            meaningful (and only comparable to a fresh ``rcostf`` bootstrap) when ``cost`` actually
+            came from the ``rcostf``-scored path -- i.e. ``solver`` in ``{"minimize",
+            "differential_evolution", "dual_annealing"}`` and ``margin != 0``; ``cost`` is raw
+            squared-residual for ``solver="least_squares"`` regardless of this value.
+        alpha: The ``alpha`` this call was made with -- same recovery purpose as ``margin``.
     """
 
     names: list[str]
     x: NDArray[np.float64]
     cost: NDArray[np.float64]
     solver: str
+    margin: float
+    alpha: float
 
 
 def parameter_estimation(
@@ -195,5 +205,6 @@ def parameter_estimation(
 
     order = np.argsort(results_cost)
     return PEResult(
-        names=list(model.names), x=results_x[order], cost=results_cost[order], solver=solver
+        names=list(model.names), x=results_x[order], cost=results_cost[order], solver=solver,
+        margin=margin, alpha=alpha,
     )

@@ -59,6 +59,7 @@ Each capability is exposed two ways:
 | Identifiability + multi-minima clustering (`sklearn`) | Done | `gsua_ia`, `gsua_dia` |
 | Range refinement, confidence sub-contour box | Done | `gsua_oatr`, `gsua_oatr2`, `gsua_csb` |
 | Profile likelihood | Done | `gsua_likelihood` |
+| Noise-calibrated fit-acceptance threshold (`noise_floor`) | Done | `gsua_noisefloor` (new to both ports this pass) |
 | Plotting (Matplotlib, composable `plot_*` functions) | Done | `gsua_plot` |
 | PEtab problem import (`load_petab`, scoped SBML→SymPy via `parse_sbml`) | Done | *(new capability, no MATLAB equivalent)* |
 | Simulink models | **Not planned** — use the MATLAB Engine API instead | `sens_dataprep`, `sens_montecarlo` |

@@ -72,7 +72,12 @@ function Tfinal = gsua_likelihood(T,xdata,ydata,alpha,step,margin,tolerance1,tol
 %         %D2 = D1+ceil((npars-D1^2)/D1); % Number of columns of subplot
 %         f1 = figure('Name','Likelihood profiles');
 %    end
-    Taux=zeros(npars,2); 
+    % Taux is indexed below by each parameter's ABSOLUTE row in T (the loop is "for i=pars", and
+    % pars holds absolute indices), not by its position within the profiled subset -- so it must be
+    % sized/aligned to the full parameter table, not to npars (the profiled-subset count). T.Range
+    % is already Np x 2 and correctly row-aligned; seeding Taux from it also means an unprofiled
+    % row retains its real original range as a sentinel instead of a corrupting [0,0].
+    Taux=T.Range;
 %    if parallel
 %         show = false;
 %         parforArg=Inf;

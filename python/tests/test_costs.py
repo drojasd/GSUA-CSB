@@ -2,6 +2,21 @@ import numpy as np
 import pytest
 
 from gsua_csb import coverage_metric, likecost, costf, costf_multi, rcostf
+from gsua_csb._costs import _pearson_rows
+
+
+def _pre_nan_tolerant_costf(ydata, yfunction, regulator, alpha=2.0):
+    """Reimplementation of costf's pre-NaN-tolerant formula (plain sum/length, no masking), for
+    byte-identity comparison against the current implementation on NaN-free data."""
+    ydata = np.atleast_2d(np.asarray(ydata, dtype=np.float64))
+    yfunction = np.atleast_2d(np.asarray(yfunction, dtype=np.float64))
+    regulator = np.atleast_1d(np.asarray(regulator, dtype=np.float64))
+    n_outputs, length = ydata.shape
+    cost = np.sum((ydata - yfunction) ** 2, axis=1) / length / regulator
+    r = _pearson_rows(ydata, yfunction)
+    r = np.where(np.isnan(r), 1.0, r)
+    cost = ((2 - r) * cost) ** alpha
+    return float(cost.sum() / n_outputs)
 
 
 def test_costf_perfect_fit_is_zero():
@@ -93,3 +108,53 @@ class TestCoverageMetric:
         cost_data, cost_band, p5, p50, p95 = coverage_metric(y, ydata2)
         assert p50.shape == (2, 50)
         assert cost_data < 1
+
+
+def test_pearson_rows_matches_corrcoef_when_no_nan():
+    rng = np.random.default_rng(2)
+    a = rng.standard_normal((3, 20))
+    b = a * 2 + 1 + 0.1 * rng.standard_normal((3, 20))
+    r = _pearson_rows(a, b)
+    expected = np.array([np.corrcoef(a[i], b[i])[0, 1] for i in range(3)])
+    np.testing.assert_allclose(r, expected, atol=1e-10)
+
+
+def test_pearson_rows_below_two_valid_points_is_zero():
+    a = np.array([[1.0, np.nan, np.nan], [1.0, 2.0, 3.0]])
+    b = np.array([[2.0, 3.0, 4.0], [2.0, 4.0, 6.0]])
+    r = _pearson_rows(a, b)
+    assert r[0] == 0.0  # row 0 has only 1 jointly-valid entry
+    assert r[1] == pytest.approx(1.0)  # row 1 fully valid, perfectly correlated
+
+
+def test_costf_no_nan_propagates_to_cost():
+    ydata = np.array([[1.0, 2.0, np.nan, np.nan, np.nan, 6.0], [2.0, 4.0, 6.0, 8.0, 10.0, 12.0]])
+    yfunction = ydata + 0.5
+    cost = costf(ydata, yfunction, regulator=[1.0, 1.0])
+    assert np.isfinite(cost)
+
+
+def test_costf_nan_row_matches_manual_restriction():
+    ydata = np.array([[1.0, 2.0, np.nan, np.nan, np.nan, 6.0]])
+    yfunction = ydata + 0.5
+    mask = ~np.isnan(ydata[0])
+    restricted = costf(ydata[:, mask], yfunction[:, mask], regulator=[1.0])
+    full = costf(ydata, yfunction, regulator=[1.0])
+    assert full == pytest.approx(restricted, abs=1e-10)
+
+
+def test_costf_byte_identical_to_pre_nan_tolerant_formula_when_no_nan():
+    rng = np.random.default_rng(3)
+    ydata = rng.uniform(1, 10, (2, 15))
+    yfunction = ydata + rng.normal(0, 0.5, (2, 15))
+    regulator = np.array([2.0, 3.0])
+    assert costf(ydata, yfunction, regulator) == pytest.approx(
+        _pre_nan_tolerant_costf(ydata, yfunction, regulator), abs=1e-12
+    )
+
+
+def test_rcostf_no_nan_propagates_to_cost():
+    ydata = np.array([[5.0, 6.0, np.nan, np.nan, 9.0, 10.0], [2.0, 4.0, 6.0, 8.0, 10.0, 12.0]])
+    yfunction = ydata + 0.5
+    cost = rcostf(ydata, yfunction)
+    assert np.isfinite(cost)

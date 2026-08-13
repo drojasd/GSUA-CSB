@@ -14,6 +14,12 @@ Two deliberate deviations from the MATLAB originals:
   ``gsua_costfMulti`` already have (a near-constant reference/candidate makes the correlation
   undefined). This is a fresh implementation, not a literal translation, so the guard is applied
   uniformly rather than reproducing that inconsistency.
+
+``costf``/``rcostf`` are NaN-tolerant per output row (a ``NaN`` in ``ydata`` -- e.g. a gap in one
+signal's real-world sampling, for a multi-output joint fit where different signals have
+independently missing periods -- is excluded from that row's MSE/correlation/regulator terms and
+normalized by that row's own non-NaN count, not the fixed length), mirroring the equivalent fix to
+MATLAB's ``gsua_costf``/the ``gsua_pe`` regulator calculation.
 """
 
 from __future__ import annotations
@@ -23,13 +29,29 @@ from numpy.typing import ArrayLike, NDArray
 
 
 def _pearson_rows(a: NDArray[np.float64], b: NDArray[np.float64]) -> NDArray[np.float64]:
-    """Row-wise Pearson correlation between two (inputs, len) arrays, NaN where undefined."""
-    a_c = a - a.mean(axis=1, keepdims=True)
-    b_c = b - b.mean(axis=1, keepdims=True)
-    num = (a_c * b_c).sum(axis=1)
-    den = np.sqrt((a_c**2).sum(axis=1) * (b_c**2).sum(axis=1))
-    with np.errstate(invalid="ignore", divide="ignore"):
-        r = num / den
+    """Row-wise Pearson correlation between two (inputs, len) arrays, NaN-tolerant.
+
+    Only positions where both ``a`` and ``b`` are non-NaN contribute to a row's correlation --
+    mirrors the MATLAB port's ``gsua_corr2omitnan`` (the NaN-tolerant ``corr2`` replacement behind
+    ``gsua_costf``). A row with fewer than 2 jointly-valid entries gets ``0`` (no correlation
+    credit), not ``NaN`` -- kept distinct from the separate "undefined due to zero variance" case
+    (a near-constant reference/candidate), which callers already handle by mapping a ``NaN`` result
+    to ``1`` (no penalty); looping per row here (rather than one vectorized reduction) keeps that
+    distinction correct without conflating the two kinds of "undefined."
+    """
+    valid = ~np.isnan(a) & ~np.isnan(b)
+    n_outputs = a.shape[0]
+    r = np.zeros(n_outputs)
+    for i in range(n_outputs):
+        mask = valid[i]
+        if mask.sum() < 2:
+            continue
+        a_c = a[i, mask] - a[i, mask].mean()
+        b_c = b[i, mask] - b[i, mask].mean()
+        num = (a_c * b_c).sum()
+        den = np.sqrt((a_c**2).sum() * (b_c**2).sum())
+        with np.errstate(invalid="ignore", divide="ignore"):
+            r[i] = num / den
     return r
 
 
@@ -53,9 +75,15 @@ def costf(ydata: ArrayLike, yfunction: ArrayLike, regulator: ArrayLike, alpha: f
     ydata = np.atleast_2d(np.asarray(ydata, dtype=np.float64))
     yfunction = np.atleast_2d(np.asarray(yfunction, dtype=np.float64))
     regulator = np.atleast_1d(np.asarray(regulator, dtype=np.float64))
-    n_outputs, length = ydata.shape
+    n_outputs = ydata.shape[0]
 
-    cost = np.sum((ydata - yfunction) ** 2, axis=1) / length / regulator
+    # NaN-tolerant per output row: a NaN in ydata (e.g. a gap in one signal's real-world sampling,
+    # for a multi-output joint fit where different signals have independently missing periods) is
+    # excluded from that row's MSE and correlation terms, normalized by that row's own count of
+    # non-NaN samples (not the fixed length) so a gappy row isn't silently deflated relative to a
+    # fully-populated one. Identical to the pre-NaN-tolerant behavior when ydata has no NaN.
+    n_valid = (~np.isnan(ydata)).sum(axis=1)
+    cost = np.nansum((ydata - yfunction) ** 2, axis=1) / n_valid / regulator
     r = _pearson_rows(ydata, yfunction)
     r = np.where(np.isnan(r), 1.0, r)
     cost = ((2 - r) * cost) ** alpha
@@ -85,10 +113,13 @@ def rcostf(ydata: ArrayLike, yfunction: ArrayLike, margin: float = 1.1, alpha: f
     margin = abs(margin)
     if margin < 1:
         margin += 1
-    n_outputs, length = ydata.shape
+    n_outputs = ydata.shape[0]
 
-    regulator = np.sum((ydata - ydata * margin) ** 2, axis=1) / length
-    cost = np.sum((ydata - yfunction) ** 2, axis=1) / length / regulator
+    # Same NaN-tolerant, per-row-valid-count treatment as costf, applied to both the self-derived
+    # regulator and the MSE term (see costf's docstring/comment for why).
+    n_valid = (~np.isnan(ydata)).sum(axis=1)
+    regulator = np.nansum((ydata - ydata * margin) ** 2, axis=1) / n_valid
+    cost = np.nansum((ydata - yfunction) ** 2, axis=1) / n_valid / regulator
     r = _pearson_rows(ydata, yfunction)
     r = np.where(np.isnan(r), 1.0, r)
     cost = ((2 - r) * cost) ** alpha

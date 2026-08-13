@@ -83,6 +83,23 @@ saver=p.Results.save;
 costAlpha = p.Results.alpha;
 timer=p.Results.timer;
 
+% Record the exact margin/alpha this call will score with, so a downstream noise-floor
+% calibration (GSUA_NOISEFLOOR) can recompute the identical regulator/cost formula without the
+% caller having to re-specify (and risk mismatching) them. Margin is stored already offset by +1,
+% matching the variable actually used in the regulator formula below -- only meaningful, and only
+% set, for the branch that actually scores with GSUA_COSTF.
+if any(strcmp(OS,{'ga','particle','psearch','surrogate','annealing','fmincon'})) && margin ~= 1 && margin > 0
+    try
+        Table = addprop(Table,{'Margin','Alpha'},{'table','table'});
+    catch
+    end
+    try
+        Table.Properties.CustomProperties.Margin = margin;
+        Table.Properties.CustomProperties.Alpha = costAlpha;
+    catch
+    end
+end
+
 lb=T.Range(:,1);
 ub=T.Range(:,2);
 Np=size(T,1);

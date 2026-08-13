@@ -95,6 +95,20 @@ def test_initial_points_row_count_mismatch_raises(ydata):
         parameter_estimation(model, XDATA, ydata, n=2, initial_points=np.array([[1.5, 0.3]]))
 
 
+def test_margin_and_alpha_recorded_on_result(ydata):
+    model = _model()
+    result = parameter_estimation(model, XDATA, ydata, n=1, solver="minimize", margin=0.15, alpha=1.5)
+    assert result.margin == 0.15
+    assert result.alpha == 1.5
+
+
+def test_margin_and_alpha_default_values_recorded(ydata):
+    model = _model()
+    result = parameter_estimation(model, XDATA, ydata, n=1, solver="least_squares")
+    assert result.margin == 0.0
+    assert result.alpha == 2.0
+
+
 def test_log_scale_recovers_true_parameter_and_returns_natural_units():
     # A parameter whose true value sits many orders of magnitude below its bound's upper end --
     # the Okuonghae failure mode (theta: bound [1e-13, 1000], true value 2e-12). log_scale=True

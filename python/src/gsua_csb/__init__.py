@@ -20,6 +20,7 @@ from ._estimation import PEResult, parameter_estimation
 from ._identifiability import ClusterInfo, IdentifiabilityResult, identifiability_analysis
 from ._likelihood import ProfileLikelihoodResult, profile_likelihood
 from ._model import Model, UserFunctionModel, build_range
+from ._noisefloor import NoiseFloorByModel, NoiseFloorResult, noise_floor
 from ._plotting import (
     plot_identifiability_correlation,
     plot_identifiability_graph,
@@ -69,6 +70,7 @@ gsua_oatr = range_refinement
 gsua_oatr2 = range_refinement
 gsua_csb = confidence_subcontour_box
 gsua_likelihood = profile_likelihood
+gsua_noisefloor = noise_floor
 # No gsua_plot alias: MATLAB's single dispatcher is replaced by the plot_* functions above, each
 # taking a result dataclass directly instead of a plot-type string + positional-count-dependent args.
 
@@ -102,6 +104,9 @@ __all__ = [
     "confidence_subcontour_box",
     "ProfileLikelihoodResult",
     "profile_likelihood",
+    "NoiseFloorResult",
+    "NoiseFloorByModel",
+    "noise_floor",
     "plot_uncertainty",
     "plot_sensitivity_bar",
     "plot_sensitivity_area",
@@ -127,6 +132,7 @@ __all__ = [
     "gsua_oatr2",
     "gsua_csb",
     "gsua_likelihood",
+    "gsua_noisefloor",
     "SBMLODESystem",
     "parse_sbml",
     "PEtabProblem",

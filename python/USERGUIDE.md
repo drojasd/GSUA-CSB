@@ -308,7 +308,51 @@ An alternative to the sampling-based intervals above, grounded directly in the l
 test: each parameter is stepped away from its nominal value (refitting every other free parameter
 at each step) until the fit degrades past a chi-squared threshold.
 
-## 9. Plotting
+## 9. Noise-calibrated fit-acceptance threshold
+
+```python
+from gsua_csb import noise_floor
+
+pe = parameter_estimation(model, xdata, ydata, n=2000, solver="minimize", margin=0.1)
+out = noise_floor(model, xdata, ydata, pe.x, pe.cost, margin=pe.margin, alpha=pe.alpha)
+out.threshold    # calibrated cutoff on the same cost scale as pe.cost
+out.accepted     # (N,) bool -- pe.cost < out.threshold
+
+accepted_x = pe.x[out.accepted]
+ia = identifiability_analysis(model, accepted_x, cost=pe.cost[out.accepted])
+```
+
+Replaces the common but scale-dependent idiom `lims = sum(pe.cost < 1.5*pe.cost.min())`: that rule
+asks "how close is this to the best fit found", not "is this statistically distinguishable from a
+perfect model given how noisy the data actually is" — it gets *narrower* as the fit improves
+(backwards), and has no mechanism to guarantee the accepted band actually covers the data it was
+fit to. `noise_floor` instead simulates the best pool member, estimates an observation-noise model
+from its own residuals, bootstraps synthetic datasets under that noise, and scores the *true*
+model against each synthetic dataset with the same cost function `pe.cost` is on — the resulting
+distribution's upper quantile (default 95%) is the largest cost still consistent with a correct
+model, calibrated against the data's own noise rather than against how well the optimizer happened
+to do.
+
+`margin`/`alpha` must be passed through from whatever produced the pool (typically `pe.margin`/
+`pe.alpha` from a `PEResult`) — they are not auto-recovered, since a threshold computed with the
+wrong ones would be silently meaningless. Three selectable noise models (`noise=`): `"poisson"`
+(almost always too tight for real data, never the default), `"quasipoisson"` (recommended default,
+`var = phi*mu`), and `"nbglobal"` (`var = mu + mu**2/k`, report as a bound only — a single global
+`k` is dominated by the largest-`mu` points). `out.by_model` reports all three regardless, as a
+sensitivity check. For a fitted output that is a *cumulative* series, pass `cumulative=[...]` (one
+flag per output row) — noise is estimated/generated on the incident (first-differenced) series and
+re-accumulated, not applied to the cumulative series directly.
+
+This is a goodness-of-fit band-sizing calibration, not a formal confidence region — it doesn't
+replace `profile_likelihood`/`confidence_subcontour_box` above, it's complementary and needs no
+refitting. It's a *parametric* bootstrap conditional on the best fit being approximately correct;
+under model misspecification the floor is optimistic. One nuance worth knowing: the calibrated
+*threshold* is intentionally not invariant to a pure rescale of the data's units (it's tied to a
+physically meaningful count-noise model), unlike `costf`'s own regulator normalization, which is
+scale-invariant by construction — that's what makes `pe.cost` values comparable across a model's
+absolute cost units in the first place.
+
+## 10. Plotting
 
 Every `plot_*` function takes a result object directly and an optional `ax`, so you can compose
 them into your own figure layout (standard Matplotlib/pandas convention):
@@ -333,7 +377,7 @@ renders as isolated nodes rather than a misleading fully-connected graph.
 Also available: `plot_sensitivity_area` (time-dependent indices, stacked), `plot_identifiability_index`
 (sorted index bar chart), and `plot_mcf` (prior/low/high ECDF panels, one per free parameter).
 
-## 10. The semi-automation identification cycle
+## 11. The semi-automation identification cycle
 
 The pattern above — sample, estimate, check identifiability, act on what you find, repeat — is the
 toolbox's core workflow. [`examples/system_identification_cycle.py`](examples/system_identification_cycle.py)
@@ -369,6 +413,7 @@ Every function below is also available under its idiomatic Python name (e.g. `co
 | `gsua_oatr`, `gsua_oatr2` | `range_refinement` |
 | `gsua_csb` | `confidence_subcontour_box` |
 | `gsua_likelihood` | `profile_likelihood` |
+| `gsua_noisefloor` | `noise_floor` |
 | `gsua_plot` | `plot_uncertainty`, `plot_sensitivity_bar`, `plot_sensitivity_area`, `plot_identifiability_correlation`, `plot_identifiability_graph`, `plot_identifiability_index`, `plot_mcf` |
 | `gsua_dpmat`, `gsua_odefun` | `SymbolicODEModel` |
 | `gsua_userdefined` | `UserFunctionModel` |
