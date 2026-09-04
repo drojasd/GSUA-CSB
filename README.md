@@ -137,7 +137,7 @@ Y       = gsua_ua(M,T);           % uncertainty analysis
 ### Sampling
 | Function | Description |
 |----------|-------------|
-| `gsua_dmatrix` | Design of experiments (factor space sampling: Latin Hypercube, Uniform, Sobol) |
+| `gsua_dmatrix` | Design of experiments (factor space sampling: Latin Hypercube, Uniform, Sobol). Also provides `'Method','Joint'` — **correlation-preserving** sampling that draws whole parameter vectors from an accepted-estimate ensemble (`Tia.Est` from `gsua_ia`, or an explicit `'Pool'`) instead of sampling each parameter independently. For a model with parameter confounding, independent draws leave the identified manifold; joint draws also inherit the pool's own spread rather than the CI-of-the-median that `gsua_ia` leaves in `T.Range`. `'JointType'` selects `Bootstrap` (default), `SmoothBootstrap` or `Gaussian`; a pool below `'MinPoolN'` is refused with a warning and falls back to marginal sampling |
 
 ### Analysis
 | Function | Description |

@@ -154,6 +154,38 @@ model built by hand, pass `log_scale=[...]` to `UserFunctionModel`/`SymbolicODEM
 `design_matrix` and `parameter_estimation` respect it (search happens in log10 space internally;
 every value you pass in or get back — `initial_points`, `pe.x` — stays in natural/linear units).
 
+### Joint (correlation-preserving) sampling
+
+The three methods above are **marginal**: each parameter is drawn independently inside its own
+interval. For a model with parameter confounding that discards the joint structure, so draws leave
+the identified manifold and any band built from them reports uncertainty the inference does not
+actually contain. `method="joint"` instead draws whole parameter vectors from an accepted-estimate
+ensemble:
+
+```python
+ia = identifiability_analysis(model, pe.x, cost=pe.cost)
+M  = design_matrix(model, 2000, "joint", seed=0, pool=ia.estimates_used)
+```
+
+`IdentifiabilityResult.estimates_used` is the pool that produced `ia.range`, after fit-quality
+filtering, dominant-cluster restriction and outlier removal. Passing it also sidesteps a second
+problem: `ia.range` is a confidence interval of the **median** of that pool, which narrows as the
+pool grows and is not the spread of values consistent with the data — joint draws carry the pool's
+own spread instead. For that reason `clip` defaults to no clipping; pass the original model's
+physical bounds if you need clipping, not `ia.range`.
+
+`joint_type` selects `"bootstrap"` (default — exact correlations, cannot leave the manifold, but
+limited to the vectors already in the pool), `"smooth_bootstrap"` (adds a variance-corrected kernel
+for new points near the manifold) or `"gaussian"` (mean + covariance; assumes the manifold is
+linear, so on a curved ridge it places mass beside it). A pool smaller than `min_pool_n` (default 5,
+matching `min_corr_n`) is refused with a warning and falls back to marginal sampling — correlation
+from two points is exactly ±1 regardless of any real relationship, so such a band would be
+confidently wrong rather than approximately right.
+
+Note that a parameter-uncertainty band is not a prediction interval: observation noise is a separate
+term, modelled by [`noise_floor`](#9-noise-calibrated-fit-acceptance-threshold). See
+`paper_experiments/joint_vs_marginal_bands.py` for a worked comparison on real data.
+
 ## 3. Global sensitivity analysis
 
 ```python

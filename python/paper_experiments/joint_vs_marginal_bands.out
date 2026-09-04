@@ -1,0 +1,133 @@
+  File "C:\Users\Lanre\anaconda3\Lib\site-packages\joblib\externals\loky\backend\context.py", line 257, in _count_physical_cores
+    cpu_info = subprocess.run(
+        "wmic CPU Get NumberOfCores /Format:csv".split(),
+        capture_output=True,
+        text=True,
+    )
+  File "C:\Users\Lanre\anaconda3\Lib\subprocess.py", line 554, in run
+    with Popen(*popenargs, **kwargs) as process:
+         ~~~~~^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\Lanre\anaconda3\Lib\subprocess.py", line 1039, in __init__
+    self._execute_child(args, executable, preexec_fn, close_fds,
+    ~~~~~~~~~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+                        pass_fds, cwd, env,
+                        ^^^^^^^^^^^^^^^^^^^
+    ...<5 lines>...
+                        gid, gids, uid, umask,
+                        ^^^^^^^^^^^^^^^^^^^^^^
+                        start_new_session, process_group)
+                        ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\Lanre\anaconda3\Lib\subprocess.py", line 1554, in _execute_child
+    hp, ht, pid, tid = _winapi.CreateProcess(executable, args,
+                       ~~~~~~~~~~~~~~~~~~~~~^^^^^^^^^^^^^^^^^^
+                             # no special security
+                             ^^^^^^^^^^^^^^^^^^^^^
+    ...<4 lines>...
+                             cwd,
+                             ^^^^
+                             startupinfo)
+                             ^^^^^^^^^^^^
+======================================================================================
+RUNG 1 -- CORRECTNESS: y = a*b*exp(-k*t), identified manifold is the hyperbola a*b = const
+======================================================================================
+multistart PE + IA in 0.1s; pool kept 60/60 fits
+recovered a*b: mean 2.0160 (true 2.0000), sd 2.72e-07
+pool corr(a,b) = -0.9075
+ia range for a: [1.3335, 1.5005]  vs pool spread [0.6870, 2.9830]   <- the CI-of-the-median narrowness, visible directly
+
+sampler                    mean |a*b - c|   corr(a,b)    (c = 2.0160)
+marginal (current)             8.0330e-02     +0.0179
+joint/bootstrap                1.2496e-07     -0.9130
+joint/smooth_bootstrap         1.8313e-01     -0.9084
+joint/gaussian                 3.3591e-01     -0.9063
+
+--- Rung 1 (analytic): band calibration ---
+sampler                    below  within   above       width  out_spread  cost_data
+marginal (current)         0.100   0.800   0.100      0.0923      0.0364   0.005214
+joint/bootstrap            0.550  -0.000   0.450   1.675e-07   1.095e-07   0.004993
+joint/smooth_bootstrap     0.000   0.950   0.050      0.2273     0.09206   0.005057
+joint/gaussian             0.000   1.000   0.000      0.3914      0.1637   0.008308
+  width/out_spread = how much trajectory variation the sampler produced
+  cost_data = distance from the band's MEDIAN to the data (accuracy; <1 is in tolerance)
+
+======================================================================================
+RUNG 2 -- UTILITY: Bertozzi_PNAS2020 (California), documented 2-of-3 non-identifiability
+======================================================================================
+multistart PE + IA in 0.8s; pool kept 60/60 fits
+  gamma_CA     ia CI [0.039033, 0.039033]   pool [0.039031, 0.039158]
+  I0_CA        ia CI [456.85, 748.93]   pool [130.67, 996.6]
+  R0_CA        ia CI [2.5533, 3.5342]   pool [1.5114, 4.9717]
+  pool correlation among free params:
+[[ 1.     0.163 -0.129]
+ [ 0.163  1.     0.124]
+ [-0.129  0.124  1.   ]]
+
+--- Rung 2 (Bertozzi CA): band calibration ---
+sampler                    below  within   above       width  out_spread  cost_data
+marginal (current)         0.545   0.000   0.455   0.0001204   5.604e-05       67.2
+joint/bootstrap            0.545   0.000   0.455     0.00588     0.06446       67.2
+joint/smooth_bootstrap     0.545   0.091   0.364     0.06927     0.06565       67.2
+joint/gaussian             0.545   0.091   0.364      0.1348     0.05941       67.2
+  width/out_spread = how much trajectory variation the sampler produced
+  cost_data = distance from the band's MEDIAN to the data (accuracy; <1 is in tolerance)
+  saved D:\MATLAB Drive.source-of-truth-20260718T095207\Toolbox\python\paper_experiments\figures\joint_vs_marginal_bertozzi.png
+
+======================================================================================
+RUNG 3 -- SAFETY: Boehm_JProteomeRes2014, two basins and a degenerate dominant cluster
+======================================================================================
+multistart PE + IA in 199.4s
+clusters found: 2, sizes [2, 1], silhouette 0.619007079487889
+dominant-basin pool passed to the sampler: 2 vectors
+correlation_reliable: False
+
+guard fired: True
+  -> pool has 2 vectors (fewer than min_pool_n=5); correlation estimated from so few points is degenerate rather than merely noisy, so a joint sample would be confidently wrong -- falling back to marginal Latin hypercube sampling
+
+Per-basin structure (the advanced alternative to a dominant-basin-only band):
+  57 of 60 runs dropped by the fit-quality filter first
+  basin 0: 2 fits (dominant)
+  basin 1: 1 fits
+  Even the largest basin here is below min_pool_n, so no basin supports a joint band;
+  the honest answer on this dataset is 'not enough accepted fits', which is what the
+  guard reports instead of a confident-looking band built from two points.
+
+======================================================================================
+READING THESE RESULTS
+======================================================================================
+
+The accepted-fit pool is selected by cost equivalence, so by construction every member
+reproduces the data about equally well -- the pool's OUTPUT spread is near zero even when its
+PARAMETER spread is large. That is what a ridge is: the parameters are unidentified, the
+trajectory they produce is not. A correct joint band on such a model is therefore NARROW.
+
+The two rungs isolate the two stacked errors separately, which is worth reading carefully
+because they push band width in OPPOSITE directions:
+
+- Rung 1 shows the discarded-correlation error. The marginal sampler draws from a parameter
+  interval ~14x narrower than the pool, yet produces ~3e5 times MORE output spread
+  (out_spread 3.6e-2 vs 1.1e-7). Width that large out of a box that small can only come from
+  leaving the manifold: it is manufactured, not inferred.
+
+- Rung 2 shows the CI-of-the-median error. Here the marginal interval is so narrow in absolute
+  terms that even off-manifold draws barely move the output (out_spread 5.6e-5), so the
+  marginal band understates rather than manufactures. The joint band is WIDER (6.4e-2) because
+  the pool genuinely spans I0_CA 131-997 where the CI admits only 457-749.
+
+Neither dataset reproduces the dramatic band MIS-CENTERING reported on the dengue-Wolbachia
+case: cost_data is identical across samplers in both rungs. That effect needs marginal
+intervals wide enough for off-manifold draws to swing the median, which these do not provide.
+Reported as a negative result rather than glossed.
+
+Two consequences worth stating plainly:
+
+1. Joint sampling's benefit on these datasets is a CORRECT parameter sample, which matters for
+   everything that consumes parameters -- sensitivity analysis, confidence subcontour boxes,
+   any further propagation -- and it makes the width question answerable at all.
+
+2. A parameter-uncertainty band is NOT a prediction interval and should not be expected to
+   contain noisy observations; observation noise is a separate term, which is what
+   gsua_noisefloor / noise_floor models. The two features compose: joint sampling gets the
+   parameter part right, the noise floor supplies the observation part. Read the 'within'
+   column with that in mind -- it is not a verdict on the sampler.
+
+Done.

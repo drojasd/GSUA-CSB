@@ -219,6 +219,17 @@ class IdentifiabilityResult:
         n_outliers_removed: Number of estimation runs dropped by outlier removal (0 if
             ``outlier=False``).
         cluster: Multiple-global-minima clustering result.
+        estimates_used: (n_kept, Np) the estimates that actually produced everything above, after
+            fit-quality filtering, dominant-cluster restriction and outlier removal. Kept because
+            ``range`` is a lossy summary: it describes each parameter separately and so cannot
+            express the correlation structure among them. Pass this as ``pool`` to
+            :func:`gsua_csb.design_matrix` with ``method="joint"`` to sample that structure rather
+            than discard it. MATLAB equivalent: ``T.Est`` from ``gsua_ia`` (stored transposed
+            there, ``Np x nPool``, to match its table layout).
+
+            When ``cluster.num_clusters > 1`` this holds the DOMINANT basin's points only, so a
+            band built from it is conditional on that basin; use ``cluster.labels`` to build
+            per-basin bands instead.
     """
 
     names: list[str]
@@ -230,6 +241,7 @@ class IdentifiabilityResult:
     n_bad_fit_removed: int
     n_outliers_removed: int
     cluster: ClusterInfo
+    estimates_used: NDArray[np.float64]
 
 
 def _summary_stats(
@@ -465,4 +477,5 @@ def identifiability_analysis(
         n_bad_fit_removed=n_bad_fit_removed,
         n_outliers_removed=n_outliers_removed,
         cluster=cluster_info,
+        estimates_used=stats_source,
     )

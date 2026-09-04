@@ -330,3 +330,37 @@ def test_plot_identifiability_graph_draws_edges_for_strong_correlation():
     edge_collections = [c for c in ax.collections if isinstance(c, LineCollection)]
     assert len(edge_collections) == 1
     assert len(edge_collections[0].get_segments()) == 1  # one edge between the two params
+
+
+class TestEstimatesUsed:
+    """`range` is a lossy per-parameter summary; the points behind it must survive.
+
+    They are what `design_matrix(method="joint")` samples to preserve the correlation
+    structure, so they have to reflect every filter that shaped `range` -- not the raw input.
+    """
+
+    def test_returns_the_points_behind_the_statistics(self):
+        rng = np.random.default_rng(0)
+        estimates = rng.normal(5.0, 0.5, size=(20, 2))
+        result = identifiability_analysis(_model(), estimates)
+        np.testing.assert_allclose(result.estimates_used, estimates)
+
+    def test_reflects_fit_quality_filtering(self):
+        rng = np.random.default_rng(1)
+        estimates = rng.normal(5.0, 0.2, size=(12, 2))
+        cost = np.concatenate([np.full(10, 1.0), np.full(2, 500.0)])
+        result = identifiability_analysis(_model(), estimates, cost=cost, cost_rtol=0.1)
+        assert result.estimates_used.shape[0] == 12 - result.n_bad_fit_removed
+        assert result.n_bad_fit_removed == 2
+
+    def test_feeds_joint_sampling_end_to_end(self):
+        from gsua_csb import design_matrix
+
+        rng = np.random.default_rng(2)
+        a = rng.uniform(1.0, 4.0, size=30)
+        estimates = np.column_stack([a, 8.0 / a])  # confounded: a*b == 8
+        model = _model()
+        result = identifiability_analysis(model, estimates)
+
+        M = design_matrix(model, 500, "joint", 0, pool=result.estimates_used)
+        assert np.abs(M[:, 0] * M[:, 1] - 8.0).max() < 1e-10

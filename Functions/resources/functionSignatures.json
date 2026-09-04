@@ -74,8 +74,14 @@
     "inputs": [
       {"name": "Table", "kind": "required", "type": ["table"]},
       {"name": "N", "kind": "required", "type": ["numeric", "scalar"]},
-      {"name": "Method", "kind": "namevalue", "type": ["char", "choices={'LatinHypercube','Uniform','Sobol'}"]},
-      {"name": "Show", "kind": "namevalue", "type": ["char", "choices={'off','on'}"]}
+      {"name": "Method", "kind": "namevalue", "type": ["char", "choices={'LatinHypercube','Uniform','Sobol','Joint'}"]},
+      {"name": "Show", "kind": "namevalue", "type": ["char", "choices={'off','on'}"]},
+      {"name": "JointType", "kind": "namevalue", "type": ["char", "choices={'Bootstrap','SmoothBootstrap','Gaussian'}"]},
+      {"name": "Pool", "kind": "namevalue", "type": ["numeric"]},
+      {"name": "MinPoolN", "kind": "namevalue", "type": ["numeric", "scalar"]},
+      {"name": "Bandwidth", "kind": "namevalue", "type": ["numeric", "scalar"]},
+      {"name": "Clip", "kind": "namevalue", "type": ["numeric"]},
+      {"name": "Seed", "kind": "namevalue", "type": ["numeric", "scalar"]}
     ],
     "outputs": [
       {"name": "M", "type": ["double"]},

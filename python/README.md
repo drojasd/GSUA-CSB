@@ -52,7 +52,7 @@ Each capability is exposed two ways:
 | Coverage/tightness metric (`coverage_metric`) | Done | `gsua_covmetric` |
 | Distribution-free median CI, band depth | Done | `gsua_medianCI`, `gsua_depth` |
 | Symbolic-ODE models (SymPy + `scipy.integrate.solve_ivp`) | Done | `gsua_dpmat`, `gsua_odefun` |
-| Sampling / design matrix (`scipy.stats.qmc`) | Done | `gsua_dmatrix` |
+| Sampling / design matrix (`scipy.stats.qmc`), incl. joint correlation-preserving sampling | Done | `gsua_dmatrix` |
 | Sensitivity analysis (Sobol, Jansen, Saltelli, Xiao, OAT) | Done | `gsua_sa` |
 | Uncertainty analysis + Monte Carlo filtering | Done | `gsua_ua`, `gsua_MCF` |
 | Parameter estimation (`scipy.optimize`) | Done | `gsua_pe` |
