@@ -9,15 +9,23 @@ the likelihood-ratio test rather than Monte Carlo coverage.
 
 Two deliberate deviations from the MATLAB source:
 
-- MATLAB's ``gsua_likelihood`` uses two different relative-standard-deviation bases for the same
-  Gaussian likelihood: the acceptance *threshold* is computed with ``desv = (ydata*(margin-1))^2``,
-  while the *inner* re-optimization (via ``gsua_pe`` with ``'margin', -margin``) uses
-  ``desv = (ydata*margin)^2`` -- a unit mismatch between the two ends of the same comparison
-  (``margin=1.1`` would use a 10% relative std for the threshold but a 110% relative std for the
-  fit). This looks like a latent inconsistency rather than an intentional design (in the same
-  family as this session's other found-and-fixed MATLAB issues), so this module uses one
-  consistent basis (``desv = (ydata*margin)^2``, e.g. ``margin=0.1`` for a 10% relative std)
-  throughout.
+- ``margin`` is offset by one relative to MATLAB's. **MATLAB's ``margin=1.1`` is this module's
+  ``margin=0.1``**; both mean a 10% relative standard deviation.
+
+  MATLAB is internally consistent about this, contrary to an earlier note here which claimed a
+  unit mismatch and was wrong. Its threshold uses ``desv = (ydata*(margin-1))^2``
+  (``gsua_likelihood.m:62``) and its inner re-optimization passes ``'margin', -margin`` to
+  ``gsua_pe`` (``:117``), which adds one (``gsua_pe.m:81``) to get ``-(margin-1)``; being
+  negative, that selects the Gaussian-NLL branch with ``desv = abs((ydata*margin)^2)``
+  (``gsua_pe.m:177``) -- the same ``(ydata*(margin-1))^2``. Both ends agree.
+
+  This module drops the offset so that ``margin`` is simply the relative standard deviation,
+  matching how ``margin`` reads everywhere else in this package. Carrying a value across
+  languages unchanged is the thing to avoid: MATLAB's ``margin=0.1`` implies a 90% relative std
+  *and* makes ``gsua_pe``'s offset positive, which silently switches its inner refit to plain
+  MSE instead of the likelihood -- so the threshold and the refit stop matching. Pass ``1+m`` in
+  MATLAB where this module takes ``m``. With that correction the two implementations agree
+  closely (on a 3-parameter pharmacokinetic fit, ``ka`` intervals of width 0.555 and 0.606).
 - The inner re-optimization at each trial point uses a single local refit
   (``scipy.optimize.minimize``) from the current nominal point rather than MATLAB's
   multistart-and-take-the-best (``gsua_pe`` with ``reps`` random starts). Profile likelihood

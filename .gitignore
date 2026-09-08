@@ -23,7 +23,7 @@ Functions/likelihoodCI.mat
 # default_example, the symbolic section of gsua_userguide.mlx and Examples/sir_symbolic.m
 # each regenerate their own on every run.
 /SIR.m
-Examples/sirEpidemicModel.m
+sirEpidemicModel.m
 
 # Version-stamped release builds (distributed as GitHub release assets, not source)
 /release/

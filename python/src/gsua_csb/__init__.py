@@ -52,17 +52,23 @@ except ImportError:  # pragma: no cover - exercised only when the `petab` extra 
     parse_sbml = None  # type: ignore[assignment,misc]
 
 # MATLAB-name-parity aliases -- same functions, for cross-reference with the MATLAB toolbox/citations.
+# These must match the MATLAB spelling EXACTLY, capitals included: their whole purpose is that a
+# name read in the MATLAB toolbox or in a paper citing it resolves here. Lower-cased spellings of
+# the mixed-case names are kept alongside so existing code importing them does not break.
 gsua_costf = costf
 gsua_rcostf = rcostf
-gsua_costfmulti = costf_multi
+gsua_costfMulti = costf_multi
+gsua_costfmulti = costf_multi  # deprecated spelling; MATLAB's is gsua_costfMulti
 gsua_likecost = likecost
 gsua_covmetric = coverage_metric
-gsua_medianci = median_ci
+gsua_medianCI = median_ci
+gsua_medianci = median_ci  # deprecated spelling; MATLAB's is gsua_medianCI
 gsua_depth = band_depth
 gsua_dmatrix = design_matrix
 gsua_sa = sensitivity_analysis
 gsua_ua = uncertainty_analysis
-gsua_mcf = monte_carlo_filter
+gsua_MCF = monte_carlo_filter
+gsua_mcf = monte_carlo_filter  # deprecated spelling; MATLAB's is gsua_MCF
 gsua_pe = parameter_estimation
 gsua_ia = identifiability_analysis
 gsua_dia = identifiability_analysis
@@ -116,14 +122,17 @@ __all__ = [
     "plot_mcf",
     "gsua_costf",
     "gsua_rcostf",
+    "gsua_costfMulti",
     "gsua_costfmulti",
     "gsua_likecost",
     "gsua_covmetric",
+    "gsua_medianCI",
     "gsua_medianci",
     "gsua_depth",
     "gsua_dmatrix",
     "gsua_sa",
     "gsua_ua",
+    "gsua_MCF",
     "gsua_mcf",
     "gsua_pe",
     "gsua_ia",

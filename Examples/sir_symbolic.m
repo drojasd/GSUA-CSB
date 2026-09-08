@@ -76,7 +76,10 @@ grid on
 %[text] With the whole curve in hand — growth, peak and decline — both factors are estimated by multistart least squares, twenty restarts as before.
 [Tfull,resFull] = gsua_pe(T, xfull, yfull, 'solver','lsqc', 'N',20, 'margin',0.1, 'timer',false);
 Efull = Tfull.Estlsqc;                     % 2 x 20: one column per multistart run
-TciFull = gsua_likelihood(Tfull, xfull, yfull, 0.95, 0.05, 0.1, 0.01, 0.01, 15, 1, false, false, false, []);
+% margin here is a relative standard deviation OFFSET BY ONE: 1.1 asserts 10% noise.
+% Passing 0.1 would assert 90% noise and would also flip gsua_pe's internal +1 offset
+% positive, silently switching its inner refit from the likelihood to plain least squares.
+TciFull = gsua_likelihood(Tfull, xfull, yfull, 0.95, 0.05, 1.1, 0.01, 0.01, 15, 1, false, false, false, []);
 table(truth, Efull(:,1), TciFull.Range(:,1), TciFull.Range(:,2), TciFull.Range(:,2)-TciFull.Range(:,1), ...
     'VariableNames', {'true','estimated','CI_low','CI_high','width'}, ...
     'RowNames', Tfull.Properties.RowNames)
@@ -94,7 +97,7 @@ cleanEarly = gsua_eval(truth, Te, xearly, [], false, false);
 yearly = cleanEarly + sqrt(max(cleanEarly,1)).*randn(size(cleanEarly));
 [Tearly,resEarly] = gsua_pe(Te, xearly, yearly, 'solver','lsqc', 'N',20, 'margin',0.1, 'timer',false);
 Eearly = Tearly.Estlsqc;
-TciEarly = gsua_likelihood(Tearly, xearly, yearly, 0.95, 0.05, 0.1, 0.01, 0.01, 15, 1, false, false, false, []);
+TciEarly = gsua_likelihood(Tearly, xearly, yearly, 0.95, 0.05, 1.1, 0.01, 0.01, 15, 1, false, false, false, []);
 table(truth, Eearly(:,1), TciEarly.Range(:,1), TciEarly.Range(:,2), TciEarly.Range(:,2)-TciEarly.Range(:,1), ...
     'VariableNames', {'true','estimated','CI_low','CI_high','width'}, ...
     'RowNames', Tearly.Properties.RowNames)

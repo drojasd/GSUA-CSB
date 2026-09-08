@@ -455,10 +455,83 @@ runs it end to end:
 
 Run it directly to see the numbers: `python examples/system_identification_cycle.py`.
 
-## MATLAB → Python name reference
+## Moving between MATLAB and Python
+
+The two ports track the same project, but they are not drop-in translations of each other. This
+section collects every difference that has actually caught someone out. If you only read one
+thing here, read the first table.
+
+### Traps — same call, different meaning
+
+| | MATLAB | Python | What happens if you carry it across |
+|---|---|---|---|
+| **Argument order** | `gsua_sa(M, T)`, `gsua_ua(M, T)` | `sensitivity_analysis(model, M)`, `uncertainty_analysis(model, M)` | Model and design matrix are **swapped**. Both are positional, so the call runs and returns nonsense rather than erroring. |
+| **`margin` in profile likelihood** | `gsua_likelihood(..., margin=1.08, ...)` — the assumed relative std is `margin - 1` | `profile_likelihood(..., margin=0.08)` — the assumed relative std *is* `margin` | **Offset by one.** Passing MATLAB's `1.1` to Python asserts 110% noise; passing Python's `0.1` to MATLAB asserts 90% noise *and* flips `gsua_pe`'s internal `+1` offset positive, silently switching its inner refit from the likelihood to plain least squares. Use `1+m` in MATLAB where Python takes `m`. |
+| **`margin` sign in estimation** | `gsua_pe` with `margin < 0` (after its `+1` offset) selects a Gaussian negative-log-likelihood objective | `parameter_estimation` takes `abs(margin)` and always uses the regulator cost | Same input, **different objective**, no error. |
+| **Repeated-estimate orientation** | `gsua_ia(T, T_est)` with `T_est` as Np × N — one **column** per run | `identifiability_analysis(model, estimates)` with `(N, Np)` — one **row** per run | Transposed. Consistent with `PEResult.x`, but a square case (Np == N) fails silently. |
+| **Joint-sampling pool orientation** | `Tia.Est` is Np × nPool | `pool=` is `(n_pool, Np)` | Transposed, for the same reason. |
+
+### Conventions that differ by design
+
+- **Fixed factors.** MATLAB drops them from `T`, so the table shrinks and indices shift. Python
+  keeps them, with `model.fixed` marking them, so indices stay stable across a `fix()` call.
+- **Output selection.** MATLAB sets `T.Properties.CustomProperties.output`; Python sets
+  `model.output` / `model.set_output(...)`. Same idea, and both are honoured everywhere.
+- **Results.** MATLAB writes back into the table (`T.Range`, `T.Est`, `T.Si`, ...), so calls chain
+  naturally. Python returns a dataclass per routine, so to feed one result into the next you
+  assign it back yourself (`model.range = ia.range`).
+- **Plotting.** MATLAB's analysis functions open figures as a side effect — `gsua_ua` always opens
+  at least two, `gsua_ia` four, and `gsua_eval` plots by default unless you pass its sixth
+  argument as `false`. Python never plots implicitly; the `plot_*` functions take a result object.
+- **Log-scale search** (`model.log_scale`) is Python-only. **Simulink models** are MATLAB-only.
+
+### Defaults that differ
+
+| Concept | MATLAB | Python |
+|---|---|---|
+| Save results to disk | `gsua_pe` writes `Estimations.mat` to the working directory (`'save'` defaults true) | never writes |
+| Progress printing | `gsua_pe`/`gsua_ia` print unconditionally; `gsua_eval` prints a progress line | silent, except `warnings.warn` |
+| Parallelism | `gsua_sa`/`gsua_ua` default `'parallel', true` | serial; no `parallel`/`n_jobs` argument anywhere |
+| Default evaluation grid | `gsua_eval` expands `domain` to a unit-step grid | `model.domain` is used verbatim — give it the points you want, not just the endpoints |
+| Plot on sampling | `gsua_dmatrix(..., 'Show','on')` draws a scatter | `design_matrix` returns `M` only |
+
+### Options with no Python equivalent
+
+`gsua_pe`: `A`, `B`, `Aeq`, `Beq`, `nonlcon` (linear and nonlinear constraints have no path at
+all), `Multistart`, `Show`, `save`, `timer`; solvers `particle`, `psearch`, `surrogate`.
+`gsua_likelihood`: `reps`, `parallel`, `show`, `saver` (so a long Python profile is unresumable).
+`gsua_sa`: `bandwidth`, and the `brute-force` method. `gsua_oatr`/`gsua_csb`: `titerlimit`,
+`parallel`, `show`, `breaking`, `stretch`. `gsua_costcutoff` has no standalone Python function —
+the logic is reachable only through `identifiability_analysis`'s `cost=` argument.
+
+### Solver names
+
+| MATLAB `'solver'` | Python `solver=` |
+|---|---|
+| `lsqc` (default), `lsqn` | `least_squares` (default) |
+| `fmincon` | `minimize` |
+| `ga` | `differential_evolution` |
+| `annealing` | `dual_annealing` |
+| `particle`, `psearch`, `surrogate` | *not ported* |
+
+### Numerical differences to expect
+
+- **Profile likelihood.** Both use the same acceptance threshold (chi-squared at one degree of
+  freedom, halved). Once `margin` is matched per the table above, the two agree closely. Python
+  refits with a single local `minimize` where MATLAB runs a `reps`-restart `gsua_pe`.
+- **Range refinement.** MATLAB accepts a bound inside a 10% dead band; Python root-finds the exact
+  crossing, so its bounds are systematically tighter by up to that slack.
+- **Percentile convention.** `gsua_covmetric` uses MATLAB's Hazen percentiles; `coverage_metric`
+  uses NumPy's linear default. The 5/95 bands differ slightly for small ensembles.
+- **NaN handling.** `rcostf` is NaN-tolerant in Python but not in MATLAB, so gappy data gives
+  different objectives across the two.
+
+### Name reference
 
 Every function below is also available under its idiomatic Python name (e.g. `costf` for
-`gsua_costf`) — see [README.md](README.md#design) for the naming convention.
+`gsua_costf`) — see [README.md](README.md#design) for the naming convention. The `gsua_*` aliases
+match the MATLAB spelling exactly, capitals included: `gsua_MCF`, `gsua_medianCI`,
+`gsua_costfMulti`.
 
 | MATLAB | Python |
 |---|---|
@@ -477,6 +550,9 @@ Every function below is also available under its idiomatic Python name (e.g. `co
 | `gsua_plot` | `plot_uncertainty`, `plot_sensitivity_bar`, `plot_sensitivity_area`, `plot_identifiability_correlation`, `plot_identifiability_graph`, `plot_identifiability_index`, `plot_mcf` |
 | `gsua_dpmat`, `gsua_odefun` | `SymbolicODEModel` |
 | `gsua_userdefined` | `UserFunctionModel` |
+| `gsua_eval`, `gsua_deval`, `gsua_pardeval` | `Model.evaluate`, `Model.evaluate_batch` |
+| `gsua_dataprep` | the `Model` constructors above |
+| `gsua_costcutoff` | *(no standalone equivalent; use `identifiability_analysis(cost=...)`)* |
 
 ## Getting help
 

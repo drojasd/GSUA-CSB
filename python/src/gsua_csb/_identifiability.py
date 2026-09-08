@@ -19,8 +19,11 @@ core toolbox. This module implements the same idea (classic squared Mahalanobis 
 chi-squared critical value) directly instead of vendoring a third-party MATLAB file's exact
 percentile-table convention.
 
-One capability neither ``gsua_ia`` nor ``gsua_dia`` has: filtering repeated estimates by fit
-quality before computing statistics. A multistart run that converged to a bad local optimum still
+Filtering repeated estimates by fit quality before computing statistics. (An earlier note here
+claimed this capability was absent from MATLAB; that was wrong -- ``gsua_ia``, ``gsua_dia`` and
+the standalone ``gsua_costcutoff`` all provide it. What differs is packaging: MATLAB exposes the
+cutoff as its own callable function, whereas here the logic is private and reachable only through
+the ``cost=`` argument below.) A multistart run that converged to a bad local optimum still
 contributes its (essentially arbitrary) parameter values to the correlation matrix, confidence
 interval, and clustering -- which can make a genuinely well-identified parameter look poorly
 identified purely because an optimizer run failed, not because of real non-identifiability.

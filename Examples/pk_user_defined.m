@@ -94,11 +94,18 @@ array2table(corr(Est3'), 'VariableNames', T3.Properties.RowNames, 'RowNames', T3
 % Positional arguments: (T, xdata, ydata, alpha, step, margin, tol1, tol2, limit,
 % reps, show, parallel, saver, pars). alpha = 0.95 is the confidence level; limit is
 % the bisection budget per bound; pars = [] profiles every factor.
-Tci3 = gsua_likelihood(T3, xdata, ydata, 0.95, 0.05, 0.1, 0.01, 0.01, 15, 1, false, false, false, []);
+%
+% margin is a RELATIVE STANDARD DEVIATION OFFSET BY ONE here: gsua_likelihood uses
+% (margin-1) as the assumed relative noise, so 1.08 means the 8% noise the data
+% actually carries. Passing 0.1 would assert 90% noise -- and would also make
+% gsua_pe's internal +1 offset positive, silently switching its inner refit from the
+% likelihood to plain least squares. The Python port drops the offset, so its
+% margin=0.08 is this margin=1.08.
+Tci3 = gsua_likelihood(T3, xdata, ydata, 0.95, 0.05, 1.08, 0.01, 0.01, 15, 1, false, false, false, []);
 table(Tci3.Range(:,1), Tci3.Range(:,2), Tci3.Range(:,2)-Tci3.Range(:,1), ranges(:,1), ranges(:,2), ...
     'VariableNames', {'CI_low','CI_high','width','prior_low','prior_high'}, ...
     'RowNames', T3.Properties.RowNames)
-%[text] This is the result worth stopping on. The interval for $ k_a $ spans its **entire prior range** — the data constrain it not at all — and $ k_e $ runs to its upper bound. A model fitting this well is still telling us that these three factors cannot be separated from a single oral concentration curve. That is a textbook pharmacokinetic result, not a failure of the optimizer.
+%[text] This is the result worth stopping on. The correlation between $ k_a $ and $ k_e $ is $ -0.998 $: the two rate constants are very nearly a single degree of freedom, and the intervals are correspondingly loose for a fit this good. A model that reproduces the data this well is still telling us that these three factors are barely separable from one oral concentration curve, which is a textbook pharmacokinetic result rather than a failure of the optimizer.
 %%
 %[text] ## 6. The remedy: fix what another experiment already knows
 %[text] The standard resolution is to measure $ V $ separately, in an intravenous study where it *is* directly identifiable, and then estimate only the two rate constants. In this toolbox a factor is fixed by giving it a degenerate range; fixed factors drop out of `T` entirely, so the table returned below has two rows rather than three.
@@ -107,7 +114,7 @@ rangesFixed = [0.6 3.0; 0.05 0.5; 15 15];            % V pinned at its known val
     'names', {'ka','ke','V'}, 'out_names', {'concentration'});
 Tf.Nominal = truth(1:height(Tf));                    % only the free factors remain
 [T2,res2] = gsua_pe(Tf, xdata, ydata, 'solver','lsqc', 'N',20, 'margin',0.1, 'timer',false);
-Tci2 = gsua_likelihood(T2, xdata, ydata, 0.95, 0.05, 0.1, 0.01, 0.01, 15, 1, false, false, false, []);
+Tci2 = gsua_likelihood(T2, xdata, ydata, 0.95, 0.05, 1.08, 0.01, 0.01, 15, 1, false, false, false, []);
 table(truth(1:2), T2.Estlsqc(:,1), Tci2.Range(:,1), Tci2.Range(:,2), Tci2.Range(:,2)-Tci2.Range(:,1), ...
     'VariableNames', {'true','estimated','CI_low','CI_high','width'}, ...
     'RowNames', T2.Properties.RowNames)
