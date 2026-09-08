@@ -31,12 +31,12 @@ rng(0,'twister')                          % fix the noise draw so the page repro
 truth = [1.2; 0.25; 15];                  % the values we will try to recover
 T.Nominal = truth;
 xdata = [0.25 0.5 1 1.5 2 3 4 6 8 10 12 16 20 24];   % sampling schedule (hours)
-% gsua_eval(values, T, xdata, ydata, parallel, show): the trailing false suppresses
-% the automatic diagnostic plot, which would otherwise open a figure on every call.
-clean = gsua_eval(truth, T, xdata, [], false, false);
+% gsua_eval(values, T, xdata, ydata, parallel, show, verbose): the trailing two false
+% flags suppress the automatic diagnostic plot and the "Progress: N %" print.
+clean = gsua_eval(truth, T, xdata, [], false, false, false);
 ydata = clean .* (1 + 0.08*randn(size(clean)));      % 8% proportional measurement noise
 tdense = linspace(0.05, 24, 300);                    % dense grid, for drawing curves only
-plot(tdense, gsua_eval(truth, T, tdense, [], false, false), 'LineWidth', 1.5)
+plot(tdense, gsua_eval(truth, T, tdense, [], false, false, false), 'LineWidth', 1.5)
 hold on
 plot(xdata, ydata, 'ko', 'MarkerFaceColor', 'k', 'MarkerSize', 5)
 hold off
@@ -50,7 +50,7 @@ grid on
 %[text] Before spending any optimizer budget it is worth asking whether the data is even *reachable*: does it fall inside the range of behaviours the model can produce over the factor bounds declared in section 1? If it does not, no amount of optimization will help — the model structure or the bounds are wrong, and that has to be fixed first. This is the reachability check that opens the toolbox's semi-automated identification cycle.
 %[text] `gsua_dmatrix` samples the factor box and `gsua_ua` runs the Monte-Carlo ensemble over those samples. `gsua_ua` also applies Monte-Carlo filtering automatically and plots it, which is what the two figures below show: for each factor, how the low and high halves of its sampled range map onto model output.
 M0 = gsua_dmatrix(T, 500);                           % 500 samples of the factor box
-Y0 = gsua_ua(M0, T, 'xdata', xdata, 'ynom', ydata, 'parallel', false);
+Y0 = gsua_ua(M0, T, 'xdata', xdata, 'ynom', ydata, 'parallel', false, 'verbose', false);
 %[text] `gsua_covmetric` reduces that ensemble to a 5–95% band and scores it. The containment fraction — how much of the measured data actually falls inside the band — is the number to read at this stage.
 [cost_data, cost_band, P5, ~, P95] = gsua_covmetric(Y0, ydata, 'margin', 0.1);
 reachable = mean(ydata >= P5 & ydata <= P95);
@@ -77,7 +77,7 @@ grid on
 Est3 = T3.Estlsqc;                        % 3 x 20: one column per multistart run
 table(truth, Est3(:,1), 'VariableNames', {'true','estimated'}, 'RowNames', T3.Properties.RowNames)
 %[text] Every one of the twenty runs converged to the same cost, and the fitted curve passes cleanly through the data. On most projects this is where the analysis would stop.
-plot(tdense, gsua_eval(Est3(:,1), T3, tdense, [], false, false), 'LineWidth', 1.5)
+plot(tdense, gsua_eval(Est3(:,1), T3, tdense, [], false, false, false), 'LineWidth', 1.5)
 hold on
 plot(xdata, ydata, 'ko', 'MarkerFaceColor', 'k', 'MarkerSize', 5)
 hold off
@@ -101,7 +101,7 @@ array2table(corr(Est3'), 'VariableNames', T3.Properties.RowNames, 'RowNames', T3
 % gsua_pe's internal +1 offset positive, silently switching its inner refit from the
 % likelihood to plain least squares. The Python port drops the offset, so its
 % margin=0.08 is this margin=1.08.
-Tci3 = gsua_likelihood(T3, xdata, ydata, 0.95, 0.05, 1.08, 0.01, 0.01, 15, 1, false, false, false, []);
+Tci3 = gsua_likelihood(T3, xdata, ydata, 0.95, 0.05, 1.08, 0.01, 0.01, 15, 1, false, false, false, [], false);
 table(Tci3.Range(:,1), Tci3.Range(:,2), Tci3.Range(:,2)-Tci3.Range(:,1), ranges(:,1), ranges(:,2), ...
     'VariableNames', {'CI_low','CI_high','width','prior_low','prior_high'}, ...
     'RowNames', T3.Properties.RowNames)
@@ -114,7 +114,7 @@ rangesFixed = [0.6 3.0; 0.05 0.5; 15 15];            % V pinned at its known val
     'names', {'ka','ke','V'}, 'out_names', {'concentration'});
 Tf.Nominal = truth(1:height(Tf));                    % only the free factors remain
 [T2,res2] = gsua_pe(Tf, xdata, ydata, 'solver','lsqc', 'N',20, 'margin',0.1, 'timer',false);
-Tci2 = gsua_likelihood(T2, xdata, ydata, 0.95, 0.05, 1.08, 0.01, 0.01, 15, 1, false, false, false, []);
+Tci2 = gsua_likelihood(T2, xdata, ydata, 0.95, 0.05, 1.08, 0.01, 0.01, 15, 1, false, false, false, [], false);
 table(truth(1:2), T2.Estlsqc(:,1), Tci2.Range(:,1), Tci2.Range(:,2), Tci2.Range(:,2)-Tci2.Range(:,1), ...
     'VariableNames', {'true','estimated','CI_low','CI_high','width'}, ...
     'RowNames', T2.Properties.RowNames)

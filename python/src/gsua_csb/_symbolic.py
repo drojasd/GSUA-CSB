@@ -98,7 +98,10 @@ class SymbolicODEModel(Model):
             np.asarray(nominal, dtype=np.float64) if nominal is not None else self.range.mean(axis=1)
         )
         self.domain = np.asarray(domain, dtype=np.float64)
-        self.output_names = list(self.names[: self.n_states])
+        # Outputs are the STATES (S, I, R), so name them after the state symbols -- not after the
+        # first n_states entries of `names`, which are the initial-condition FACTORS (S0, I0, R0)
+        # and read confusingly as output labels (e.g. selecting I(t) reported "I0").
+        self.output_names = [str(s) for s in state_vars]
         self.set_output(output)
         self.log_scale = (
             np.zeros(n, dtype=bool) if log_scale is None else np.asarray(log_scale, dtype=bool)

@@ -13,8 +13,9 @@ function y = gsua_ua(M,T,varargin)
 % over multiple model outputs. To obtain extrapolated results, use the
 % paired feature 'xdata'. To compare results with a specific output use
 % the paired feature 'ynom' (ynom length must coindice with xdata length).
-% To avoid parallel computing (no speed up), use the paired feature 
-% 'parallel',false.
+% To avoid parallel computing (no speed up), use the paired feature
+% 'parallel',false. To silence the "Progress: N %" print during evaluation,
+% use the paired feature 'verbose',false (default true).
 % Y=gsua_ua(M,T,'xdata',xdata,'ynom',ynom,'parallel',false)
 %
 % See also GSUA_SA, GSUA_DMATRIX, GSUA_MCF, GSUA_PARDEVAL.
@@ -26,6 +27,7 @@ addRequired(p,'T',@istable);
 addParameter(p,'xdata',defNum,@isnumeric);
 addParameter(p,'ynom',defNum,@isnumeric);
 addParameter(p,'parallel',true,@islogical);
+addParameter(p,'verbose',true,@islogical);
 
 parse(p,M,T,varargin{:})
 M=p.Results.M;
@@ -33,6 +35,7 @@ T=p.Results.T;
 xdata=p.Results.xdata;
 ynom=p.Results.ynom;
 parallel=p.Results.parallel;
+verbose=p.Results.verbose;
 
 try
     TP=T.Properties.CustomProperties;
@@ -58,7 +61,7 @@ if isempty(ynom)
 end
 
 
-y=gsua_pardeval(M,T,xdata,parallel,[0,size(M,1)]);
+y=gsua_pardeval(M,T,xdata,parallel,[0,size(M,1)],verbose);
 
 figure(1)
 clf

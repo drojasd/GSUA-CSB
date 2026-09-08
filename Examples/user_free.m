@@ -7,11 +7,11 @@ function odes = user_free(params)
 beta_m=params(1,:);
 beta_h=params(2,:);
 theta_m=params(3,:);
-theta_h=params(3,:);
-alpha=params(3,:);
-mu_m=params(3,:);
-gamma_h=params(3,:);
-mu_h=params(3,:);
+theta_h=params(4,:);
+alpha=params(5,:);
+mu_m=params(6,:);
+gamma_h=params(7,:);
+mu_h=params(8,:);
 
 t2 = alpha.*mu_m;
 odes = (beta_h.*beta_m.*theta_h.*theta_m)./(t2.*(gamma_h+mu_h).*(mu_h+theta_h).*(t2+theta_m));

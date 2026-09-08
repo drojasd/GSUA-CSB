@@ -98,7 +98,8 @@
       {"name": "parallel", "kind": "namevalue", "type": ["logical"]},
       {"name": "xdata", "kind": "namevalue", "type": ["numeric"]},
       {"name": "xAlpha", "kind": "namevalue", "type": ["numeric", "scalar"]},
-      {"name": "bandwidth", "kind": "namevalue", "type": ["numeric"]}
+      {"name": "bandwidth", "kind": "namevalue", "type": ["numeric"]},
+      {"name": "verbose", "kind": "namevalue", "type": ["logical"]}
     ],
     "outputs": [
       {"name": "ParT", "type": ["table"]},
@@ -113,7 +114,8 @@
       {"name": "T", "kind": "required", "type": ["table"]},
       {"name": "xdata", "kind": "namevalue", "type": ["numeric"]},
       {"name": "ynom", "kind": "namevalue", "type": ["numeric"]},
-      {"name": "parallel", "kind": "namevalue", "type": ["logical"]}
+      {"name": "parallel", "kind": "namevalue", "type": ["logical"]},
+      {"name": "verbose", "kind": "namevalue", "type": ["logical"]}
     ],
     "outputs": [
       {"name": "y", "type": ["double"]}
@@ -260,7 +262,8 @@
       {"name": "show", "kind": "required", "type": ["logical"]},
       {"name": "parallel", "kind": "required", "type": ["logical"]},
       {"name": "saver", "kind": "required", "type": ["logical"]},
-      {"name": "pars", "kind": "required", "type": ["numeric"]}
+      {"name": "pars", "kind": "required", "type": ["numeric"]},
+      {"name": "verbose", "kind": "ordered", "type": ["logical"]}
     ],
     "outputs": [
       {"name": "Tfinal", "type": ["table"]}
@@ -274,7 +277,8 @@
       {"name": "xdata", "kind": "ordered", "type": ["numeric"]},
       {"name": "ydata", "kind": "ordered", "type": ["numeric"]},
       {"name": "parallel", "kind": "ordered", "type": ["logical"]},
-      {"name": "show", "kind": "ordered", "type": ["logical"]}
+      {"name": "show", "kind": "ordered", "type": ["logical"]},
+      {"name": "verbose", "kind": "ordered", "type": ["logical"]}
     ],
     "outputs": [
       {"name": "y", "type": ["double"]},
@@ -299,7 +303,8 @@
       {"name": "Table2", "kind": "required", "type": ["table"]},
       {"name": "xdata", "kind": "required", "type": ["numeric"]},
       {"name": "parallel", "kind": "required", "type": ["logical"]},
-      {"name": "init", "kind": "ordered", "type": ["numeric"]}
+      {"name": "init", "kind": "ordered", "type": ["numeric"]},
+      {"name": "verbose", "kind": "ordered", "type": ["logical"]}
     ],
     "outputs": [
       {"name": "y", "type": ["double"]}

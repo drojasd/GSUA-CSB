@@ -56,6 +56,7 @@ addRequired(p,'ParT',@istable);
 addParameter(p,'ynom',defaultyexp,@isnumeric);
 addParameter(p,'SensMethod',defaultSensMethod,checkSensMethod);
 addParameter(p,'parallel',defaultParallel,@islogical);
+addParameter(p,'verbose',true,@islogical);
 addParameter(p,'xdata',defaultXdata,@isnumeric);
 addParameter(p,'xAlpha',dxAlpha,checkxAlpha);
 addParameter(p,'bandwidth',dxAlpha,@isnumeric);
@@ -67,6 +68,7 @@ ParT=p.Results.ParT;
 y_exp=p.Results.ynom;
 SensMethod=p.Results.SensMethod;
 Parallel=p.Results.parallel;
+verbose=p.Results.verbose;
 xdata=p.Results.xdata;
 pod=p.Results.xAlpha;
 margin=p.Results.bandwidth;
@@ -136,7 +138,7 @@ if ~multiObjt
 
         case 'brute-force'
             Nsim = N + Np2*N^2; % Number of Montecarlo simulations
-            [Y] = gsua_pardeval(M,ParT,xdata,Parallel,[0 Nsim]); % Y is a matrix (NxNd) with time responses in rows
+            [Y] = gsua_pardeval(M,ParT,xdata,Parallel,[0 Nsim],verbose); % Y is a matrix (NxNd) with time responses in rows
             Nd = size(y_exp,2); % Number of simulation data
             Y_nom = ones(N,1)*y_exp;
             J = sum((Y-Y_nom).^2,2); % Scalar model output
@@ -164,7 +166,7 @@ if ~multiObjt
                 if ~(fixed(k))
                 % Simulation with every set of parameters (row of Mi{k}) and storage
                 % in matrix Yi (a cell for every parameter)
-                [Yi{k}] = gsua_pardeval(Mi{k},ParT,xdata,Parallel,[N+(k-1)*N^2,Nsim]);
+                [Yi{k}] = gsua_pardeval(Mi{k},ParT,xdata,Parallel,[N+(k-1)*N^2,Nsim],verbose);
                 Y_nom2 = ones(N^2,1)*y_exp;
                 Ji{k} = sum((Yi{k}-Y_nom2).^2,2);
                 end
@@ -243,8 +245,8 @@ if ~multiObjt
             end
 
 
-            [YA] = gsua_pardeval(A,ParT,xdata,Parallel,[0,Nsim]);
-            [YB] = gsua_pardeval(B,ParT,xdata,Parallel,[N/2,Nsim]); % dim(YA)=dim(YB)=(Nd x N/2)
+            [YA] = gsua_pardeval(A,ParT,xdata,Parallel,[0,Nsim],verbose);
+            [YB] = gsua_pardeval(B,ParT,xdata,Parallel,[N/2,Nsim],verbose); % dim(YA)=dim(YB)=(Nd x N/2)
             Y = [YA;YB];
             JA = sum((YA-ones(N/2,1)*y_exp).^2,2);
             JB = sum((YB-ones(N/2,1)*y_exp).^2,2);
@@ -267,8 +269,8 @@ if ~multiObjt
                     f02 = mean(J)^2;
                     for k = 1:Np
                         if ~(fixed(k))
-                            [YBAi{k}] = gsua_pardeval(BAi{k},ParT,xdata,Parallel,[k*N,Nsim]);
-                            [YABi{k}] = gsua_pardeval(ABi{k},ParT,xdata,Parallel,[k*N+N/2,Nsim]);
+                            [YBAi{k}] = gsua_pardeval(BAi{k},ParT,xdata,Parallel,[k*N,Nsim],verbose);
+                            [YABi{k}] = gsua_pardeval(ABi{k},ParT,xdata,Parallel,[k*N+N/2,Nsim],verbose);
                             JBAi{k} = sum((YBAi{k}-ones(N/2,1)*y_exp).^2,2);
                             JABi{k} = sum((YABi{k}-ones(N/2,1)*y_exp).^2,2);
                             Si_vec(k,:) = ( mean( YA.*YBAi{k},1 ) - f02_vec )./V_vec;
@@ -280,7 +282,7 @@ if ~multiObjt
                 case 'Jansen'
                     for k = 1:Np
                         if ~(fixed(k))
-                            [YABi{k}] = gsua_pardeval(ABi{k},ParT,xdata,Parallel,[N+(k-1)*N/2,Nsim]);
+                            [YABi{k}] = gsua_pardeval(ABi{k},ParT,xdata,Parallel,[N+(k-1)*N/2,Nsim],verbose);
                             JABi{k} = sum((YABi{k}-ones(N/2,1)*y_exp).^2,2);
                             Si_vec(k,:) = 1 - mean((YB - YABi{k}).^2,1)./(2*V_vec);
                             STi_vec(k,:) = mean( (YA - YABi{k}).^2,1 )./(2*V_vec);
@@ -295,7 +297,7 @@ if ~multiObjt
                     YB2=(YB-y_exp).^2;
                     for k = 1:Np
                         if ~(fixed(k))
-                            [YABi{k}] = gsua_pardeval(ABi{k},ParT,xdata,Parallel,[N+(k-1)*N/2,Nsim]);
+                            [YABi{k}] = gsua_pardeval(ABi{k},ParT,xdata,Parallel,[N+(k-1)*N/2,Nsim],verbose);
                             JABi{k} = sum((YABi{k}-ones(N/2,1)*y_exp).^2,2);
                             YABi2=(YABi{k}-y_exp).^2;
                             Si_vec(k,:) = mean(YB2.*(YABi2 - YA2),1)./V_vec2;
@@ -311,7 +313,7 @@ if ~multiObjt
                     denv=mean((abs(YA-YB)).^pod);
                         for k = 1:Np
                             if ~(fixed(k))
-                                [YABi{k}] = gsua_pardeval(ABi{k},ParT,xdata,Parallel,[N+(k-1)*N/2,Nsim]);
+                                [YABi{k}] = gsua_pardeval(ABi{k},ParT,xdata,Parallel,[N+(k-1)*N/2,Nsim],verbose);
                                 JABi{k} = sum((YABi{k}-ones(N/2,1)*y_exp).^2,2);
                                 Si_vec(k,:)=(denv-mean((abs(YB-YABi{k})).^pod))./denv;
                                 STi_vec(k,:) = mean((abs(YA-YABi{k})).^pod)./denv;
@@ -327,12 +329,12 @@ if ~multiObjt
                 return
             else
                 Nsim=N*Np2+N;
-                [Y]=gsua_pardeval(M,ParT,xdata,Parallel,[0,Nsim]);
+                [Y]=gsua_pardeval(M,ParT,xdata,Parallel,[0,Nsim],verbose);
                 J = zeros(Np,1);
                 for i = 1:Np %construir M apropiado
                     if ~(fixed(i))
                     M_oat=M(:,i);
-                    [Y_oat]=gsua_pardeval(M_oat,ParT,xdata,Parallel,[i*N,Nsim]);
+                    [Y_oat]=gsua_pardeval(M_oat,ParT,xdata,Parallel,[i*N,Nsim],verbose);
                     J(i) = var(sum((Y_oat-y_exp).^2,2));
                     end
                 end
@@ -359,7 +361,7 @@ else %Multiobjetive SA
     
         case 'brute-force'
             Nsim = N + Np2*N^2; % Number of Montecarlo simulations
-            [Y] = gsua_pardeval(M,ParT,xdata,Parallel,[0 Nsim]); % Y is a matrix (NxNd) with time responses in rows
+            [Y] = gsua_pardeval(M,ParT,xdata,Parallel,[0 Nsim],verbose); % Y is a matrix (NxNd) with time responses in rows
             if isempty(y_exp)
                 disp('Finding the deepest curve...')
                 [~,idx]=gsua_depth(Y,Parallel);
@@ -389,7 +391,7 @@ else %Multiobjetive SA
                 if ~(fixed(k))
                 % Simulation with every set of parameters (row of Mi{k}) and storage
                 % in matrix Yi (a cell for every parameter)
-                [Yi{k}] = gsua_costfMulti(gsua_pardeval(Mi{k},ParT,xdata,Parallel,[N+(k-1)*N^2,Nsim]),...
+                [Yi{k}] = gsua_costfMulti(gsua_pardeval(Mi{k},ParT,xdata,Parallel,[N+(k-1)*N^2,Nsim],verbose),...
                     y_exp,margin,Parallel);
                 end
             end
@@ -453,8 +455,8 @@ else %Multiobjetive SA
             end
 
 
-            [YA] = gsua_pardeval(A,ParT,xdata,Parallel,[0,Nsim]);
-            [YB] = gsua_pardeval(B,ParT,xdata,Parallel,[N/2,Nsim]); % dim(YA)=dim(YB)=(Nd x N/2)
+            [YA] = gsua_pardeval(A,ParT,xdata,Parallel,[0,Nsim],verbose);
+            [YB] = gsua_pardeval(B,ParT,xdata,Parallel,[N/2,Nsim],verbose); % dim(YA)=dim(YB)=(Nd x N/2)
             Y = [YA;YB];
             if isempty(y_exp)
                 disp('Finding the deepest curve...')
@@ -475,9 +477,9 @@ else %Multiobjetive SA
                     f02 = mean(Y)^2;
                     for k = 1:Np
                         if ~(fixed(k))
-                            [YBAi{k}] = gsua_costfMulti(gsua_pardeval(BAi{k},ParT,xdata,Parallel,[k*N,Nsim]),...
+                            [YBAi{k}] = gsua_costfMulti(gsua_pardeval(BAi{k},ParT,xdata,Parallel,[k*N,Nsim],verbose),...
                                 y_exp,margin,Parallel);
-                            [YABi{k}] = gsua_costfMulti(gsua_pardeval(ABi{k},ParT,xdata,Parallel,[k*N+N/2,Nsim]),...
+                            [YABi{k}] = gsua_costfMulti(gsua_pardeval(ABi{k},ParT,xdata,Parallel,[k*N+N/2,Nsim],verbose),...
                                 y_exp,margin,Parallel);
                             Si(k) = ( mean( YA.*YBAi{k} ) - f02 )/VJ;
                             STi(k) = mean( YA.*(YA - YABi{k}) )/VJ;
@@ -486,7 +488,7 @@ else %Multiobjetive SA
                 case 'Jansen'
                     for k = 1:Np
                         if ~(fixed(k))
-                            [YABi{k}] = gsua_costfMulti(gsua_pardeval(ABi{k},ParT,xdata,Parallel,[N+(k-1)*N/2,Nsim]),...
+                            [YABi{k}] = gsua_costfMulti(gsua_pardeval(ABi{k},ParT,xdata,Parallel,[N+(k-1)*N/2,Nsim],verbose),...
                                 y_exp,margin,Parallel);
                             Si(k) = 1 - mean((YB - YABi{k}).^2)/(2*VJ);
                             STi(k) = mean((YA - YABi{k}).^2)/(2*VJ);
@@ -495,7 +497,7 @@ else %Multiobjetive SA
                 case 'Saltelli'
                     for k = 1:Np
                         if ~(fixed(k))
-                            [YABi{k}] = gsua_costfMulti(gsua_pardeval(ABi{k},ParT,xdata,Parallel,[N+(k-1)*N/2,Nsim]),...
+                            [YABi{k}] = gsua_costfMulti(gsua_pardeval(ABi{k},ParT,xdata,Parallel,[N+(k-1)*N/2,Nsim],verbose),...
                                 y_exp,margin,Parallel);
                             Si(k) = mean(YB.*(YABi{k} - YA))/VJ;
                             STi(k) = mean((YA - YABi{k}).^2)/(2*VJ);
@@ -505,7 +507,7 @@ else %Multiobjetive SA
                     den=mean(vecnorm(YA-YB,2).^pod);
                         for k = 1:Np
                             if ~(fixed(k))
-                                [YABi{k}] = gsua_costfMulti(gsua_pardeval(ABi{k},ParT,xdata,Parallel,[N+(k-1)*N/2,Nsim]),...
+                                [YABi{k}] = gsua_costfMulti(gsua_pardeval(ABi{k},ParT,xdata,Parallel,[N+(k-1)*N/2,Nsim],verbose),...
                                     y_exp,margin,Parallel);
                                 Si(k) = (den-mean(vecnorm(YB-YABi{k},2).^pod))/den;
                                 STi(k) = mean(vecnorm(YA-YABi{k},2).^pod)/den;

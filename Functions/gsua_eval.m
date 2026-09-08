@@ -7,6 +7,7 @@ function [y,xdata] = gsua_eval(par,Table,varargin)
 %   Y = gsua_eval(values,Table,xdata,ydata)
 %   Y = gsua_eval(values,Table,xdata,ydata,parallel)
 %   Y = gsua_eval(values,Table,xdata,ydata,parallel,show)
+%   Y = gsua_eval(values,Table,xdata,ydata,parallel,show,verbose)
 %
 % Inputs:
 %   par      <-- array of Np x N (number of factors x number of simulations)
@@ -15,6 +16,9 @@ function [y,xdata] = gsua_eval(par,Table,varargin)
 %   ydata    <-- (optional) experimental / previous model data matching xdata
 %   parallel <-- (optional, logical) use parallel evaluation (default: false)
 %   show     <-- (optional, logical) if true, calls gsua_plot; if false, no plot
+%   verbose  <-- (optional, logical) if true, prints "Progress: N %" during the
+%                batch loop (default: true, preserving prior behavior). Pass false
+%                for a quiet run -- e.g. inside a script whose output is captured.
 %
 % Outputs:
 %   y     <-- array with model output
@@ -32,6 +36,7 @@ function [y,xdata] = gsua_eval(par,Table,varargin)
     addOptional(ip,'ydata',   [], @(x) true);
     addOptional(ip,'parallel',false,@(x) islogical(x) || isnumeric(x));
     addOptional(ip,'show',    true, @(x) islogical(x) || isnumeric(x));
+    addOptional(ip,'verbose', true, @(x) islogical(x) || isnumeric(x));
 
     parse(ip,par,Table,varargin{:});
 
@@ -41,6 +46,7 @@ function [y,xdata] = gsua_eval(par,Table,varargin)
     ydata    = ip.Results.ydata;
     parallel = logical(ip.Results.parallel);
     show     = logical(ip.Results.show);
+    verbose  = logical(ip.Results.verbose);
 
     % --------- Parallel configuration ---------
     if parallel
@@ -99,7 +105,7 @@ function [y,xdata] = gsua_eval(par,Table,varargin)
                         y(1,:,j) = y_temp(j,:);
                     end
                     % progress is trivially 100%
-                    disp('Progress: 100 %');
+                    if verbose, disp('Progress: 100 %'); end
                 else
                     % multi-simulation case in blocks
                     for b = 1:nBlocks
@@ -123,7 +129,7 @@ function [y,xdata] = gsua_eval(par,Table,varargin)
                         end
 
                         progress = 100 * iEnd / nSim;
-                        disp(['Progress: ', num2str(progress,'%.1f'), ' %']);
+                        if verbose, disp(['Progress: ', num2str(progress,'%.1f'), ' %']); end
                     end
                 end
 
@@ -155,7 +161,7 @@ function [y,xdata] = gsua_eval(par,Table,varargin)
                     end
 
                     progress = 100 * iEnd / nSim;
-                    disp(['Progress: ', num2str(progress,'%.1f'), ' %']);
+                    if verbose, disp(['Progress: ', num2str(progress,'%.1f'), ' %']); end
                 end
 
             case 6
@@ -176,7 +182,7 @@ function [y,xdata] = gsua_eval(par,Table,varargin)
                     end
 
                     progress = 100 * iEnd / nSim;
-                    disp(['Progress: ', num2str(progress,'%.1f'), ' %']);
+                    if verbose, disp(['Progress: ', num2str(progress,'%.1f'), ' %']); end
                 end
         end
     end

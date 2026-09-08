@@ -108,10 +108,10 @@ err_limit=100;
 
 if MS>1
     OS='Multistart';
-    disp('only lsqc supports Multistart ... Running lsq optimization')
+    if timer, disp('only lsqc supports Multistart ... Running lsq optimization'), end
 end
 if (isempty(IP) || size(IP,1)~=N) && any(strcmp(OS,{'lsqc','Multistart','lsqn','fmincon'}))
-    disp('Generating a valid matrix for estimations')
+    if timer, disp('Generating a valid matrix for estimations'), end
     [IP,~]=gsua_dmatrix(T,N);
 end
 
@@ -145,7 +145,7 @@ if timer
 end
     for i=1:N
         err_counter=0;
-        disp(['Estimation ' num2str(i)])
+        if timer, disp(['Estimation ' num2str(i)]), end
         done=true;
         attempt=1;
     while done

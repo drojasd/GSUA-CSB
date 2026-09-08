@@ -1,4 +1,4 @@
-function y = gsua_pardeval(M,Table2,xdata,parallel,init)
+function y = gsua_pardeval(M,Table2,xdata,parallel,init,verbose)
 %GSUA_PARDEVAL Evaluate the model behind a GSUA table for a batch of parameter sets
 %
 %   y = gsua_pardeval(M,T,xdata,parallel)
@@ -41,6 +41,9 @@ if kind==1
 end
 
 global t0
+if nargin<6 || isempty(verbose)
+    verbose=true;   % default on, preserving prior behavior; pass false for a quiet run
+end
 if nargin<5
     rem_compute=0;
 else
@@ -131,7 +134,7 @@ switch kind
         end
             
 end   
-if rem_compute==1
+if rem_compute==1 && verbose
         rem_percent=max(0,(1-(N+init(1))/init(2))*100);
         t11=clock; t1=t11(4)*3600+t11(5)*60+t11(6);
         dt=t1-t0;

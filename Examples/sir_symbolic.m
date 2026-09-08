@@ -35,11 +35,11 @@ rng(3,'twister')                           % fix the noise draw so the page repr
 truth = [0.35; 0.10];                      % beta, gamma -- the values to recover
 T.Nominal = truth;
 xfull = linspace(1, 80, 20);               % 80 days of surveillance, 20 reports
-% Trailing false,false suppresses gsua_eval's automatic diagnostic plot.
-cleanFull = gsua_eval(truth, T, xfull, [], false, false);
+% Trailing false,false,false suppresses gsua_eval's diagnostic plot and progress print.
+cleanFull = gsua_eval(truth, T, xfull, [], false, false, false);
 yfull = cleanFull + sqrt(max(cleanFull,1)).*randn(size(cleanFull));
 tdense = linspace(1, 80, 300);             % dense grid, for drawing curves only
-plot(tdense, gsua_eval(truth, T, tdense, [], false, false), 'LineWidth', 1.5)
+plot(tdense, gsua_eval(truth, T, tdense, [], false, false, false), 'LineWidth', 1.5)
 hold on
 plot(xfull, yfull, 'ko', 'MarkerFaceColor', 'k', 'MarkerSize', 5)
 xline(25, '--', 'end of early phase', 'LabelVerticalAlignment', 'bottom')
@@ -54,7 +54,7 @@ grid on
 %[text] Before spending any optimizer budget it is worth asking whether the data is even *reachable*: does it fall inside the range of epidemics the model can produce over the $ \\beta $ and $ \\gamma $ bounds declared in section 1? If it does not, no amount of optimization will help — the model structure or the bounds are wrong, and that has to be fixed first. This is the reachability check that opens the toolbox's semi-automated identification cycle.
 %[text] `gsua_dmatrix` samples the factor box and `gsua_ua` runs the Monte-Carlo ensemble over those samples, applying Monte-Carlo filtering and plotting it automatically — that is what the figures below show, factor by factor.
 M0 = gsua_dmatrix(T, 300);                          % 300 samples of the (beta, gamma) box
-Y0 = gsua_ua(M0, T, 'xdata', xfull, 'ynom', yfull, 'parallel', false);
+Y0 = gsua_ua(M0, T, 'xdata', xfull, 'ynom', yfull, 'parallel', false, 'verbose', false);
 %[text] `gsua_covmetric` reduces the ensemble to a 5–95% band. The containment fraction is the number to read at this stage; `cost_data` and `cost_band` are normalized against a tight tolerance and only become meaningful after convergence, in section 7.
 [cost_data, cost_band, P5, ~, P95] = gsua_covmetric(Y0, yfull, 'margin', 0.1);
 reachable = mean(yfull >= P5 & yfull <= P95);
@@ -79,7 +79,7 @@ Efull = Tfull.Estlsqc;                     % 2 x 20: one column per multistart r
 % margin here is a relative standard deviation OFFSET BY ONE: 1.1 asserts 10% noise.
 % Passing 0.1 would assert 90% noise and would also flip gsua_pe's internal +1 offset
 % positive, silently switching its inner refit from the likelihood to plain least squares.
-TciFull = gsua_likelihood(Tfull, xfull, yfull, 0.95, 0.05, 1.1, 0.01, 0.01, 15, 1, false, false, false, []);
+TciFull = gsua_likelihood(Tfull, xfull, yfull, 0.95, 0.05, 1.1, 0.01, 0.01, 15, 1, false, false, false, [], false);
 table(truth, Efull(:,1), TciFull.Range(:,1), TciFull.Range(:,2), TciFull.Range(:,2)-TciFull.Range(:,1), ...
     'VariableNames', {'true','estimated','CI_low','CI_high','width'}, ...
     'RowNames', Tfull.Properties.RowNames)
@@ -93,11 +93,11 @@ R0_full = Efull(1,1)/Efull(2,1)
     'range', [999 999; 1 1; 0 0; 0.15 0.9; 0.02 0.4], 'output', 2);
 Te.Nominal = truth;
 xearly = linspace(1, 25, 12);              % 25 days, 12 reports
-cleanEarly = gsua_eval(truth, Te, xearly, [], false, false);
+cleanEarly = gsua_eval(truth, Te, xearly, [], false, false, false);
 yearly = cleanEarly + sqrt(max(cleanEarly,1)).*randn(size(cleanEarly));
 [Tearly,resEarly] = gsua_pe(Te, xearly, yearly, 'solver','lsqc', 'N',20, 'margin',0.1, 'timer',false);
 Eearly = Tearly.Estlsqc;
-TciEarly = gsua_likelihood(Tearly, xearly, yearly, 0.95, 0.05, 1.1, 0.01, 0.01, 15, 1, false, false, false, []);
+TciEarly = gsua_likelihood(Tearly, xearly, yearly, 0.95, 0.05, 1.1, 0.01, 0.01, 15, 1, false, false, false, [], false);
 table(truth, Eearly(:,1), TciEarly.Range(:,1), TciEarly.Range(:,2), TciEarly.Range(:,2)-TciEarly.Range(:,1), ...
     'VariableNames', {'true','estimated','CI_low','CI_high','width'}, ...
     'RowNames', Tearly.Properties.RowNames)
@@ -116,9 +116,9 @@ summary = table([min(resFull); corrBetaGamma(Efull); TciFull.Range(1,2)-TciFull.
                  TciEarly.Range(2,2)-TciEarly.Range(2,1); Eearly(1,1)/Eearly(2,1)], ...
     'VariableNames', {'full_epidemic','early_phase'}, ...
     'RowNames', {'best cost','corr(beta,gamma)','CI width beta','CI width gamma','R0 (true 3.5)'})
-plot(tdense, gsua_eval(Efull(:,1), Tfull, tdense, [], false, false), 'LineWidth', 1.5)
+plot(tdense, gsua_eval(Efull(:,1), Tfull, tdense, [], false, false, false), 'LineWidth', 1.5)
 hold on
-plot(tdense, gsua_eval(Eearly(:,1), Tfull, tdense, [], false, false), '--', 'LineWidth', 1.5)
+plot(tdense, gsua_eval(Eearly(:,1), Tfull, tdense, [], false, false, false), '--', 'LineWidth', 1.5)
 plot(xfull, yfull, 'ko', 'MarkerFaceColor', 'k', 'MarkerSize', 4)
 hold off
 xlabel('time (days)')

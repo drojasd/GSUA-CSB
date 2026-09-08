@@ -1,4 +1,4 @@
-function Tfinal = gsua_likelihood(T,xdata,ydata,alpha,step,margin,tolerance1,tolerance2,limit,reps,show,parallel,saver,pars)
+function Tfinal = gsua_likelihood(T,xdata,ydata,alpha,step,margin,tolerance1,tolerance2,limit,reps,show,parallel,saver,pars,verbose)
 %GSUA_LIKELIHOOD Profile-likelihood confidence intervals for each parameter
 %
 %   Tfinal = gsua_likelihood(T,xdata,ydata,alpha,step,margin,tolerance1,tolerance2,limit,reps,show,parallel,saver,pars)
@@ -39,6 +39,9 @@ function Tfinal = gsua_likelihood(T,xdata,ydata,alpha,step,margin,tolerance1,tol
 %     saver      <-- (logical) append each parameter's result to
 %                    'likelihoodCI.mat' as it is computed
 %     pars       <-- indices of the parameters to profile (empty = all)
+%     verbose    <-- (optional, logical) print "Progress: N %" timing during
+%                    profiling. Default: true (preserving prior behavior); pass
+%                    false for a quiet run, e.g. inside a captured script.
 %
 %   Outputs:
 %     Tfinal <-- copy of T with Tfinal.Range replaced by the
@@ -46,6 +49,9 @@ function Tfinal = gsua_likelihood(T,xdata,ydata,alpha,step,margin,tolerance1,tol
 %                parameter
 %
 %   See also GSUA_PE, GSUA_LIKECOST, GSUA_OATR, GSUA_CSB.
+    if nargin<15 || isempty(verbose)
+        verbose=true;   % default on, preserving prior behavior; pass false for a quiet run
+    end
     margin2=margin-1;
     if isempty(pars)
         npars = size(T,1);
@@ -65,7 +71,7 @@ function Tfinal = gsua_likelihood(T,xdata,ydata,alpha,step,margin,tolerance1,tol
     
     Tfinal=T;
     init = [0,npars*2];
-    gsua_timer(0,init);
+    gsua_timer(0,init,verbose);
 
 %    if show
 %         %D1 = floor(sqrt(npars)); % Number of rows of subplot
@@ -190,8 +196,8 @@ function Tfinal = gsua_likelihood(T,xdata,ydata,alpha,step,margin,tolerance1,tol
             if saver
                 save_for_parfor('likelihoodCI.mat',1,Taux);
             end
-            clc
-            gsua_timer(1,[(2*i-(2-j)),init(2)]);
+            if verbose, clc; end
+            gsua_timer(1,[(2*i-(2-j)),init(2)],verbose);
         end
     end
     Tfinal.Range=Taux;
