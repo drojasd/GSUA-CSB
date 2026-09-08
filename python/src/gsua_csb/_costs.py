@@ -144,8 +144,11 @@ def costf_multi(
     faster arrangement regardless of parallelism.
 
     Args:
-        ydata: (n_runs, n_samples, n_outputs) array, one page of output per run (e.g. from
-            :meth:`gsua_csb.Model.evaluate_batch`).
+        ydata: (n_runs, n_samples, n_outputs) array, one page of output per run. Note this is
+            MATLAB ``gsua_pardeval``'s axis order, NOT :meth:`gsua_csb.Model.evaluate_batch`'s,
+            which is (n_runs, n_outputs, n_samples) -- swap the last two axes when bridging from
+            it (``np.swapaxes(Y, 1, 2)``). A 2-D ``(n_runs, n_samples)`` array is treated as a
+            single output.
         yfunction: (n_outputs, n_samples) reference/nominal output.
         margin: Relative perturbation for the internal regulator. Values ``<= 1`` are treated as a
             fraction and converted to ``1 + margin``. Default 0.1.
@@ -154,6 +157,14 @@ def costf_multi(
     Returns:
         (n_runs,) array of scalar costs, one per run.
     """
+    if isinstance(alpha, bool):
+        # MATLAB's gsua_costfMulti(ydata, yfunction, margin, parallel, alpha) takes `parallel` in
+        # this 4th slot; here the 4th argument is `alpha`. A positional port passing a boolean
+        # would otherwise raise every cost to the power 0 or 1 silently -- catch it explicitly.
+        raise TypeError(
+            "costf_multi()'s 4th argument is `alpha` (a numeric exponent), not MATLAB's "
+            "`parallel` flag; got a bool. This package has no parallel argument here."
+        )
     ydata = np.asarray(ydata, dtype=np.float64)
     if ydata.ndim == 2:
         ydata = ydata[:, :, None]
@@ -231,9 +242,11 @@ def coverage_metric(
     see the semi-automation identification routine's Phase 4/5 for how to act on the distinction.
 
     Args:
-        y: (n_runs, n_samples) or (n_runs, n_samples, n_outputs) Monte-Carlo output (e.g. from
-            :meth:`gsua_csb.Model.evaluate_batch`). Runs containing any non-finite value are
-            excluded from the percentile band.
+        y: (n_runs, n_samples) or (n_runs, n_samples, n_outputs) Monte-Carlo output. The 3-D form
+            is MATLAB's axis order, NOT :meth:`gsua_csb.Model.evaluate_batch`'s (which is
+            (n_runs, n_outputs, n_samples)); swap the last two axes when bridging from it. The 2-D
+            output of :func:`gsua_csb.uncertainty_analysis` (``UncertaintyResult.Y``) needs no
+            swap. Runs containing any non-finite value are excluded from the percentile band.
         ydata: (n_samples,) or (n_outputs, n_samples) reference data.
         margin: Relative tolerance for the shared normalization regulator. Values ``< 1`` are
             treated as a fraction. Default 0.1.

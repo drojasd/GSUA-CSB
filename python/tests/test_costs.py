@@ -158,3 +158,12 @@ def test_rcostf_no_nan_propagates_to_cost():
     yfunction = ydata + 0.5
     cost = rcostf(ydata, yfunction)
     assert np.isfinite(cost)
+
+
+def test_costf_multi_rejects_bool_alpha_matlab_parallel_slot():
+    # MATLAB gsua_costfMulti's 4th arg is `parallel`; here it is `alpha`. A positional port
+    # passing a bool must fail loudly rather than silently raising every cost to the 0th power.
+    y = np.ones((4, 10, 1))
+    ref = np.ones((1, 10))
+    with pytest.raises(TypeError, match="parallel"):
+        costf_multi(y, ref, 0.1, False)

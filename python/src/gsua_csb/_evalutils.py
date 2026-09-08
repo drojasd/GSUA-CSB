@@ -13,16 +13,37 @@ from numpy.typing import NDArray
 from ._model import Model
 
 
+def require_model(model: object, func_name: str) -> None:
+    """Raise a clear error if ``model`` is not a :class:`Model`.
+
+    Guards the argument-order trap under the MATLAB-parity aliases: MATLAB calls
+    ``gsua_sa(M, T)`` / ``gsua_ua(M, T)`` with the design matrix first, but this package puts the
+    model first (``sensitivity_analysis(model, M)``). Both arguments are positional, so a swap
+    would otherwise run and return nonsense; catch it with a message that names the fix.
+    """
+    if not isinstance(model, Model):
+        raise TypeError(
+            f"{func_name}() expects the Model first, then the design matrix: "
+            f"{func_name}(model, M). Got {type(model).__name__} as the first argument -- if you "
+            "are porting a MATLAB call, note the order is reversed there (gsua_sa(M, T))."
+        )
+
+
 def eval_batch(
-    model: Model, params: NDArray[np.float64], xdata: NDArray[np.float64] | None, output_index: int = 0
+    model: Model,
+    params: NDArray[np.float64],
+    xdata: NDArray[np.float64] | None,
+    output_index: int = 0,
+    n_jobs: int = 1,
 ) -> NDArray[np.float64]:
     """Evaluate a batch of parameter sets, collapsing to a plain (N, Nd) array.
 
     A scalar-output model's ``evaluate_batch`` returns (N,), a single-output time-series model
     returns (N, Nd), and a multi-state model (e.g. ``SymbolicODEModel``) returns (N, n_states, Nd)
-    -- ``output_index`` selects which state to use in the last case.
+    -- ``output_index`` selects which state to use in the last case. ``n_jobs`` is forwarded to
+    :meth:`Model.evaluate_batch` (parallel per-row evaluation; default serial).
     """
-    Y = np.asarray(model.evaluate_batch(params, xdata), dtype=np.float64)
+    Y = np.asarray(model.evaluate_batch(params, xdata, n_jobs=n_jobs), dtype=np.float64)
     if Y.ndim == 1:
         return Y[:, None]
     if Y.ndim == 3:

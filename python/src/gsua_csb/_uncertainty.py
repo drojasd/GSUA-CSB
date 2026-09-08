@@ -25,7 +25,7 @@ from dataclasses import dataclass
 import numpy as np
 from numpy.typing import ArrayLike, NDArray
 
-from ._evalutils import eval_batch, nominal_output
+from ._evalutils import eval_batch, nominal_output, require_model
 from ._model import Model
 
 
@@ -52,6 +52,7 @@ def uncertainty_analysis(
     xdata: ArrayLike | None = None,
     y_exp: ArrayLike | None = None,
     output_index: int = 0,
+    n_jobs: int = 1,
 ) -> UncertaintyResult:
     """Run a Monte Carlo ensemble of ``model`` over every row of a design matrix.
 
@@ -63,10 +64,14 @@ def uncertainty_analysis(
             Defaults to ``model.evaluate(model.nominal, xdata)``, matching MATLAB's default.
         output_index: For a multi-state model whose ``evaluate`` returns (n_states, Nd), which
             state to analyze. Ignored for single-output models.
+        n_jobs: Parallel worker processes for the model evaluations, the counterpart of MATLAB
+            ``gsua_ua``'s default-on ``'parallel'`` (default here is ``1``, serial; ``-1`` uses all
+            cores). Worth setting only when a single ``model.evaluate`` is genuinely expensive.
 
     Returns:
         An :class:`UncertaintyResult` with the full (N, Nd) ensemble.
     """
+    require_model(model, "uncertainty_analysis")
     M = np.asarray(M, dtype=np.float64)
     d = model.domain if xdata is None else np.asarray(xdata, dtype=np.float64)
 
@@ -75,7 +80,7 @@ def uncertainty_analysis(
     else:
         y_nom = np.atleast_1d(np.asarray(y_exp, dtype=np.float64))
 
-    Y = eval_batch(model, M, d, output_index)
+    Y = eval_batch(model, M, d, output_index, n_jobs=n_jobs)
     return UncertaintyResult(Y=Y, y_nom=y_nom, xdata=np.asarray(d) if d is not None else None)
 
 
@@ -126,6 +131,7 @@ def monte_carlo_filter(
     Returns:
         An :class:`MCFResult`.
     """
+    require_model(model, "monte_carlo_filter")
     M = np.asarray(M, dtype=np.float64)
     Y = np.asarray(Y, dtype=np.float64)
     y_exp = np.atleast_1d(np.asarray(y_exp, dtype=np.float64))

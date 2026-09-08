@@ -230,25 +230,38 @@ class Model(ABC):
         )
 
     def evaluate_batch(
-        self, params: NDArray[np.float64], xdata: ArrayLike | None = None
+        self, params: NDArray[np.float64], xdata: ArrayLike | None = None, n_jobs: int = 1
     ) -> NDArray[np.float64]:
         """Evaluate the model for a batch of parameter sets.
 
         Default implementation loops calling :meth:`evaluate` once per row -- correct for any
-        model, but not fast. This is the direct replacement for MATLAB's ``parfor``-based
+        model. This is the direct replacement for MATLAB's ``parfor``-based
         ``gsua_pardeval``/``gsua_eval``: subclasses whose underlying callable can accept a batch of
         parameter sets at once (the MATLAB toolbox's ``vectorized=True`` case) should override this
-        for real vectorized speed instead of a Python-level loop, which is usually a much bigger win
-        than parallelizing the loop itself (no process/thread overhead, no GIL contention).
+        for real vectorized speed, which is usually a much bigger win than parallelizing the loop
+        itself (no process/thread overhead, no GIL contention).
 
         Args:
             params: (N, Np) parameter sets, one row per run.
             xdata: Points to evaluate/interpolate at. If ``None``, uses ``self.domain``.
+            n_jobs: Number of parallel worker processes for the per-row loop, the counterpart of
+                MATLAB's default-on ``parfor`` (which this port defaults *off*, ``n_jobs=1``, to
+                avoid surprising process pools). ``-1`` uses all cores. Only helps when
+                :meth:`evaluate` is genuinely expensive (a stiff ODE solve, say) and enough to
+                outweigh process startup and result pickling; a fast or vectorized model is better
+                left serial or overridden. Ignored by vectorized subclasses.
 
         Returns:
             (N, ...) stacked output, one row per parameter set.
         """
-        rows = [self.evaluate(params[i], xdata) for i in range(params.shape[0])]
+        if n_jobs == 1:
+            rows = [self.evaluate(params[i], xdata) for i in range(params.shape[0])]
+        else:
+            from joblib import Parallel, delayed
+
+            rows = Parallel(n_jobs=n_jobs)(
+                delayed(self.evaluate)(params[i], xdata) for i in range(params.shape[0])
+            )
         return np.stack(rows, axis=0)
 
 
@@ -321,11 +334,12 @@ class UserFunctionModel(Model):
         return np.asarray(self._func(params, d, **self.opt))
 
     def evaluate_batch(
-        self, params: NDArray[np.float64], xdata: ArrayLike | None = None
+        self, params: NDArray[np.float64], xdata: ArrayLike | None = None, n_jobs: int = 1
     ) -> NDArray[np.float64]:
         if not self.vectorized:
             # The base loop calls evaluate(), which already applies the output selection.
-            return super().evaluate_batch(params, xdata)
+            return super().evaluate_batch(params, xdata, n_jobs=n_jobs)
+        # A vectorized model runs the whole batch in one call, so n_jobs does not apply.
         d = self.domain if xdata is None else np.asarray(xdata, dtype=np.float64)
         if d is None:
             return self._select_batch(np.asarray(self._func(params, **self.opt)))

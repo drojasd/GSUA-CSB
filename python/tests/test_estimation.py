@@ -156,3 +156,55 @@ def test_log_scale_defaults_to_all_false_and_matches_prior_behavior(ydata):
         model, XDATA, ydata, n=1, solver="least_squares", initial_points=np.array([[1.5, 0.3]])
     )
     np.testing.assert_allclose(result.x[0], TRUE_PARAMS, atol=1e-3)
+
+
+class TestObjectiveAndRobustness:
+    """Parity fixes: negative-margin objective, evaluation-failure handling, opt-in save."""
+
+    @staticmethod
+    def _model():
+        xd = np.linspace(0.25, 24, 14)
+        def pk(p, t):
+            ka, ke, V = p
+            return ((100 * ka) / (V * (ka - ke)) * (np.exp(-ke * t) - np.exp(-ka * t)))[None, :]
+        m = UserFunctionModel(func=pk, names=["ka", "ke", "V"],
+                              range=np.array([[0.6, 3.0], [0.05, 0.5], [5.0, 40.0]]),
+                              nominal=np.array([1.2, 0.25, 15.0]), domain=xd, output_names=["c"])
+        y = m.evaluate(np.array([1.2, 0.25, 15.0])) * (
+            1 + 0.05 * np.random.default_rng(0).standard_normal((1, 14)))
+        return m, xd, y
+
+    def test_negative_margin_selects_nll_objective(self):
+        # margin<0 must run the Gaussian NLL, a different objective than margin>0's regulator
+        # cost -- so their reported best costs differ (they are on different scales entirely).
+        m, xd, y = self._model()
+        neg = parameter_estimation(m, xd, y, n=3, solver="minimize", margin=-0.1, seed=0)
+        pos = parameter_estimation(m, xd, y, n=3, solver="minimize", margin=0.1, seed=0)
+        assert not np.isclose(neg.cost.min(), pos.cost.min())
+
+    def test_evaluation_failure_does_not_crash_the_run(self):
+        xd = np.linspace(0.25, 24, 14)
+        def flaky(p, t):
+            if p[0] > 2.5:
+                raise RuntimeError("unevaluable regime")
+            return (p[0] * np.exp(-p[1] * t))[None, :]
+        m = UserFunctionModel(func=flaky, names=["a", "r"],
+                              range=np.array([[1.0, 4.0], [0.1, 1.0]]),
+                              nominal=np.array([2.0, 0.5]), domain=xd, output_names=["o"])
+        y = flaky(np.array([2.0, 0.5]), xd)
+        for solver in ["least_squares", "minimize"]:
+            pe = parameter_estimation(m, xd, y, n=6, solver=solver, seed=0)
+            assert np.isfinite(pe.cost.min())          # a good start still wins
+            assert pe.x[np.argmin(pe.cost), 0] == pytest.approx(2.0, abs=1e-3)
+
+    def test_save_path_is_opt_in(self, tmp_path):
+        m, xd, y = self._model()
+        # nothing written without save_path
+        before = set(tmp_path.iterdir())
+        parameter_estimation(m, xd, y, n=2, seed=0)
+        assert set(tmp_path.iterdir()) == before
+        # written when asked
+        fp = tmp_path / "est.npz"
+        parameter_estimation(m, xd, y, n=2, seed=0, save_path=str(fp))
+        with np.load(fp, allow_pickle=True) as d:
+            assert "x" in d and "cost" in d and d["solver"] == "least_squares"

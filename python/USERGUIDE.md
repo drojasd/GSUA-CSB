@@ -465,7 +465,7 @@ thing here, read the first table.
 
 | | MATLAB | Python | What happens if you carry it across |
 |---|---|---|---|
-| **Argument order** | `gsua_sa(M, T)`, `gsua_ua(M, T)` | `sensitivity_analysis(model, M)`, `uncertainty_analysis(model, M)` | Model and design matrix are **swapped**. Both are positional, so the call runs and returns nonsense rather than erroring. |
+| **Argument order** | `gsua_sa(M, T)`, `gsua_ua(M, T)` | `sensitivity_analysis(model, M)`, `uncertainty_analysis(model, M)` | Model and design matrix are **swapped**. A swap now raises a clear `TypeError` naming the correct order, rather than silently returning nonsense. |
 | **`margin` in profile likelihood** | `gsua_likelihood(..., margin=1.08, ...)` — the assumed relative std is `margin - 1` | `profile_likelihood(..., margin=0.08)` — the assumed relative std *is* `margin` | **Offset by one.** Passing MATLAB's `1.1` to Python asserts 110% noise; passing Python's `0.1` to MATLAB asserts 90% noise *and* flips `gsua_pe`'s internal `+1` offset positive, silently switching its inner refit from the likelihood to plain least squares. Use `1+m` in MATLAB where Python takes `m`. |
 | **`margin` sign in estimation** | `gsua_pe` with `margin < 0` (after its `+1` offset) selects a Gaussian negative-log-likelihood objective | `parameter_estimation` takes `abs(margin)` and always uses the regulator cost | Same input, **different objective**, no error. |
 | **Repeated-estimate orientation** | `gsua_ia(T, T_est)` with `T_est` as Np × N — one **column** per run | `identifiability_analysis(model, estimates)` with `(N, Np)` — one **row** per run | Transposed. Consistent with `PEResult.x`, but a square case (Np == N) fails silently. |
@@ -489,16 +489,18 @@ thing here, read the first table.
 
 | Concept | MATLAB | Python |
 |---|---|---|
-| Save results to disk | `gsua_pe` writes `Estimations.mat` to the working directory (`'save'` defaults true) | never writes |
+| Save results to disk | `gsua_pe` writes `Estimations.mat` to the working directory (`'save'` defaults true) | opt-in: `parameter_estimation(..., save_path=...)` writes an `.npz`; nothing is written otherwise |
 | Progress printing | `gsua_pe`/`gsua_ia` print unconditionally; `gsua_eval` prints a progress line | silent, except `warnings.warn` |
-| Parallelism | `gsua_sa`/`gsua_ua` default `'parallel', true` | serial; no `parallel`/`n_jobs` argument anywhere |
+| Parallelism | `gsua_sa`/`gsua_ua` default `'parallel', true` | `sensitivity_analysis`/`uncertainty_analysis`/`Model.evaluate_batch` take `n_jobs` (default `1`, serial; `-1` all cores) |
 | Default evaluation grid | `gsua_eval` expands `domain` to a unit-step grid | `model.domain` is used verbatim — give it the points you want, not just the endpoints |
 | Plot on sampling | `gsua_dmatrix(..., 'Show','on')` draws a scatter | `design_matrix` returns `M` only |
 
 ### Options with no Python equivalent
 
 `gsua_pe`: `A`, `B`, `Aeq`, `Beq`, `nonlcon` (linear and nonlinear constraints have no path at
-all), `Multistart`, `Show`, `save`, `timer`; solvers `particle`, `psearch`, `surrogate`.
+all), `Multistart`, `Show`, `timer`; solvers `particle`, `psearch`, `surrogate`. (`save` is
+covered by `save_path`, and negative `margin` selects the same Gaussian-NLL objective it does in
+MATLAB.)
 `gsua_likelihood`: `reps`, `parallel`, `show`, `saver` (so a long Python profile is unresumable).
 `gsua_sa`: `bandwidth`, and the `brute-force` method. `gsua_oatr`/`gsua_csb`: `titerlimit`,
 `parallel`, `show`, `breaking`, `stretch`. `gsua_costcutoff` has no standalone Python function —

@@ -32,7 +32,7 @@ from typing import Literal
 import numpy as np
 from numpy.typing import ArrayLike, NDArray
 
-from ._evalutils import eval_batch, nominal_output
+from ._evalutils import eval_batch, nominal_output, require_model
 from ._model import Model
 
 SensMethod = Literal["sobol", "jansen", "saltelli", "xiao", "oat"]
@@ -72,10 +72,11 @@ def _oat(
     xdata: NDArray[np.float64] | None,
     y_exp: NDArray[np.float64],
     output_index: int,
+    n_jobs: int = 1,
 ) -> SensitivityResult:
     N, Np = M.shape
     fixed = model.fixed
-    Y = eval_batch(model, M, xdata, output_index)
+    Y = eval_batch(model, M, xdata, output_index, n_jobs=n_jobs)
     J = np.zeros(Np)
     nominal_rows = np.tile(model.nominal, (N, 1))
     for k in range(Np):
@@ -83,7 +84,7 @@ def _oat(
             continue
         M_oat = nominal_rows.copy()
         M_oat[:, k] = M[:, k]
-        Y_oat = eval_batch(model, M_oat, xdata, output_index)
+        Y_oat = eval_batch(model, M_oat, xdata, output_index, n_jobs=n_jobs)
         J[k] = np.var(np.sum((Y_oat - y_exp) ** 2, axis=1))
     VT = np.sum(J)
     Si = J / VT if VT > 0 else np.zeros(Np)
@@ -101,6 +102,7 @@ def sensitivity_analysis(
     method: SensMethod = "xiao",
     pod: float = 1.0,
     output_index: int = 0,
+    n_jobs: int = 1,
 ) -> SensitivityResult:
     """Estimate global sensitivity indices for ``model``'s free parameters.
 
@@ -120,6 +122,9 @@ def sensitivity_analysis(
         pod: Exponent for the Xiao method's norm (``0 < pod <= 2``). Ignored for other methods.
         output_index: For a multi-state model whose ``evaluate`` returns (n_states, Nd), which
             state to analyze. Ignored for single-output models.
+        n_jobs: Parallel worker processes for the model evaluations, the counterpart of MATLAB
+            ``gsua_sa``'s default-on ``'parallel'`` (default here is ``1``, serial; ``-1`` uses all
+            cores). Worth setting only when a single ``model.evaluate`` is genuinely expensive.
 
     Returns:
         A :class:`SensitivityResult`.
@@ -128,6 +133,7 @@ def sensitivity_analysis(
         ValueError: If ``method`` is not one of the five supported values, or ``pod`` is out of
             ``(0, 2]``.
     """
+    require_model(model, "sensitivity_analysis")
     method = method.lower()  # type: ignore[assignment]
     if method not in _VALID_METHODS:
         raise ValueError(f"Unknown sensitivity method: {method!r}, expected one of {sorted(_VALID_METHODS)}")
@@ -148,7 +154,7 @@ def sensitivity_analysis(
         y_exp = np.atleast_1d(np.asarray(y_exp, dtype=np.float64))
 
     if method == "oat":
-        return _oat(model, M, d, y_exp, output_index)
+        return _oat(model, M, d, y_exp, output_index, n_jobs=n_jobs)
 
     Np = model.n_params
     fixed = model.fixed
@@ -156,8 +162,8 @@ def sensitivity_analysis(
 
     A = M[: N // 2]
     B = M[N // 2 :]
-    YA = eval_batch(model, A, d, output_index)
-    YB = eval_batch(model, B, d, output_index)
+    YA = eval_batch(model, A, d, output_index, n_jobs=n_jobs)
+    YB = eval_batch(model, B, d, output_index, n_jobs=n_jobs)
     Y = np.vstack([YA, YB])
     JA = np.sum((YA - y_exp) ** 2, axis=1)
     JB = np.sum((YB - y_exp) ** 2, axis=1)
@@ -188,13 +194,13 @@ def sensitivity_analysis(
             continue
         ABi_k = A.copy()
         ABi_k[:, k] = B[:, k]
-        YABi_k = eval_batch(model, ABi_k, d, output_index)
+        YABi_k = eval_batch(model, ABi_k, d, output_index, n_jobs=n_jobs)
         JABi_k = np.sum((YABi_k - y_exp) ** 2, axis=1)
 
         if method == "sobol":
             BAi_k = B.copy()
             BAi_k[:, k] = A[:, k]
-            YBAi_k = eval_batch(model, BAi_k, d, output_index)
+            YBAi_k = eval_batch(model, BAi_k, d, output_index, n_jobs=n_jobs)
             JBAi_k = np.sum((YBAi_k - y_exp) ** 2, axis=1)
             Si_vec[k] = (np.mean(YA * YBAi_k, axis=0) - f02_vec) / V_vec
             STi_vec[k] = np.mean(YA * (YA - YABi_k), axis=0) / V_vec

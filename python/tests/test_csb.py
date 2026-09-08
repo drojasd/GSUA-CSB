@@ -101,3 +101,21 @@ def test_confidence_subcontour_box_warns_when_not_converged():
     y_exp = model.evaluate(true_params, XDATA)
     with pytest.warns(UserWarning, match="did not reach"):
         confidence_subcontour_box(model, n=30, y_exp=y_exp, reps=1, stop=0.999999, seed=0)
+
+
+def test_csb_and_costf_multi_axis_order_multi_output():
+    # Regression: evaluate_batch is (N, n_outputs, n_samples) but costf_multi wants
+    # (N, n_samples, n_outputs); confidence_subcontour_box must bridge the two axes and score
+    # against ALL outputs. Before the fix this raised for any genuinely multi-output model.
+    import numpy as np
+    from gsua_csb import UserFunctionModel, confidence_subcontour_box
+    def f(p, t):
+        a, b = p
+        return np.vstack([a * np.exp(-0.3 * t), b * np.sin(t)])
+    m = UserFunctionModel(func=f, names=["a", "b"],
+                          range=np.array([[1.0, 3.0], [1.0, 3.0]]),
+                          nominal=np.array([2.0, 2.0]),
+                          domain=np.linspace(0, 5, 30), output_names=["o0", "o1"])
+    res = confidence_subcontour_box(m, n=40, reps=2, seed=0)
+    assert res.range.shape == (2, 2)
+    assert np.all(np.isfinite(res.range))

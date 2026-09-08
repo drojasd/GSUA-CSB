@@ -86,6 +86,7 @@ def parameter_estimation(
     alpha: float = 2.0,
     seed: int | np.random.Generator | None = None,
     solver_kwargs: dict | None = None,
+    save_path: str | None = None,
 ) -> PEResult:
     """Fit ``model``'s free parameters to ``(xdata, ydata)``, from ``n`` starting points.
 
@@ -106,16 +107,22 @@ def parameter_estimation(
             ``model.log_scale``), one row per attempt. Defaults to
             :func:`gsua_csb.design_matrix(model, n, seed=seed)`, matching MATLAB's default
             behavior of generating a fresh design matrix when no ``ipoint`` is given.
-        margin: For ``solver`` in ``{"minimize", "differential_evolution", "dual_annealing"}``:
-            if ``0`` (default), the objective is plain MSE (mirrors MATLAB's ``immse`` default
-            path). If nonzero, the objective is :func:`gsua_csb.rcostf` with this margin (mirrors
-            MATLAB's ``gsua_costf``-based path) -- below 1 means within tolerance. Ignored for
+        margin: For ``solver`` in ``{"minimize", "differential_evolution", "dual_annealing"}``,
+            selects the objective by sign. ``0`` (default): plain MSE (MATLAB's ``immse`` path).
+            ``> 0``: :func:`gsua_csb.rcostf` with this margin, the correlation-penalized regulator
+            cost (MATLAB's ``gsua_costf`` path) -- below 1 means within tolerance. ``< 0``: Gaussian
+            negative log-likelihood with standard deviation ``|ydata| * |margin|`` (MATLAB's
+            ``margin < 0`` path, which ``gsua_likelihood`` uses for its inner refit). Ignored for
             ``solver="least_squares"``, which always minimizes the raw residual.
         alpha: Exponent passed to :func:`gsua_csb.rcostf` when ``margin != 0``.
         seed: Seed for the default ``initial_points`` and for the stochastic global solvers
             (``differential_evolution``, ``dual_annealing``).
         solver_kwargs: Extra keyword arguments passed through to the underlying `scipy.optimize`
             call.
+        save_path: If given, write the results to this path as an ``.npz`` archive (``x``, ``cost``,
+            ``names``, ``solver``, ``margin``, ``alpha``). MATLAB ``gsua_pe`` writes
+            ``Estimations.mat`` to the working directory by default; this port makes it opt-in, so
+            nothing is written unless ``save_path`` is set.
 
     Returns:
         A :class:`PEResult`.
@@ -170,14 +177,36 @@ def parameter_estimation(
         full[free_idx] = p_free_natural
         return full
 
+    # A parameter set can drive the model into a regime it cannot evaluate (a stiff ODE the
+    # solver fails to integrate, a domain error in the callable). MATLAB's gsua_deval returns
+    # inf(len) there so the optimizer rejects the point rather than crashing the whole run;
+    # mirror that -- a large finite residual for least_squares (inf would break its linear
+    # algebra), inf for the scalar-cost solvers.
+    _fail = 1e10
+
     def residual(p_search: NDArray[np.float64]) -> NDArray[np.float64]:
-        y = model.evaluate(full_params(p_search), xdata)
-        return np.ravel(np.asarray(y, dtype=np.float64) - ydata)
+        try:
+            y = np.asarray(model.evaluate(full_params(p_search), xdata), dtype=np.float64)
+        except Exception:
+            return np.full(ydata.size, _fail)
+        r = np.ravel(y - ydata)
+        return np.where(np.isfinite(r), r, _fail)
 
     def cost(p_search: NDArray[np.float64]) -> float:
-        y = model.evaluate(full_params(p_search), xdata)
+        try:
+            y = np.asarray(model.evaluate(full_params(p_search), xdata), dtype=np.float64)
+        except Exception:
+            return np.inf
         if margin == 0:
-            return float(np.mean((ydata - np.asarray(y, dtype=np.float64)) ** 2))
+            return float(np.mean((ydata - y) ** 2))
+        if margin < 0:
+            # Gaussian negative log-likelihood, std = |ydata| * |margin|. Mirrors MATLAB
+            # gsua_pe's margin<0 branch (gsua_pe.m:176-178) -- the objective gsua_likelihood
+            # uses for its inner refit. Without this a negative margin was silently taken as
+            # its absolute value and run through the regulator cost, a different objective.
+            desv = (ydata * margin) ** 2
+            with np.errstate(divide="ignore", invalid="ignore"):
+                return float(np.nansum(np.log(2 * np.pi * desv) + (ydata - y) ** 2 / desv) / 2)
         return rcostf(ydata, y, margin=margin, alpha=alpha)
 
     results_x = np.zeros((n, model.n_params))
@@ -189,22 +218,38 @@ def parameter_estimation(
         if solver == "least_squares":
             sol = least_squares(residual, x0_free, bounds=(lb, ub), **solver_kwargs)
             results_x[i] = full_params(sol.x)
-            results_cost[i] = float(np.sum(sol.fun**2))
+            fun = float(np.sum(sol.fun**2))
         elif solver == "minimize":
             sol = minimize(cost, x0_free, bounds=list(zip(lb, ub)), **solver_kwargs)
             results_x[i] = full_params(sol.x)
-            results_cost[i] = float(sol.fun)
+            fun = float(sol.fun)
         elif solver == "differential_evolution":
             sol = differential_evolution(cost, bounds=list(zip(lb, ub)), seed=seed, **solver_kwargs)
             results_x[i] = full_params(sol.x)
-            results_cost[i] = float(sol.fun)
+            fun = float(sol.fun)
         elif solver == "dual_annealing":
             sol = dual_annealing(cost, bounds=list(zip(lb, ub)), seed=seed, **solver_kwargs)
             results_x[i] = full_params(sol.x)
-            results_cost[i] = float(sol.fun)
+            fun = float(sol.fun)
+        # A start that begins in a region the model cannot evaluate can leave a scalar solver at a
+        # non-finite objective (no gradient to escape on). Record it as inf so it sorts last rather
+        # than poisoning min()/argsort with a NaN -- another start still wins.
+        results_cost[i] = fun if np.isfinite(fun) else np.inf
 
     order = np.argsort(results_cost)
-    return PEResult(
+    result = PEResult(
         names=list(model.names), x=results_x[order], cost=results_cost[order], solver=solver,
         margin=margin, alpha=alpha,
     )
+
+    if save_path is not None:
+        # MATLAB gsua_pe writes Estimations.mat to the working directory by DEFAULT (its 'save'
+        # flag defaults true), for crash-resume. Writing files silently by default is a poor
+        # default in a library, so here it is opt-in: pass save_path to get an .npz with the
+        # same information.
+        np.savez(
+            save_path, x=result.x, cost=result.cost, names=np.asarray(result.names),
+            solver=solver, margin=margin, alpha=alpha,
+        )
+
+    return result

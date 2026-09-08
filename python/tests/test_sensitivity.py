@@ -101,3 +101,33 @@ def test_pod_out_of_range_raises():
     M = design_matrix(model, 100, seed=0)
     with pytest.raises(ValueError, match="pod must be"):
         sensitivity_analysis(model, M, method="xiao", pod=3.0)
+
+
+def test_swapped_model_and_matrix_raises_clear_error():
+    # gsua_sa(M, T) in MATLAB but sensitivity_analysis(model, M) here; a swap must be caught.
+    import numpy as np
+    import pytest
+    from gsua_csb import (UserFunctionModel, design_matrix, sensitivity_analysis,
+                          uncertainty_analysis)
+    m = UserFunctionModel(func=lambda p, t: (p[0] * np.exp(-p[1] * t))[None, :],
+                          names=["a", "r"], range=np.array([[1.0, 3.0], [0.1, 1.0]]),
+                          domain=np.linspace(0, 5, 20), output_names=["o"])
+    M = design_matrix(m, 20, seed=0)
+    with pytest.raises(TypeError, match="reversed"):
+        sensitivity_analysis(M, m)
+    with pytest.raises(TypeError, match="reversed"):
+        uncertainty_analysis(M, m)
+
+
+def test_n_jobs_matches_serial():
+    import numpy as np
+    from gsua_csb import UserFunctionModel, design_matrix, uncertainty_analysis, sensitivity_analysis
+    m = UserFunctionModel(func=lambda p, t: (p[0] * np.exp(-p[1] * t))[None, :],
+                          names=["a", "r"], range=np.array([[1.0, 3.0], [0.1, 1.0]]),
+                          domain=np.linspace(0, 5, 20), output_names=["o"])
+    M = design_matrix(m, 24, seed=0)
+    np.testing.assert_allclose(uncertainty_analysis(m, M, n_jobs=1).Y,
+                               uncertainty_analysis(m, M, n_jobs=2).Y)
+    s1 = sensitivity_analysis(m, M, method="sobol", n_jobs=1)
+    s2 = sensitivity_analysis(m, M, method="sobol", n_jobs=2)
+    np.testing.assert_allclose(s1.STi, s2.STi)

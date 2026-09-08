@@ -256,7 +256,13 @@ def confidence_subcontour_box(
         A :class:`CSBResult`.
     """
     d = model.domain if xdata is None else np.asarray(xdata, dtype=np.float64)
-    y_nom = nominal_output(model, d) if y_exp is None else np.atleast_1d(np.asarray(y_exp, dtype=np.float64))
+    # Score against ALL outputs, shape (n_outputs, n_samples), to match the (N, n_samples,
+    # n_outputs) batch fed to costf_multi below -- collapsing to a single output (as
+    # nominal_output does) would silently ignore every output but the first.
+    if y_exp is None:
+        y_nom = np.atleast_2d(np.asarray(model.evaluate(model.nominal, d), dtype=np.float64))
+    else:
+        y_nom = np.atleast_2d(np.asarray(y_exp, dtype=np.float64))
 
     free_idx = np.where(~model.fixed)[0]
     Np = model.n_params
@@ -275,7 +281,11 @@ def confidence_subcontour_box(
         temp_model = copy.copy(model)
         temp_model.range = current_range
         M = design_matrix(temp_model, n, method="latin_hypercube", seed=rng)
-        Y = model.evaluate_batch(M, d)
+        Y = np.asarray(model.evaluate_batch(M, d), dtype=np.float64)
+        # evaluate_batch is (N, n_outputs, n_samples); costf_multi wants
+        # (N, n_samples, n_outputs) -- MATLAB gsua_pardeval's order. Bridge the two axes.
+        if Y.ndim == 3:
+            Y = np.swapaxes(Y, 1, 2)
         J = costf_multi(Y, y_nom, margin=lim, alpha=1.0)
 
         behavioral = J < 1
