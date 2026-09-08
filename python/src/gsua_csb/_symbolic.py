@@ -73,6 +73,7 @@ class SymbolicODEModel(Model):
         method: str = "RK45",
         solver_kwargs: dict | None = None,
         log_scale: ArrayLike | None = None,
+        output: int | str | Sequence[int | str] | None = None,
     ) -> None:
         self.n_states = len(state_vars)
         self.n_true_params = len(params)
@@ -98,13 +99,14 @@ class SymbolicODEModel(Model):
         )
         self.domain = np.asarray(domain, dtype=np.float64)
         self.output_names = list(self.names[: self.n_states])
+        self.set_output(output)
         self.log_scale = (
             np.zeros(n, dtype=bool) if log_scale is None else np.asarray(log_scale, dtype=bool)
         )
         if self.log_scale.shape != (n,):
             raise ValueError(f"log_scale must have shape ({n},), got {self.log_scale.shape}")
 
-    def evaluate(self, params: NDArray[np.float64], xdata: ArrayLike | None = None) -> NDArray[np.float64]:
+    def _evaluate(self, params: NDArray[np.float64], xdata: ArrayLike | None = None) -> NDArray[np.float64]:
         d = self.domain if xdata is None else np.asarray(xdata, dtype=np.float64)
         y0 = params[: self.n_states]
         true_params = params[self.n_states :]

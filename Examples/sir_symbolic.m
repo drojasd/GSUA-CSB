@@ -50,7 +50,29 @@ legend('true epidemic','surveillance data','Location','northeast')
 title('Simulated epidemic, R_0 = 3.5')
 grid on
 %%
-%[text] ## 3. Estimating from the full epidemic
+%[text] ## 3. Can these parameters be estimated at all?
+%[text] Before spending any optimizer budget it is worth asking whether the data is even *reachable*: does it fall inside the range of epidemics the model can produce over the $ \\beta $ and $ \\gamma $ bounds declared in section 1? If it does not, no amount of optimization will help — the model structure or the bounds are wrong, and that has to be fixed first. This is the reachability check that opens the toolbox's semi-automated identification cycle.
+%[text] `gsua_dmatrix` samples the factor box and `gsua_ua` runs the Monte-Carlo ensemble over those samples, applying Monte-Carlo filtering and plotting it automatically — that is what the figures below show, factor by factor.
+M0 = gsua_dmatrix(T, 300);                          % 300 samples of the (beta, gamma) box
+Y0 = gsua_ua(M0, T, 'xdata', xfull, 'ynom', yfull, 'parallel', false);
+%[text] `gsua_covmetric` reduces the ensemble to a 5–95% band. The containment fraction is the number to read at this stage; `cost_data` and `cost_band` are normalized against a tight tolerance and only become meaningful after convergence, in section 7.
+[cost_data, cost_band, P5, ~, P95] = gsua_covmetric(Y0, yfull, 'margin', 0.1);
+reachable = mean(yfull >= P5 & yfull <= P95);
+table(reachable, median(P95-P5), cost_data, cost_band, ...
+    'VariableNames', {'contained','median_band_width','cost_data','cost_band'})
+%[text] Nearly all the observations fall inside the reachable band, so an epidemic of this shape is within the model's declared range and estimation is worth attempting. The band itself is far too wide to be useful as an answer — it spans most of the population — which is precisely the uncertainty the next sections set out to reduce.
+plot(xfull, P5, 'Color', [0.4 0.4 0.4], 'LineWidth', 1)
+hold on
+plot(xfull, P95, 'Color', [0.4 0.4 0.4], 'LineWidth', 1)
+plot(xfull, yfull, 'ko', 'MarkerFaceColor', 'k', 'MarkerSize', 5)
+hold off
+xlabel('time (days)')
+ylabel('infected individuals I(t)')
+legend('5th percentile','95th percentile','surveillance data','Location','northeast')
+title(sprintf('Reachable band before fitting (%.0f%% of data contained)', 100*reachable))
+grid on
+%%
+%[text] ## 4. Estimating from the full epidemic
 %[text] With the whole curve in hand — growth, peak and decline — both factors are estimated by multistart least squares, twenty restarts as before.
 [Tfull,resFull] = gsua_pe(T, xfull, yfull, 'solver','lsqc', 'N',20, 'margin',0.1, 'timer',false);
 Efull = Tfull.Estlsqc;                     % 2 x 20: one column per multistart run
@@ -61,7 +83,7 @@ table(truth, Efull(:,1), TciFull.Range(:,1), TciFull.Range(:,2), TciFull.Range(:
 %[text] Both factors land close to the truth and both intervals are narrow. Reading off the quantity that matters:
 R0_full = Efull(1,1)/Efull(2,1)
 %%
-%[text] ## 4. Estimating from the early phase only
+%[text] ## 5. Estimating from the early phase only
 %[text] Now suppose the analysis had to be done *during* the outbreak, with only the first 25 days available — the situation every real-time epidemic assessment faces. Nothing about the model changes; only the observation window shrinks.
 % Same system, shorter domain. The model file is regenerated for the new time span.
 [Te,~] = gsua_dataprep(odes, vars, [0 25], 'sirEpidemicModel', ...
@@ -78,13 +100,13 @@ table(truth, Eearly(:,1), TciEarly.Range(:,1), TciEarly.Range(:,2), TciEarly.Ran
     'RowNames', Tearly.Properties.RowNames)
 %[text] The estimates still look plausible. Note the cost, though: the early-phase fit is *better* than the full-epidemic fit was — fewer points, all of them on a smooth exponential rise — while the intervals have widened and $ \\gamma $ now reaches nearly to its lower bound.
 %%
-%[text] ## 5. Diagnosing identifiability
+%[text] ## 6. Diagnosing identifiability
 %[text] The correlation between the repeated estimates explains what happened.
 table(corrBetaGamma(Efull), corrBetaGamma(Eearly), ...
     'VariableNames', {'full_epidemic','early_phase'}, 'RowNames', {'corr(beta,gamma)'})
 %[text] In the early phase it is essentially $ 1 $. During exponential growth the data constrain only the growth rate, roughly $ \\beta-\\gamma $, so any pair with the right difference reproduces the observations equally well. It takes the peak — where susceptibles are depleted and the curve turns over — to separate the two.
 %%
-%[text] ## 6. The two windows side by side
+%[text] ## 7. The two windows side by side
 summary = table([min(resFull); corrBetaGamma(Efull); TciFull.Range(1,2)-TciFull.Range(1,1); ...
                  TciFull.Range(2,2)-TciFull.Range(2,1); Efull(1,1)/Efull(2,1)], ...
                 [min(resEarly); corrBetaGamma(Eearly); TciEarly.Range(1,2)-TciEarly.Range(1,1); ...
@@ -102,7 +124,7 @@ legend('fit to full epidemic','fit to early phase, extrapolated','data','Locatio
 title('Where the early-phase fit leads')
 grid on
 %%
-%[text] ## 7. What this example shows
+%[text] ## 8. What this example shows
 %[text] The same model and the same estimator produced two very different states of knowledge, and the difference was the observation window rather than anything about the algorithm. The better-fitting dataset was the less informative one.
 %[text] Fit quality measures agreement with the points you have; identifiability measures whether those points could have distinguished your parameters from the alternatives. They are different questions, and only the second tells you whether an estimate is worth reporting.
 %[text] For a real outbreak the consequence follows directly: an $ R_0 $ estimated before the peak carries a confidence interval wide enough to change policy conclusions, and quoting the point estimate alone would hide that.

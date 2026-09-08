@@ -53,6 +53,34 @@ when practical identifiability analysis says a parameter can't be estimated (see
 
 For a *scalar* (domain-less) model, just omit `domain` and write `func(params)`.
 
+### Choosing which output to work with
+
+A model that returns several signals — the three compartments of an SIR system, say — usually has
+only one of them measured. `model.output` selects which, and is the counterpart of
+`T.Properties.CustomProperties.output` on a MATLAB summary table:
+
+```python
+model.set_output("infected")     # by name
+model.set_output(1)              # or by index
+model.set_output([0, 2])         # or several
+model.set_output(None)           # back to all outputs
+model.active_output_names        # -> what evaluate() currently returns
+```
+
+It can also be given at construction: `SymbolicODEModel(..., output=1)`.
+
+Set it once and everything follows, because every routine in the package reaches the model
+through `model.evaluate`. That includes `parameter_estimation`, `profile_likelihood`,
+`confidence_subcontour_box` and `noise_floor`, none of which take an `output_index` argument — so
+before this existed, fitting one state of a multi-state model meant wrapping it in a second model
+just to slice the output. The `output_index` arguments on `sensitivity_analysis` and
+`uncertainty_analysis` still work and index the *active* outputs, i.e. whatever is left after this
+selection.
+
+Prefer `model.evaluate(params, xdata)` over calling your own function directly: it is the
+toolbox's evaluation path, it applies this selection, and it is what every routine uses
+internally. It is the counterpart of MATLAB's `gsua_eval`.
+
 ### `SymbolicODEModel` — a system of ODEs defined with SymPy
 
 Requires the `symbolic` extra (`pip install -e ".[symbolic]"`).

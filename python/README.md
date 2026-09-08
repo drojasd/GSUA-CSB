@@ -47,7 +47,7 @@ Each capability is exposed two ways:
 
 | Capability | Status | MATLAB equivalent |
 |---|---|---|
-| `Model` / `UserFunctionModel` | Done | table + CustomProperties, `gsua_userdefined` |
+| `Model` / `UserFunctionModel`, incl. `model.output` selection | Done | table + CustomProperties, `gsua_userdefined` |
 | Cost functions (`costf`, `rcostf`, `costf_multi`, `likecost`) | Done | `gsua_costf`, `gsua_rcostf`, `gsua_costfMulti`, `gsua_likecost` |
 | Coverage/tightness metric (`coverage_metric`) | Done | `gsua_covmetric` |
 | Distribution-free median CI, band depth | Done | `gsua_medianCI`, `gsua_depth` |

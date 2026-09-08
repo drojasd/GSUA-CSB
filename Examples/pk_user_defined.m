@@ -46,7 +46,29 @@ legend('true model','measurements','Location','northeast')
 title('Simulated single-dose concentration data')
 grid on
 %%
-%[text] ## 3. Estimating the parameters
+%[text] ## 3. Can these parameters be estimated at all?
+%[text] Before spending any optimizer budget it is worth asking whether the data is even *reachable*: does it fall inside the range of behaviours the model can produce over the factor bounds declared in section 1? If it does not, no amount of optimization will help — the model structure or the bounds are wrong, and that has to be fixed first. This is the reachability check that opens the toolbox's semi-automated identification cycle.
+%[text] `gsua_dmatrix` samples the factor box and `gsua_ua` runs the Monte-Carlo ensemble over those samples. `gsua_ua` also applies Monte-Carlo filtering automatically and plots it, which is what the two figures below show: for each factor, how the low and high halves of its sampled range map onto model output.
+M0 = gsua_dmatrix(T, 500);                           % 500 samples of the factor box
+Y0 = gsua_ua(M0, T, 'xdata', xdata, 'ynom', ydata, 'parallel', false);
+%[text] `gsua_covmetric` reduces that ensemble to a 5–95% band and scores it. The containment fraction — how much of the measured data actually falls inside the band — is the number to read at this stage.
+[cost_data, cost_band, P5, ~, P95] = gsua_covmetric(Y0, ydata, 'margin', 0.1);
+reachable = mean(ydata >= P5 & ydata <= P95);
+table(reachable, median(P95-P5), cost_data, cost_band, ...
+    'VariableNames', {'contained','median_band_width','cost_data','cost_band'})
+%[text] All of the data lies inside the reachable band, so estimation is worth attempting. Note that `cost_data` and `cost_band` are both far above 1 here, and that is expected rather than alarming: they are normalized against a tight tolerance and are meaningful as a *post-convergence* check (section 7), not as a pass/fail gate against a prior range this wide. The band is enormous — a median width of about 5 mg/L against data that never exceeds 4.5 — which is exactly what an uninformative prior looks like before any fitting.
+plot(xdata, P5, 'Color', [0.4 0.4 0.4], 'LineWidth', 1)
+hold on
+plot(xdata, P95, 'Color', [0.4 0.4 0.4], 'LineWidth', 1)
+plot(xdata, ydata, 'ko', 'MarkerFaceColor', 'k', 'MarkerSize', 5)
+hold off
+xlabel('time (h)')
+ylabel('concentration (mg/L)')
+legend('5th percentile','95th percentile','measurements','Location','northeast')
+title(sprintf('Reachable band before fitting (%.0f%% of data contained)', 100*reachable))
+grid on
+%%
+%[text] ## 4. Estimating the parameters
 %[text] `gsua_pe` runs a multistart estimation: `'N',20` restarts the optimizer from twenty different points in the factor space, which is how you find out whether the problem has one solution or several.
 % 'margin',0.1 selects the correlation-penalized cost and records the margin on the
 % output table, so functions further down the pipeline can recover what was scored.
@@ -65,7 +87,7 @@ legend('fitted model','measurements','Location','northeast')
 title(sprintf('Fit with all three factors free (cost = %.4g)', min(res3)))
 grid on
 %%
-%[text] ## 4. Diagnosing identifiability
+%[text] ## 5. Diagnosing identifiability
 %[text] The correlation between the repeated estimates is the first warning sign. Values near $ \\pm 1 $ mean the factors trade off against each other: many different combinations reproduce the same curve.
 array2table(corr(Est3'), 'VariableNames', T3.Properties.RowNames, 'RowNames', T3.Properties.RowNames)
 %[text] `gsua_likelihood` turns that into something actionable. It profiles each factor — stepping it away from the estimate while re-fitting all the others at every step — and reports the interval over which the fit stays statistically acceptable.
@@ -78,7 +100,7 @@ table(Tci3.Range(:,1), Tci3.Range(:,2), Tci3.Range(:,2)-Tci3.Range(:,1), ranges(
     'RowNames', T3.Properties.RowNames)
 %[text] This is the result worth stopping on. The interval for $ k_a $ spans its **entire prior range** — the data constrain it not at all — and $ k_e $ runs to its upper bound. A model fitting this well is still telling us that these three factors cannot be separated from a single oral concentration curve. That is a textbook pharmacokinetic result, not a failure of the optimizer.
 %%
-%[text] ## 5. The remedy: fix what another experiment already knows
+%[text] ## 6. The remedy: fix what another experiment already knows
 %[text] The standard resolution is to measure $ V $ separately, in an intravenous study where it *is* directly identifiable, and then estimate only the two rate constants. In this toolbox a factor is fixed by giving it a degenerate range; fixed factors drop out of `T` entirely, so the table returned below has two rows rather than three.
 rangesFixed = [0.6 3.0; 0.05 0.5; 15 15];            % V pinned at its known value
 [Tf,~] = gsua_dataprep('pkAbsorptionModel', rangesFixed, 'domain', [0 24], ...
@@ -91,7 +113,7 @@ table(truth(1:2), T2.Estlsqc(:,1), Tci2.Range(:,1), Tci2.Range(:,2), Tci2.Range(
     'RowNames', T2.Properties.RowNames)
 %[text] Both remaining factors are now recovered close to the truth, and both intervals sit well inside their bounds instead of running to them.
 %%
-%[text] ## 6. The two runs side by side
+%[text] ## 7. The two runs side by side
 %[text] Comparing the two fits on the quantities people usually conflate:
 summary = table([min(res3); corr2free(Est3); Tci3.Range(1,2)-Tci3.Range(1,1); Tci3.Range(2,2)-Tci3.Range(2,1)], ...
                 [min(res2); corr2free(T2.Estlsqc); Tci2.Range(1,2)-Tci2.Range(1,1); Tci2.Range(2,2)-Tci2.Range(2,1)], ...
@@ -104,7 +126,7 @@ legend('all three free','V fixed','Location','northeast')
 title('Fixing one factor sharpens the other two')
 grid on
 %%
-%[text] ## 7. What this example shows
+%[text] ## 8. What this example shows
 %[text] Fixing $ V $ made the fit slightly **worse** and the science considerably **better**: the correlation between $ k_a $ and $ k_e $ collapses, both intervals tighten, and the estimates move onto the truth.
 %[text] Cost measures how well a curve passes through points. It does not measure whether the factors that produced that curve could have been recovered. Only the identifiability analysis answers that, which is why it belongs *inside* the workflow rather than after it.
 %[text] The companion symbolic-math example reaches the same conclusion from the opposite direction: there, the dataset that fits *better* is the one whose parameters are *less* identifiable.

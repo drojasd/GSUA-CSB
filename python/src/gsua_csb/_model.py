@@ -91,6 +91,16 @@ class Model(ABC):
             constants) needs log-space sampling to be searchable at all: linear-uniform sampling
             over e.g. ``[1e-13, 1000]`` essentially never lands anywhere near a true value like
             ``2e-12``, and a linear-space local optimizer cannot traverse that distance either.
+        output: Which of the model's outputs are exposed by :meth:`evaluate`, or ``None`` (the
+            default) for all of them. ``CustomProperties.output`` in MATLAB, and settable the same
+            way -- assign to it, or call :meth:`set_output`, at any point after construction.
+
+            This is the single place output selection lives. Every routine in the package reaches
+            the model through :meth:`evaluate`/:meth:`evaluate_batch`, so setting it once governs
+            estimation, profile likelihood, the confidence sub-contour box and the noise floor
+            too -- none of which take an ``output_index`` argument. The ``output_index`` parameters
+            on :func:`gsua_csb.sensitivity_analysis` and :func:`gsua_csb.uncertainty_analysis`
+            index the *active* outputs, i.e. what is left after this selection is applied.
     """
 
     names: list[str]
@@ -99,6 +109,7 @@ class Model(ABC):
     output_names: list[str]
     domain: NDArray[np.float64] | None
     log_scale: NDArray[np.bool_]
+    output: NDArray[np.intp] | None = None
 
     @property
     def n_params(self) -> int:
@@ -133,9 +144,66 @@ class Model(ABC):
         self.range[i, :] = v
         self.nominal[i] = v
 
-    @abstractmethod
+    @property
+    def active_output_names(self) -> list[str]:
+        """``output_names`` restricted to the outputs :meth:`evaluate` currently returns."""
+        if self.output is None:
+            return list(self.output_names)
+        return [self.output_names[i] for i in self.output]
+
+    def set_output(self, which: int | str | Sequence[int | str] | None) -> None:
+        """Choose which output(s) :meth:`evaluate` returns.
+
+        The counterpart of editing ``T.Properties.CustomProperties.output`` on a MATLAB summary
+        table: set it once and every downstream routine follows, because they all go through
+        :meth:`evaluate`.
+
+        Args:
+            which: An output index, an output name, a sequence of either, or ``None`` to expose
+                every output again.
+
+        Raises:
+            ValueError: If a name is not in ``output_names`` or an index is out of range.
+        """
+        if which is None:
+            self.output = None
+            return
+        items = [which] if isinstance(which, (int, np.integer, str)) else list(which)
+        idx = []
+        for it in items:
+            if isinstance(it, str):
+                if it not in self.output_names:
+                    raise ValueError(f"unknown output {it!r}; have {self.output_names}")
+                idx.append(self.output_names.index(it))
+            else:
+                i = int(it)
+                if not 0 <= i < len(self.output_names):
+                    raise ValueError(
+                        f"output index {i} out of range for {len(self.output_names)} output(s)"
+                    )
+                idx.append(i)
+        self.output = np.asarray(idx, dtype=np.intp)
+
+    def _select(self, y: NDArray[np.float64]) -> NDArray[np.float64]:
+        """Apply :attr:`output` to a single-run result whose leading axis is the output index."""
+        if self.output is None:
+            return y
+        y = np.asarray(y)
+        # A single-output or domain-less model has nothing to select from.
+        return y if y.ndim < 2 else y[self.output]
+
+    def _select_batch(self, Y: NDArray[np.float64]) -> NDArray[np.float64]:
+        """Apply :attr:`output` to a batch result shaped (N, n_outputs, len(xdata))."""
+        if self.output is None:
+            return Y
+        Y = np.asarray(Y)
+        return Y if Y.ndim < 3 else Y[:, self.output, :]
+
     def evaluate(self, params: NDArray[np.float64], xdata: ArrayLike | None = None) -> NDArray[np.float64]:
-        """Evaluate the model for a single parameter vector.
+        """Evaluate the model for a single parameter vector, honouring :attr:`output`.
+
+        Concrete classes implement :meth:`_evaluate`; this wrapper applies the output selection so
+        that it takes effect everywhere, without every caller having to know about it.
 
         Args:
             params: (Np,) parameter values (all Np, including fixed ones -- unlike the MATLAB
@@ -145,9 +213,21 @@ class Model(ABC):
 
         Returns:
             Model output. Shape depends on the model: (len(xdata),) for a single-output
-            time-series model, (len(xdata), n_outputs) for multi-output, or ``(1,)``/scalar for a
-            domain-less model.
+            time-series model, (n_outputs, len(xdata)) for multi-output, or ``(1,)``/scalar for a
+            domain-less model. When :attr:`output` is set, the output axis is reduced accordingly.
         """
+        return self._select(self._evaluate(params, xdata))
+
+    def _evaluate(self, params: NDArray[np.float64], xdata: ArrayLike | None = None) -> NDArray[np.float64]:
+        """Evaluate the model, ignoring :attr:`output`. Implemented by concrete classes.
+
+        Deliberately not abstract: a subclass written against an earlier version overrides
+        :meth:`evaluate` directly, and must keep working. Such a class simply bypasses output
+        selection, exactly as it did before.
+        """
+        raise NotImplementedError(
+            f"{type(self).__name__} must implement _evaluate() (or override evaluate())"
+        )
 
     def evaluate_batch(
         self, params: NDArray[np.float64], xdata: ArrayLike | None = None
@@ -209,6 +289,7 @@ class UserFunctionModel(Model):
         vectorized: bool = False,
         opt: dict | None = None,
         log_scale: ArrayLike | None = None,
+        output: int | str | Sequence[int | str] | None = None,
     ) -> None:
         self._func = func
         self.names = list(names)
@@ -231,8 +312,9 @@ class UserFunctionModel(Model):
         )
         if self.log_scale.shape != (len(self.names),):
             raise ValueError(f"log_scale must have shape ({len(self.names)},), got {self.log_scale.shape}")
+        self.set_output(output)
 
-    def evaluate(self, params: NDArray[np.float64], xdata: ArrayLike | None = None) -> NDArray[np.float64]:
+    def _evaluate(self, params: NDArray[np.float64], xdata: ArrayLike | None = None) -> NDArray[np.float64]:
         d = self.domain if xdata is None else np.asarray(xdata, dtype=np.float64)
         if d is None:
             return np.asarray(self._func(params, **self.opt))
@@ -242,11 +324,12 @@ class UserFunctionModel(Model):
         self, params: NDArray[np.float64], xdata: ArrayLike | None = None
     ) -> NDArray[np.float64]:
         if not self.vectorized:
+            # The base loop calls evaluate(), which already applies the output selection.
             return super().evaluate_batch(params, xdata)
         d = self.domain if xdata is None else np.asarray(xdata, dtype=np.float64)
         if d is None:
-            return np.asarray(self._func(params, **self.opt))
-        return np.asarray(self._func(params, d, **self.opt))
+            return self._select_batch(np.asarray(self._func(params, **self.opt)))
+        return self._select_batch(np.asarray(self._func(params, d, **self.opt)))
 
     @classmethod
     def from_bounds(
