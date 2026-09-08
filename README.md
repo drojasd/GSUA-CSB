@@ -25,8 +25,9 @@ import gsua_csb as gc
 
 - **[`python/README.md`](python/README.md)** — what's implemented, install options, design notes
 - **[`python/USERGUIDE.md`](python/USERGUIDE.md)** — worked examples for every capability
-- **[`python/examples/system_identification_cycle.py`](python/examples/system_identification_cycle.py)**
-  — the full semi-automated identification workflow, runnable end to end
+- **[`python/examples/`](python/examples/)** — end-to-end notebooks ([pharmacokinetics](https://drojasd.github.io/GSUA-CSB/examples/pk-user-defined-python.html),
+  [SIR epidemic](https://drojasd.github.io/GSUA-CSB/examples/sir-symbolic-python.html)) plus
+  `system_identification_cycle.py`, the full semi-automated identification workflow
 
 Simulink-backed models are intentionally not ported (no Python equivalent — call MATLAB directly
 via its Python Engine API instead); everything else targets full parity with the MATLAB toolbox
@@ -56,6 +57,28 @@ A single "GSUA table" (a MATLAB `table` carrying custom properties) records para
 and everything the toolbox needs to evaluate the underlying model, so the same functions
 (`gsua_sa`, `gsua_ua`, `gsua_pe`, `gsua_ia`, ...) work regardless of which kind of model produced the table.
 
+## Worked Examples
+
+Two complete system-identification workflows — from writing the model down to reporting
+confidence intervals. Each one is written twice, as a **MATLAB Live Script** and as a **Python
+notebook** computing the same thing, so you can follow whichever you work in.
+
+| Example | Model kind | Read it | Source |
+|---------|-----------|---------|--------|
+| **Pharmacokinetics** — when a perfect fit hides an unidentifiable parameter | user-defined function | [MATLAB](https://drojasd.github.io/GSUA-CSB/examples/pk-user-defined-matlab.html) · [Python](https://drojasd.github.io/GSUA-CSB/examples/pk-user-defined-python.html) | [`Examples/pk_user_defined.m`](Examples/pk_user_defined.m) · [`python/examples/pk_user_defined.ipynb`](python/examples/pk_user_defined.ipynb) |
+| **SIR epidemic** — identifiability depends on when you stopped looking | symbolic ODEs | [MATLAB](https://drojasd.github.io/GSUA-CSB/examples/sir-symbolic-matlab.html) · [Python](https://drojasd.github.io/GSUA-CSB/examples/sir-symbolic-python.html) | [`Examples/sir_symbolic.m`](Examples/sir_symbolic.m) · [`python/examples/sir_symbolic.ipynb`](python/examples/sir_symbolic.ipynb) |
+
+Both reach the same conclusion from opposite directions: **the dataset that produced the lower
+cost is the one that produced the less trustworthy parameters.** In the pharmacokinetic example
+every multistart run converges to the same excellent fit while the parameters correlate at
+−0.9999; fixing the volume of distribution makes the fit *worse* and the parameters recoverable.
+In the epidemic example the first 25 days fit about four times better than the full outbreak,
+yet transmission and recovery rates become perfectly confounded and R₀ is underestimated at 2.78
+against a true 3.5.
+
+All four pages are executed output, not illustrative snippets. Browse them from
+**[drojasd.github.io/GSUA-CSB](https://drojasd.github.io/GSUA-CSB/)**.
+
 ## Why It Matters
 
 Mathematical models used in epidemiology, public health, engineering, and biological systems often depend on
@@ -64,7 +87,8 @@ through the model, and how identifiable fitted parameters are under available da
 
 ## Links
 
-- User guide and examples: [GSUA-CSB documentation](https://drojasd.github.io/GSUA-CSB/gsua_userguide)
+- Documentation site: [drojasd.github.io/GSUA-CSB](https://drojasd.github.io/GSUA-CSB/) — worked examples and user guide
+- User guide: [GSUA-CSB documentation](https://drojasd.github.io/GSUA-CSB/gsua_userguide.html)
 - MATLAB File Exchange: [View GSUA-CSB on File Exchange](https://www.mathworks.com/matlabcentral/fileexchange/72637-gsua-csb)
 - Latest GitHub release: [releases](https://github.com/drojasd/GSUA-CSB/releases)
 - DOI: [Zenodo DOI](https://zenodo.org/badge/latestdoi/205731654)

@@ -66,6 +66,22 @@ Each capability is exposed two ways:
 
 ## Examples
 
+### End-to-end notebooks
+
+Two complete workflows — model definition through parameter estimation, identifiability analysis
+and confidence intervals — each with a MATLAB Live Script counterpart computing the same thing.
+Rendered output is on the [documentation site](https://drojasd.github.io/GSUA-CSB/).
+
+| Notebook | Model kind | Rendered |
+|----------|-----------|----------|
+| [`examples/pk_user_defined.ipynb`](examples/pk_user_defined.ipynb) — a perfect fit hiding an unidentifiable parameter | `UserFunctionModel` | [view](https://drojasd.github.io/GSUA-CSB/examples/pk-user-defined-python.html) |
+| [`examples/sir_symbolic.ipynb`](examples/sir_symbolic.ipynb) — identifiability depends on when you stopped looking | `SymbolicODEModel` | [view](https://drojasd.github.io/GSUA-CSB/examples/sir-symbolic-python.html) |
+
+Both reach the same conclusion from opposite directions: the dataset that produced the lower cost
+is the one that produced the less trustworthy parameters.
+
+### Scripted workflow
+
 [`examples/system_identification_cycle.py`](examples/system_identification_cycle.py) — a runnable,
 narrated worked example of the toolbox's semi-automation system-identification cycle (reachability
 check → multistart estimation → practical identifiability analysis → confidence-interval thinness
