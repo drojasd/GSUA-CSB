@@ -1,1 +1,158 @@
-<html><body><p>Hello World</p></body></html>
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>GSUA-CSB Toolbox</title>
+<style>
+  :root{
+    --bg:#fbfbfa; --fg:#1c1c1a; --muted:#5f5f58; --line:#e2e1dc;
+    --card:#ffffff; --accent:#8a4b2a; --accent-soft:#f3ece7;
+    --matlab:#a8452a; --python:#2d5f7c;
+  }
+  @media (prefers-color-scheme: dark){
+    :root:not([data-theme="light"]){
+      --bg:#15161a; --fg:#e9e8e3; --muted:#a3a29b; --line:#2c2e34;
+      --card:#1d1f24; --accent:#d99a6c; --accent-soft:#2a2320;
+      --matlab:#e08a6d; --python:#7fb2d1;
+    }
+  }
+  :root[data-theme="dark"]{
+    --bg:#15161a; --fg:#e9e8e3; --muted:#a3a29b; --line:#2c2e34;
+    --card:#1d1f24; --accent:#d99a6c; --accent-soft:#2a2320;
+    --matlab:#e08a6d; --python:#7fb2d1;
+  }
+  *{box-sizing:border-box}
+  body{
+    margin:0; background:var(--bg); color:var(--fg);
+    font:16px/1.65 -apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,Helvetica,Arial,sans-serif;
+    -webkit-font-smoothing:antialiased;
+  }
+  .wrap{max-width:860px; margin:0 auto; padding:0 24px 72px}
+  header{padding:64px 0 8px}
+  h1{font-size:2.1rem; letter-spacing:-.02em; margin:0 0 6px; font-weight:650}
+  .sub{color:var(--muted); font-size:1.05rem; margin:0 0 4px}
+  .meta{color:var(--muted); font-size:.88rem; margin-top:18px}
+  .meta a{color:var(--accent)}
+  a{color:var(--accent); text-decoration:none}
+  a:hover{text-decoration:underline}
+  h2{font-size:1.12rem; margin:52px 0 6px; letter-spacing:-.01em}
+  h2 + p.lede{color:var(--muted); margin:0 0 22px; font-size:.95rem}
+  .card{
+    background:var(--card); border:1px solid var(--line); border-radius:10px;
+    padding:22px 24px; margin-bottom:18px;
+  }
+  .card h3{margin:0 0 4px; font-size:1.04rem; font-weight:620}
+  .card .kind{
+    display:inline-block; font-size:.72rem; letter-spacing:.06em; text-transform:uppercase;
+    color:var(--accent); background:var(--accent-soft); border-radius:4px;
+    padding:2px 8px; margin-bottom:10px; font-weight:600;
+  }
+  .card p{margin:0 0 16px; color:var(--muted); font-size:.94rem}
+  .card p strong{color:var(--fg); font-weight:600}
+  .runs{display:flex; gap:10px; flex-wrap:wrap}
+  .run{
+    display:inline-flex; align-items:baseline; gap:7px; border:1px solid var(--line);
+    border-radius:7px; padding:7px 14px; font-size:.9rem; font-weight:550;
+    background:var(--bg);
+  }
+  .run:hover{border-color:var(--accent); text-decoration:none}
+  .run .lang{font-weight:680}
+  .run .fmt{color:var(--muted); font-size:.82rem; font-weight:400}
+  .run.m .lang{color:var(--matlab)}
+  .run.p .lang{color:var(--python)}
+  table{border-collapse:collapse; width:100%; font-size:.9rem; margin:6px 0 0}
+  th,td{text-align:left; padding:7px 12px 7px 0; border-bottom:1px solid var(--line)}
+  th{font-weight:600; color:var(--muted); font-size:.82rem; text-transform:uppercase; letter-spacing:.04em}
+  code{
+    font-family:ui-monospace,SFMono-Regular,Menlo,Consolas,monospace; font-size:.88em;
+    background:var(--accent-soft); padding:1px 5px; border-radius:4px;
+  }
+  footer{margin-top:56px; padding-top:22px; border-top:1px solid var(--line);
+         color:var(--muted); font-size:.86rem}
+</style>
+</head>
+<body>
+<div class="wrap">
+
+<header>
+  <h1>GSUA-CSB Toolbox</h1>
+  <p class="sub">Global sensitivity and uncertainty analysis, parameter estimation, and
+  confidence sub-contour boxes for dynamical models &mdash; in MATLAB and Python.</p>
+  <p class="meta">
+    Universidad EAFIT &middot;
+    <a href="https://github.com/drojasd/GSUA-CSB">GitHub</a> &middot;
+    <a href="https://www.mathworks.com/matlabcentral/fileexchange/">File&nbsp;Exchange</a> &middot;
+    <a href="gsua_userguide.html">User guide</a>
+  </p>
+</header>
+
+<h2>Worked examples</h2>
+<p class="lede">Two complete system-identification workflows, from writing the model down to
+reporting confidence intervals. Each is available as a MATLAB Live Script and as a Python
+notebook, computing the same thing both ways.</p>
+
+<div class="card">
+  <span class="kind">User-defined model</span>
+  <h3>Pharmacokinetics: when a perfect fit hides an unidentifiable parameter</h3>
+  <p>A one-compartment model with first-order absorption, fitted to a single oral
+  concentration curve. Every multistart run converges to the same excellent fit &mdash; and the
+  parameters still cannot be separated, because they are correlated at nearly &minus;1.
+  Fixing the volume of distribution from an independent study makes the fit
+  <strong>slightly worse and the science considerably better</strong>.</p>
+  <div class="runs">
+    <a class="run m" href="examples/pk-user-defined-matlab.html"><span class="lang">MATLAB</span><span class="fmt">Live Script</span></a>
+    <a class="run p" href="examples/pk-user-defined-python.html"><span class="lang">Python</span><span class="fmt">notebook</span></a>
+  </div>
+</div>
+
+<div class="card">
+  <span class="kind">Symbolic ODE model</span>
+  <h3>Epidemic modelling: identifiability depends on when you stopped looking</h3>
+  <p>An SIR system written with Symbolic Math Toolbox (SymPy in the Python version), fitted
+  twice: once to a full epidemic and once to the first 25 days only. The early-phase data give
+  the <strong>better fit and the worse answer</strong> &mdash; transmission and recovery rates
+  become perfectly confounded before the peak, and R<sub>0</sub> is underestimated by 21% with
+  intervals nearly seven times wider.</p>
+  <div class="runs">
+    <a class="run m" href="examples/sir-symbolic-matlab.html"><span class="lang">MATLAB</span><span class="fmt">Live Script</span></a>
+    <a class="run p" href="examples/sir-symbolic-python.html"><span class="lang">Python</span><span class="fmt">notebook</span></a>
+  </div>
+</div>
+
+<h2>What the two examples share</h2>
+<p class="lede">Both reach the same conclusion from opposite directions, which is the reason to
+read them together.</p>
+<table>
+  <tr><th>&nbsp;</th><th>Better fit</th><th>Better identified</th></tr>
+  <tr><td>Pharmacokinetics</td><td>all three factors free</td><td>volume fixed</td></tr>
+  <tr><td>Epidemic</td><td>early phase only</td><td>full epidemic</td></tr>
+</table>
+<p class="lede" style="margin-top:16px">In both cases the dataset that produced the lower cost
+is the one that produced the less trustworthy parameters. Cost measures how well a curve passes
+through points; it says nothing about whether the parameters behind that curve could have been
+recovered. Only an identifiability analysis answers the second question.</p>
+
+<h2>Where to go next</h2>
+<p class="lede">The <a href="gsua_userguide.html">user guide</a> covers the whole toolbox. The
+functions these examples lean on most:</p>
+<table>
+  <tr><th>Function</th><th>Role</th></tr>
+  <tr><td><code>gsua_dataprep</code></td><td>Build the summary table from a Simulink, symbolic or user-defined model</td></tr>
+  <tr><td><code>gsua_pe</code></td><td>Multistart parameter estimation</td></tr>
+  <tr><td><code>gsua_ia</code></td><td>Practical identifiability: correlations, ranges, multiple global minima</td></tr>
+  <tr><td><code>gsua_likelihood</code></td><td>Profile-likelihood confidence intervals</td></tr>
+  <tr><td><code>gsua_covmetric</code></td><td>Scores an uncertainty band for the confounding signature</td></tr>
+  <tr><td><code>gsua_noisefloor</code></td><td>Noise-calibrated threshold for which fits to accept</td></tr>
+  <tr><td><code>gsua_dmatrix</code></td><td>Factor sampling, including correlation-preserving joint sampling</td></tr>
+</table>
+
+<footer>
+  Developed at Universidad EAFIT by Daniel Rojas D&iacute;az and Carlos Mario V&eacute;lez S&aacute;nchez.
+  The Python port mirrors the MATLAB API; see
+  <a href="https://github.com/drojasd/GSUA-CSB/blob/master/python/USERGUIDE.md">python/USERGUIDE.md</a>.
+</footer>
+
+</div>
+</body>
+</html>
