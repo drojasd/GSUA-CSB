@@ -19,6 +19,9 @@ Par_Final.mat
 Estimations.mat
 ATable.mat
 Functions/likelihoodCI.mat
+# Symbolic Math Toolbox codegen emitted by gsua_dataprep's modelName argument --
+# default_example and the symbolic section of gsua_userguide.mlx both regenerate it.
+/SIR.m
 
 # Version-stamped release builds (distributed as GitHub release assets, not source)
 /release/
