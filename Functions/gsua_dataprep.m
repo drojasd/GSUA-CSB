@@ -6,7 +6,7 @@ function [T,out1]=gsua_dataprep(p1,p2,p3,p4,varargin)
 % Parameters:
 % model_name      <-- file name of the simulink model
 % Ranges          <-- double array of Npx2
-% Parameter_names <-- cell array with the parameter names of the model
+% Parameter_names <-- parameter names of the model, as a cellstr, string array, or char
 % Outputs:
 % T    <-- table array with all required system information
 % tout <-- array of output time for the model

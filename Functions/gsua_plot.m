@@ -198,19 +198,26 @@ switch plot_type
         set(gca,'visible','off')
         set(h,'visible','on')
         
-    case 'ScatterParameter'  % Scatter plots of every pair of parameters
+    case 'ScatterParameter'  % Scatter matrix of every pair of parameters
         if nargin ~=4
             disp('Give the right number of 4 function inputs')
-            disp('sens_plot(''ScatterParameter'',Par,SampleMethod,M)')
+            disp('gsua_plot(''ScatterParameter'',Par,SampleMethod,M)')
             return
         end
         SampleMethod = p2; M = p3(:,~fixed);
-        Table = array2table(M,'VariableNames',genvarname(Par.Properties.RowNames(~fixed)));
-        sdo.scatterPlot(Table)
-        h = title(axes,{['Scatterplot of pair of parameters with ' SampleMethod ' method'];' '},'Color','r');
-        set(gca,'visible','off')
-        set(h,'visible','on')
-        
+        % plotmatrix is base MATLAB, so this scatter matrix no longer needs the Simulink
+        % Design Optimization scatter routine. It also keeps the real parameter names --
+        % including TeX markup such as \tau or \beta_h -- as axis labels via the default
+        % 'tex' interpreter, which the old routine rendered poorly.
+        [~,AX,BigAx] = plotmatrix(M);
+        np = numel(names);
+        for i = 1:np
+            ylabel(AX(i,1), names{i}, 'Interpreter','tex', ...
+                'Rotation',0, 'HorizontalAlignment','right');
+            xlabel(AX(np,i), names{i}, 'Interpreter','tex');
+        end
+        title(BigAx, {['Scatterplot of parameter pairs (' SampleMethod ' sampling)'];' '}, 'Color','r');
+
     case 'Pie'
         switch nargin
             case 5 % Time-dependent pie charts of sensitivity indices

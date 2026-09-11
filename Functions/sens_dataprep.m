@@ -40,7 +40,7 @@ addRequired(p,'ParIn',checkPar);
 addParameter(p,'rMethod',defaultrMethod,checkrMethod);
 addParameter(p,'modelkind',defaultTypeModel,checkTypeModel);
 addParameter(p,'nominal',defaultNominals,checkRanges);
-addParameter(p,'out_names',defaultONames,@iscellstr);
+addParameter(p,'out_names',defaultONames,@(x) iscellstr(x)||isstring(x)||ischar(x));
 addParameter(p,'Step',defaultStep,@isnumeric);
 addParameter(p,'output',defaultStep,@isnumeric);
 
@@ -48,6 +48,9 @@ parse(p,model,Ranges,ParIn,varargin{:})
 
 Ranges=p.Results.Ranges;
 out_names=p.Results.out_names;
+% Accept out_names as a cellstr, string array, or char; normalize to a cellstr row.
+if ~iscell(out_names) && ~isempty(out_names), out_names=cellstr(out_names); end
+out_names=reshape(out_names,1,[]);
 
 Np = size(Ranges,1);
 if isa(Ranges,'double')

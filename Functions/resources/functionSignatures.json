@@ -41,7 +41,7 @@
       {"name": "rMethod", "kind": "namevalue", "type": ["char", "choices={'range','percent','normal','std'}"]},
       {"name": "modelkind", "kind": "namevalue", "type": ["char", "choices={'Dynamic','Static'}"]},
       {"name": "nominal", "kind": "namevalue"},
-      {"name": "out_names", "kind": "namevalue", "type": ["cell"]},
+      {"name": "out_names", "kind": "namevalue", "type": ["cell","string","char"]},
       {"name": "Step", "kind": "namevalue", "type": ["numeric"]},
       {"name": "output", "kind": "namevalue", "type": ["numeric"]}
     ],
@@ -55,12 +55,12 @@
     "inputs": [
       {"name": "func", "kind": "required", "type": ["char"]},
       {"name": "Range", "kind": "required", "type": ["numeric"]},
-      {"name": "names", "kind": "namevalue", "type": ["cell"]},
+      {"name": "names", "kind": "namevalue", "type": ["cell","string","char"]},
       {"name": "domain", "kind": "namevalue", "type": ["numeric"]},
       {"name": "rMethod", "kind": "namevalue", "type": ["char", "choices={'range','percent','normal','std'}"]},
       {"name": "nominal", "kind": "namevalue", "type": ["numeric"]},
       {"name": "output", "kind": "namevalue"},
-      {"name": "out_names", "kind": "namevalue", "type": ["cell"]},
+      {"name": "out_names", "kind": "namevalue", "type": ["cell","string","char"]},
       {"name": "vectorized", "kind": "namevalue", "type": ["logical"]},
       {"name": "opt", "kind": "namevalue"}
     ],

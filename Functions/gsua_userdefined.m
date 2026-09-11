@@ -20,7 +20,8 @@ function [Table,solver] = gsua_userdefined(func,Range,varargin)
 %               depending on 'rMethod')
 %
 %   Paired features (name-value):
-%     'names',names       <-- cell array of parameter names (row names)
+%     'names',names       <-- parameter names (row names), as a cellstr, a string
+%                             array ["a" "b"], or a char. Omit to auto-number 1..Np
 %     'domain',domain     <-- domain passed through to func when it
 %                              accepts 2+ inputs. Default: 1
 %     'rMethod',method     <-- how to interpret Range: 'range' (Np x 2
@@ -30,7 +31,8 @@ function [Table,solver] = gsua_userdefined(func,Range,varargin)
 %                              Default: midpoint of Range
 %     'output',output      <-- indices of func's output(s) to expose.
 %                              Default: all
-%     'out_names',names    <-- cell array of output names. Default: {'out'}
+%     'out_names',names    <-- output names, as a cellstr, string array, or char.
+%                             Default: {'out'}
 %     'vectorized',tf      <-- true if func accepts a batch of parameter
 %                              sets at once (only used when func has a
 %                              single input). Default: false
@@ -62,12 +64,12 @@ defaultVector=false;
 
 addRequired(p,'func');
 addRequired(p,'Range',checkRange);
-addParameter(p,'names',defaultNames,@iscellstr);
+addParameter(p,'names',defaultNames,@(x) iscellstr(x)||isstring(x)||ischar(x));
 addParameter(p,'domain',defaultDomain,checkDomain);
 addParameter(p,'rMethod',defaultrMethod,checkrMethod);
 addParameter(p,'nominal',defaultNominals,@isnumeric);
 addParameter(p,'output',defaultOutput,checkRange);
-addParameter(p,'out_names',defaultONames,@iscellstr);
+addParameter(p,'out_names',defaultONames,@(x) iscellstr(x)||isstring(x)||ischar(x));
 addParameter(p,'vectorized',defaultVector,@islogical);
 addParameter(p,'opt',dfOpt);
 
@@ -82,6 +84,12 @@ rMethod=p.Results.rMethod;
 nominal=p.Results.nominal;
 output=p.Results.output;
 out_names=p.Results.out_names;
+% Accept names/out_names as a cellstr, a string array, or a char and normalize to a
+% cellstr row -- so a caller can pass the modern ["a" "b"] or a bare 'y' instead of
+% being forced into {'a','b'} form. Empty stays empty (names then auto-generate below).
+if ~iscell(names) && ~isempty(names), names=cellstr(names); end
+if ~iscell(out_names) && ~isempty(out_names), out_names=cellstr(out_names); end
+names=reshape(names,1,[]); out_names=reshape(out_names,1,[]);
 vectorized=p.Results.vectorized;
 opt=p.Results.opt;
 
