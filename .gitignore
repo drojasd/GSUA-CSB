@@ -27,3 +27,8 @@ sirEpidemicModel.m
 
 # Version-stamped release builds (distributed as GitHub release assets, not source)
 /release/
+
+# Guided course (course/): generated outputs are reproducible, not versioned.
+# Source (demos, models, notebooks, READMEs) IS tracked; figures/caches are not.
+course/**/__pycache__/
+course/**/*.png

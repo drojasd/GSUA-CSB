@@ -1,0 +1,400 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN">
+<html>
+<head>
+<META http-equiv="Content-Type" content="text/html; charset=UTF-8">
+<!--
+This HTML was auto-generated from MATLAB code.
+To make changes, update the MATLAB code and republish this document.
+      -->
+<title>demo_03_incertidumbre</title>
+<meta name="generator" content="MATLAB 25.2">
+<link rel="schema.DC" href="http://purl.org/dc/elements/1.1/">
+<meta name="DC.date" content="2026-09-17">
+<meta name="DC.source" content="demo_03_incertidumbre.m">
+<style type="text/css">
+html,body,div,span,applet,object,iframe,h1,h2,h3,h4,h5,h6,p,blockquote,pre,a,abbr,acronym,address,big,cite,code,del,dfn,em,font,img,ins,kbd,q,s,samp,small,strike,strong,tt,var,b,u,i,center,dl,dt,dd,ol,ul,li,fieldset,form,label,legend,table,caption,tbody,tfoot,thead,tr,th,td{margin:0;padding:0;border:0;outline:0;font-size:100%;vertical-align:baseline;background:transparent}body{line-height:1}ol,ul{list-style:none}blockquote,q{quotes:none}blockquote:before,blockquote:after,q:before,q:after{content:'';content:none}:focus{outine:0}ins{text-decoration:none}del{text-decoration:line-through}table{border-collapse:collapse;border-spacing:0}
+
+html { min-height:100%; margin-bottom:1px; }
+html body { height:100%; margin:0px; font-family:Arial, Helvetica, sans-serif; font-size:10px; color:#000; line-height:140%; background:#fff none; overflow-y:scroll; }
+html body td { vertical-align:top; text-align:left; }
+
+h1 { padding:0px; margin:0px 0px 25px; font-family:Arial, Helvetica, sans-serif; font-size:1.5em; color:#d55000; line-height:100%; font-weight:normal; }
+h2 { padding:0px; margin:0px 0px 8px; font-family:Arial, Helvetica, sans-serif; font-size:1.2em; color:#000; font-weight:bold; line-height:140%; border-bottom:1px solid #d6d4d4; display:block; }
+h3 { padding:0px; margin:0px 0px 5px; font-family:Arial, Helvetica, sans-serif; font-size:1.1em; color:#000; font-weight:bold; line-height:140%; }
+
+a { color:#005fce; text-decoration:none; }
+a:hover { color:#005fce; text-decoration:underline; }
+a:visited { color:#004aa0; text-decoration:none; }
+
+p { padding:0px; margin:0px 0px 20px; }
+img { padding:0px; margin:0px 0px 20px; border:none; }
+p img, pre img, tt img, li img, h1 img, h2 img { margin-bottom:0px; }
+
+ul { padding:0px; margin:0px 0px 20px 23px; list-style:square; }
+ul li { padding:0px; margin:0px 0px 7px 0px; }
+ul li ul { padding:5px 0px 0px; margin:0px 0px 7px 23px; }
+ul li ol li { list-style:decimal; }
+ol { padding:0px; margin:0px 0px 20px 0px; list-style:decimal; }
+ol li { padding:0px; margin:0px 0px 7px 23px; list-style-type:decimal; }
+ol li ol { padding:5px 0px 0px; margin:0px 0px 7px 0px; }
+ol li ol li { list-style-type:lower-alpha; }
+ol li ul { padding-top:7px; }
+ol li ul li { list-style:square; }
+
+.content { font-size:1.2em; line-height:140%; padding: 20px; }
+
+pre, code { font-size:12px; }
+tt { font-size: 1.2em; }
+pre { margin:0px 0px 20px; }
+pre.codeinput { padding:10px; border:1px solid #d3d3d3; background:#f7f7f7; }
+pre.codeoutput { padding:10px 11px; margin:0px 0px 20px; color:#4c4c4c; }
+pre.error { color:red; }
+
+@media print { pre.codeinput, pre.codeoutput { word-wrap:break-word; width:100%; } }
+
+span.keyword { color:#0000FF }
+span.comment { color:#228B22 }
+span.string { color:#A020F0 }
+span.untermstring { color:#B20000 }
+span.syscmd { color:#B28C00 }
+span.typesection { color:#A0522D }
+
+.footer { width:auto; padding:10px 0px; margin:25px 0px 0px; border-top:1px dotted #878787; font-size:0.8em; line-height:140%; font-style:italic; color:#878787; text-align:left; float:none; }
+.footer p { margin:0px; }
+.footer a { color:#878787; }
+.footer a:hover { color:#878787; text-decoration:underline; }
+.footer a:visited { color:#878787; }
+
+table th { padding:7px 5px; text-align:left; vertical-align:middle; border: 1px solid #d6d4d4; font-weight:bold; }
+table td { padding:7px 5px; text-align:left; vertical-align:top; border:1px solid #d6d4d4; }
+
+
+
+
+
+  </style>
+</head>
+<body>
+<div class="content">
+<h2>Contents</h2>
+<div>
+<ul>
+<li>
+<a href="#2">1. Configuraci&oacute;n del Entorno</a>
+</li>
+<li>
+<a href="#3">2. Definici&oacute;n del Modelo SIR (salida objetivo: Infectados)</a>
+</li>
+<li>
+<a href="#4">3. Datos "observados" sint&eacute;ticos (verdad conocida + ruido)</a>
+</li>
+<li>
+<a href="#5">4. Muestreo del Espacio de Incertidumbre</a>
+</li>
+<li>
+<a href="#6">5. An&aacute;lisis de Incertidumbre (propagaci&oacute;n Monte Carlo)</a>
+</li>
+<li>
+<a href="#7">6. Banda de Percentiles y M&eacute;tricas de Cobertura</a>
+</li>
+<li>
+<a href="#8">7. Filtrado Monte Carlo (MCF): combinaciones aceptables vs. no aceptables</a>
+</li>
+<li>
+<a href="#9">8. PREGUNTAS Y EJERCICIOS PARA EL ESTUDIANTE</a>
+</li>
+</ul>
+</div>
+<pre class="codeinput">
+<span class="comment">% DEMO_03_INCERTIDUMBRE An&aacute;lisis de Incertidumbre y Filtrado Monte Carlo</span>
+<span class="comment">% Curso guiado de GSUA-CSB</span>
+<span class="comment">%</span>
+<span class="comment">% Propagamos la incertidumbre de los factores (par&aacute;metros + condiciones</span>
+<span class="comment">% iniciales) hacia la salida del modelo y evaluamos:</span>
+<span class="comment">%   - el ENSAMBLE de trayectorias (gsua_ua),</span>
+<span class="comment">%   - la BANDA de percentiles P5/P50/P95 y su m&eacute;trica de cobertura (gsua_covmetric),</span>
+<span class="comment">%   - el FILTRADO Monte Carlo que separa combinaciones "aceptables" de las que no</span>
+<span class="comment">%     lo son (gsua_MCF).</span>
+<span class="comment">%</span>
+<span class="comment">% Modelo de trabajo: SIR continuo del M&oacute;dulo 01, observando la curva de Infectados.</span>
+</pre>
+<h2 id="2">1. Configuraci&oacute;n del Entorno</h2>
+<pre class="codeinput">clc; clear; close <span class="string">all</span>;
+
+<span class="comment">% --- Localizaci&oacute;n portable de la toolbox GSUA-CSB (ver M&oacute;dulo 01) -----------</span>
+<span class="keyword">if</span> isempty(which(<span class="string">'gsua_dataprep'</span>))
+    candidatos = {
+        fullfile(fileparts(mfilename(<span class="string">'fullpath'</span>)), <span class="string">'..'</span>, <span class="string">'..'</span>, <span class="string">'..'</span>, <span class="string">'Functions'</span>)  <span class="comment">% dentro del repo clonado</span>
+        fullfile(getenv(<span class="string">'USERPROFILE'</span>), <span class="string">'MATLAB Drive'</span>, <span class="string">'Toolbox'</span>, <span class="string">'Functions'</span>)
+        fullfile(getenv(<span class="string">'USERPROFILE'</span>), <span class="string">'Documents'</span>, <span class="string">'MATLAB'</span>, <span class="string">'GSUA-CSB'</span>, <span class="string">'Functions'</span>)
+    };
+    <span class="keyword">for</span> k = 1:numel(candidatos)
+        <span class="keyword">if</span> isfolder(candidatos{k}), addpath(candidatos{k}); <span class="keyword">break</span>; <span class="keyword">end</span>
+    <span class="keyword">end</span>
+    <span class="keyword">if</span> isempty(which(<span class="string">'gsua_dataprep'</span>))
+        error([<span class="string">'No se encontr&oacute; la toolbox GSUA-CSB en el path de MATLAB. '</span> <span class="keyword">...</span>
+               <span class="string">'Instala GSUA-CSB.mltbx o a&ntilde;ade su carpeta Functions con addpath(...).'</span>]);
+    <span class="keyword">end</span>
+<span class="keyword">end</span>
+
+<span class="comment">% El modelo SIR se reutiliza del M&oacute;dulo 01 (ruta relativa a este script).</span>
+model1_path = fullfile(fileparts(mfilename(<span class="string">'fullpath'</span>)), <span class="string">'..'</span>, <span class="string">'..'</span>, <span class="keyword">...</span>
+    <span class="string">'01_Introduccion_Modelos'</span>, <span class="string">'matlab'</span>);
+<span class="keyword">if</span> isfolder(model1_path), addpath(model1_path); <span class="keyword">else</span>, error(<span class="string">'Falta el M&oacute;dulo 01 en %s'</span>, model1_path); <span class="keyword">end</span>
+
+fprintf(<span class="string">'=========================================================================\n'</span>);
+fprintf(<span class="string">'  M&Oacute;DULO 03: AN&Aacute;LISIS DE INCERTIDUMBRE Y FILTRADO MONTE CARLO  \n'</span>);
+fprintf(<span class="string">'=========================================================================\n\n'</span>);
+</pre>
+<pre class="codeoutput">=========================================================================
+  M&Oacute;DULO 03: AN&Aacute;LISIS DE INCERTIDUMBRE Y FILTRADO MONTE CARLO  
+=========================================================================
+
+</pre>
+<h2 id="3">2. Definici&oacute;n del Modelo SIR (salida objetivo: Infectados)</h2>
+<p>Rangos "previos" acotados alrededor del valor real (&plusmn; ~20%). A prop&oacute;sito son m&aacute;s estrechos que en el M&oacute;dulo 02: aqu&iacute; no exploramos el muestreo, sino que propagamos una incertidumbre plausible para ver cu&aacute;nta variabilidad induce en la salida.</p>
+<pre class="codeinput">ranges_sir = [
+    4.0e-4, 6.0e-4;  <span class="comment">% beta  (tasa de transmisi&oacute;n)</span>
+    0.10,   0.15;    <span class="comment">% gamma (tasa de recuperaci&oacute;n)</span>
+    920,    980;     <span class="comment">% S0    (susceptibles iniciales)</span>
+    3,      8        <span class="comment">% I0    (infectados iniciales)</span>
+];
+[T, ~] = gsua_dataprep(<span class="string">'sir_continuous_userdefined'</span>, ranges_sir, <span class="keyword">...</span>
+    <span class="string">'domain'</span>, [0, 80], <span class="keyword">...</span>
+    <span class="string">'names'</span>, {<span class="string">'beta'</span>, <span class="string">'gamma'</span>, <span class="string">'S0'</span>, <span class="string">'I0'</span>}, <span class="keyword">...</span>
+    <span class="string">'out_names'</span>, {<span class="string">'Susceptibles'</span>, <span class="string">'Infectados'</span>, <span class="string">'Recuperados'</span>});
+
+<span class="comment">% Seleccionamos la salida a analizar. En una tabla GSUA esto se hace fijando la</span>
+<span class="comment">% propiedad 'output' (equivalente a model.set_output(...) en Python).</span>
+T.Properties.CustomProperties.output = 2;   <span class="comment">% 2 = Infectados</span>
+xdata = linspace(0, 80, 200);
+</pre>
+<pre class="codeoutput">Setting environment to work with user-defined function
+</pre>
+<h2 id="4">3. Datos "observados" sint&eacute;ticos (verdad conocida + ruido)</h2>
+<p>Para poder medir cobertura necesitamos datos. Generamos una curva "real" con un conjunto de par&aacute;metros verdadero y le a&ntilde;adimos ruido de medici&oacute;n del 8%.</p>
+<pre class="codeinput">true_par = [0.0005; 0.12; 950; 5];                       <span class="comment">% beta, gamma, S0, I0</span>
+y_true   = gsua_eval(true_par, T, xdata, [], false, false, false);   <span class="comment">% (1 x 200 x 1)</span>
+y_true   = squeeze(y_true).';                            <span class="comment">% 1 x 200 (fila)</span>
+rng(7);                                                  <span class="comment">% reproducibilidad</span>
+ydata    = y_true .* (1 + 0.08 * randn(size(y_true)));   <span class="comment">% ruido multiplicativo 8%</span>
+</pre>
+<h2 id="5">4. Muestreo del Espacio de Incertidumbre</h2>
+<pre class="codeinput">N = 300;
+M = gsua_dmatrix(T, N, <span class="string">'Method'</span>, <span class="string">'LatinHypercube'</span>);      <span class="comment">% 300 muestras del hipercubo</span>
+</pre>
+<h2 id="6">5. An&aacute;lisis de Incertidumbre (propagaci&oacute;n Monte Carlo)</h2>
+<p>gsua_ua eval&uacute;a el modelo en cada fila de M y abre las figuras est&aacute;ndar de la toolbox (ensamble + filtrado Monte Carlo). Desactivamos el paralelismo para no depender del Parallel Computing Toolbox en clase; en un estudio grande conviene 'parallel', true.</p>
+<pre class="codeinput">Y = gsua_ua(M, T, <span class="string">'xdata'</span>, xdata, <span class="string">'ynom'</span>, ydata, <span class="string">'parallel'</span>, false, <span class="string">'verbose'</span>, false);
+<span class="comment">% Y es (N x 200): una trayectoria de Infectados por cada muestra.</span>
+</pre>
+<img vspace="5" hspace="5" src="demo_03_incertidumbre_01.png" alt=""> <img vspace="5" hspace="5" src="demo_03_incertidumbre_02.png" alt=""> <h2 id="7">6. Banda de Percentiles y M&eacute;tricas de Cobertura</h2>
+<p>gsua_covmetric resume el ensamble en una banda P5/P50/P95 y entrega dos costos normalizados (un valor &lt; 1 significa "dentro de la tolerancia"): cost_data -&gt; &iquest;la mediana de la banda sigue a los datos? (exactitud/alcanzabilidad) cost_band -&gt; &iquest;es angosta la banda P5-P95? (precisi&oacute;n/convergencia)</p>
+<pre class="codeinput">[cost_data, cost_band, P5, P50, P95] = gsua_covmetric(Y, ydata, <span class="string">'margin'</span>, 0.1);
+
+fprintf(<span class="string">'\n--- M&eacute;tricas de cobertura (margen 10%%) ---\n'</span>);
+fprintf(<span class="string">'cost_data = %.3f  (exactitud: mediana vs datos)\n'</span>, cost_data);
+<span class="keyword">if</span> cost_data &lt; 1
+    fprintf(<span class="string">'   -&gt; Los datos SON alcanzables por el modelo dentro de los rangos actuales.\n'</span>);
+<span class="keyword">else</span>
+    fprintf(<span class="string">'   -&gt; Los datos NO son alcanzables: revisa rangos o estructura del modelo.\n'</span>);
+<span class="keyword">end</span>
+fprintf(<span class="string">'cost_band = %.3g  (precisi&oacute;n: ancho de la banda P5-P95)\n'</span>, cost_band);
+<span class="keyword">if</span> cost_band &lt; 1
+    fprintf(<span class="string">'   -&gt; La banda ya es angosta: la incertidumbre est&aacute; acotada.\n\n'</span>);
+<span class="keyword">else</span>
+    fprintf(<span class="string">'   -&gt; La banda es ancha (es normal que sea &gt;&gt;1 con una previa sin ajustar;\n'</span>);
+    fprintf(<span class="string">'      el M&oacute;dulo 05 la reduce estimando los par&aacute;metros con datos).\n\n'</span>);
+<span class="keyword">end</span>
+
+<span class="comment">% Gr&aacute;fica propia de la banda de incertidumbre frente a los datos</span>
+figure(<span class="string">'Name'</span>, <span class="string">'Banda de Incertidumbre P5-P50-P95'</span>);
+fill([xdata, fliplr(xdata)], [P5, fliplr(P95)], [0.80 0.88 0.98], <span class="keyword">...</span>
+    <span class="string">'EdgeColor'</span>, <span class="string">'none'</span>, <span class="string">'DisplayName'</span>, <span class="string">'Banda P5-P95'</span>); hold <span class="string">on</span>;
+plot(xdata, P50, <span class="string">'b-'</span>, <span class="string">'LineWidth'</span>, 2, <span class="string">'DisplayName'</span>, <span class="string">'Mediana P50'</span>);
+plot(xdata, ydata, <span class="string">'r.'</span>, <span class="string">'MarkerSize'</span>, 7, <span class="string">'DisplayName'</span>, <span class="string">'Datos observados'</span>);
+xlabel(<span class="string">'Tiempo (D&iacute;as)'</span>); ylabel(<span class="string">'Infectados I(t)'</span>);
+title(sprintf(<span class="string">'Incertidumbre propagada (cost\\_data=%.2f, cost\\_band=%.2f)'</span>, cost_data, cost_band));
+grid <span class="string">on</span>; legend(<span class="string">'Location'</span>, <span class="string">'northeast'</span>);
+</pre>
+<pre class="codeoutput">
+--- M&eacute;tricas de cobertura (margen 10%) ---
+cost_data = 0.760  (exactitud: mediana vs datos)
+   -&gt; Los datos SON alcanzables por el modelo dentro de los rangos actuales.
+cost_band = 2.73e+04  (precisi&oacute;n: ancho de la banda P5-P95)
+   -&gt; La banda es ancha (es normal que sea &gt;&gt;1 con una previa sin ajustar;
+      el M&oacute;dulo 05 la reduce estimando los par&aacute;metros con datos).
+
+</pre>
+<img vspace="5" hspace="5" src="demo_03_incertidumbre_03.png" alt=""> <h2 id="8">7. Filtrado Monte Carlo (MCF): combinaciones aceptables vs. no aceptables</h2>
+<p>gsua_MCF separa las corridas cuyo acumulado queda por debajo/encima del dato observado y compara la distribuci&oacute;n de cada par&aacute;metro en cada subconjunto. Cuando un par&aacute;metro "importa", sus distribuciones low/high se separan.</p>
+<pre class="codeinput">[Jsup, Jinf] = gsua_MCF(T, M, Y, ydata);
+fprintf(<span class="string">'Filtrado Monte Carlo: %d corridas por debajo y %d por encima del acumulado observado.\n\n'</span>, <span class="keyword">...</span>
+    numel(Jinf{1}), numel(Jsup{1}));
+</pre>
+<pre class="codeoutput">Filtrado Monte Carlo: 183 corridas por debajo y 117 por encima del acumulado observado.
+
+</pre>
+<img vspace="5" hspace="5" src="demo_03_incertidumbre_04.png" alt=""> <h2 id="9">8. PREGUNTAS Y EJERCICIOS PARA EL ESTUDIANTE</h2>
+<pre class="codeinput">fprintf(<span class="string">'=========================================================================\n'</span>);
+fprintf(<span class="string">'  PREGUNTAS DE AN&Aacute;LISIS Y EJERCICIOS DOCENTES (M&Oacute;DULO 03)  \n'</span>);
+fprintf(<span class="string">'=========================================================================\n'</span>);
+fprintf(<span class="string">'1. Sube el ruido de 8%% a 25%%. &iquest;C&oacute;mo cambian cost_data y cost_band?\n'</span>);
+fprintf(<span class="string">'2. Reduce el rango de beta a la mitad. &iquest;La banda P5-P95 se vuelve m&aacute;s angosta?\n'</span>);
+fprintf(<span class="string">'3. En las gr&aacute;ficas de MCF, &iquest;qu&eacute; par&aacute;metro separa m&aacute;s sus curvas low/high? &iquest;Por qu&eacute;?\n'</span>);
+fprintf(<span class="string">'4. &iquest;Puede cost_band ser bajo (banda angosta) y cost_data alto a la vez? &iquest;Qu&eacute; significar&iacute;a?\n'</span>);
+fprintf(<span class="string">'=========================================================================\n\n'</span>);
+</pre>
+<pre class="codeoutput">=========================================================================
+  PREGUNTAS DE AN&Aacute;LISIS Y EJERCICIOS DOCENTES (M&Oacute;DULO 03)  
+=========================================================================
+1. Sube el ruido de 8% a 25%. &iquest;C&oacute;mo cambian cost_data y cost_band?
+2. Reduce el rango de beta a la mitad. &iquest;La banda P5-P95 se vuelve m&aacute;s angosta?
+3. En las gr&aacute;ficas de MCF, &iquest;qu&eacute; par&aacute;metro separa m&aacute;s sus curvas low/high? &iquest;Por qu&eacute;?
+4. &iquest;Puede cost_band ser bajo (banda angosta) y cost_data alto a la vez? &iquest;Qu&eacute; significar&iacute;a?
+=========================================================================
+
+</pre>
+<p class="footer">
+<br>
+<a href="https://www.mathworks.com/products/matlab/">Published with MATLAB&reg; R2025b</a>
+<br>
+</p>
+</div>
+<!--
+##### SOURCE BEGIN #####
+% DEMO_03_INCERTIDUMBRE Análisis de Incertidumbre y Filtrado Monte Carlo
+% Curso guiado de GSUA-CSB
+%
+% Propagamos la incertidumbre de los factores (parámetros + condiciones
+% iniciales) hacia la salida del modelo y evaluamos:
+%   - el ENSAMBLE de trayectorias (gsua_ua),
+%   - la BANDA de percentiles P5/P50/P95 y su métrica de cobertura (gsua_covmetric),
+%   - el FILTRADO Monte Carlo que separa combinaciones "aceptables" de las que no
+%     lo son (gsua_MCF).
+%
+% Modelo de trabajo: SIR continuo del Módulo 01, observando la curva de Infectados.
+
+%% 1. Configuración del Entorno
+clc; clear; close all;
+
+% REPLACE_WITH_DASH_DASH- Localización portable de la toolbox GSUA-CSB (ver Módulo 01) REPLACE_WITH_DASH_DASHREPLACE_WITH_DASH_DASHREPLACE_WITH_DASH_DASHREPLACE_WITH_DASH_DASHREPLACE_WITH_DASH_DASH-
+if isempty(which('gsua_dataprep'))
+    candidatos = {
+        fullfile(fileparts(mfilename('fullpath')), '..', '..', '..', 'Functions')  % dentro del repo clonado
+        fullfile(getenv('USERPROFILE'), 'MATLAB Drive', 'Toolbox', 'Functions')
+        fullfile(getenv('USERPROFILE'), 'Documents', 'MATLAB', 'GSUA-CSB', 'Functions')
+    };
+    for k = 1:numel(candidatos)
+        if isfolder(candidatos{k}), addpath(candidatos{k}); break; end
+    end
+    if isempty(which('gsua_dataprep'))
+        error(['No se encontró la toolbox GSUA-CSB en el path de MATLAB. ' ...
+               'Instala GSUA-CSB.mltbx o añade su carpeta Functions con addpath(...).']);
+    end
+end
+
+% El modelo SIR se reutiliza del Módulo 01 (ruta relativa a este script).
+model1_path = fullfile(fileparts(mfilename('fullpath')), '..', '..', ...
+    '01_Introduccion_Modelos', 'matlab');
+if isfolder(model1_path), addpath(model1_path); else, error('Falta el Módulo 01 en %s', model1_path); end
+
+fprintf('=========================================================================\n');
+fprintf('  MÓDULO 03: ANÁLISIS DE INCERTIDUMBRE Y FILTRADO MONTE CARLO  \n');
+fprintf('=========================================================================\n\n');
+
+%% 2. Definición del Modelo SIR (salida objetivo: Infectados)
+% Rangos "previos" acotados alrededor del valor real (± ~20%). A propósito son más
+% estrechos que en el Módulo 02: aquí no exploramos el muestreo, sino que propagamos
+% una incertidumbre plausible para ver cuánta variabilidad induce en la salida.
+ranges_sir = [
+    4.0e-4, 6.0e-4;  % beta  (tasa de transmisión)
+    0.10,   0.15;    % gamma (tasa de recuperación)
+    920,    980;     % S0    (susceptibles iniciales)
+    3,      8        % I0    (infectados iniciales)
+];
+[T, ~] = gsua_dataprep('sir_continuous_userdefined', ranges_sir, ...
+    'domain', [0, 80], ...
+    'names', {'beta', 'gamma', 'S0', 'I0'}, ...
+    'out_names', {'Susceptibles', 'Infectados', 'Recuperados'});
+
+% Seleccionamos la salida a analizar. En una tabla GSUA esto se hace fijando la
+% propiedad 'output' (equivalente a model.set_output(...) en Python).
+T.Properties.CustomProperties.output = 2;   % 2 = Infectados
+xdata = linspace(0, 80, 200);
+
+%% 3. Datos "observados" sintéticos (verdad conocida + ruido)
+% Para poder medir cobertura necesitamos datos. Generamos una curva "real" con un
+% conjunto de parámetros verdadero y le añadimos ruido de medición del 8%.
+true_par = [0.0005; 0.12; 950; 5];                       % beta, gamma, S0, I0
+y_true   = gsua_eval(true_par, T, xdata, [], false, false, false);   % (1 x 200 x 1)
+y_true   = squeeze(y_true).';                            % 1 x 200 (fila)
+rng(7);                                                  % reproducibilidad
+ydata    = y_true .* (1 + 0.08 * randn(size(y_true)));   % ruido multiplicativo 8%
+
+%% 4. Muestreo del Espacio de Incertidumbre
+N = 300;
+M = gsua_dmatrix(T, N, 'Method', 'LatinHypercube');      % 300 muestras del hipercubo
+
+%% 5. Análisis de Incertidumbre (propagación Monte Carlo)
+% gsua_ua evalúa el modelo en cada fila de M y abre las figuras estándar de la
+% toolbox (ensamble + filtrado Monte Carlo). Desactivamos el paralelismo para no
+% depender del Parallel Computing Toolbox en clase; en un estudio grande conviene
+% 'parallel', true.
+Y = gsua_ua(M, T, 'xdata', xdata, 'ynom', ydata, 'parallel', false, 'verbose', false);
+% Y es (N x 200): una trayectoria de Infectados por cada muestra.
+
+%% 6. Banda de Percentiles y Métricas de Cobertura
+% gsua_covmetric resume el ensamble en una banda P5/P50/P95 y entrega dos costos
+% normalizados (un valor < 1 significa "dentro de la tolerancia"):
+%   cost_data -> ¿la mediana de la banda sigue a los datos? (exactitud/alcanzabilidad)
+%   cost_band -> ¿es angosta la banda P5-P95? (precisión/convergencia)
+[cost_data, cost_band, P5, P50, P95] = gsua_covmetric(Y, ydata, 'margin', 0.1);
+
+fprintf('\nREPLACE_WITH_DASH_DASH- Métricas de cobertura (margen 10%%) REPLACE_WITH_DASH_DASH-\n');
+fprintf('cost_data = %.3f  (exactitud: mediana vs datos)\n', cost_data);
+if cost_data < 1
+    fprintf('   -> Los datos SON alcanzables por el modelo dentro de los rangos actuales.\n');
+else
+    fprintf('   -> Los datos NO son alcanzables: revisa rangos o estructura del modelo.\n');
+end
+fprintf('cost_band = %.3g  (precisión: ancho de la banda P5-P95)\n', cost_band);
+if cost_band < 1
+    fprintf('   -> La banda ya es angosta: la incertidumbre está acotada.\n\n');
+else
+    fprintf('   -> La banda es ancha (es normal que sea >>1 con una previa sin ajustar;\n');
+    fprintf('      el Módulo 05 la reduce estimando los parámetros con datos).\n\n');
+end
+
+% Gráfica propia de la banda de incertidumbre frente a los datos
+figure('Name', 'Banda de Incertidumbre P5-P50-P95');
+fill([xdata, fliplr(xdata)], [P5, fliplr(P95)], [0.80 0.88 0.98], ...
+    'EdgeColor', 'none', 'DisplayName', 'Banda P5-P95'); hold on;
+plot(xdata, P50, 'b-', 'LineWidth', 2, 'DisplayName', 'Mediana P50');
+plot(xdata, ydata, 'r.', 'MarkerSize', 7, 'DisplayName', 'Datos observados');
+xlabel('Tiempo (Días)'); ylabel('Infectados I(t)');
+title(sprintf('Incertidumbre propagada (cost\\_data=%.2f, cost\\_band=%.2f)', cost_data, cost_band));
+grid on; legend('Location', 'northeast');
+
+%% 7. Filtrado Monte Carlo (MCF): combinaciones aceptables vs. no aceptables
+% gsua_MCF separa las corridas cuyo acumulado queda por debajo/encima del dato
+% observado y compara la distribución de cada parámetro en cada subconjunto.
+% Cuando un parámetro "importa", sus distribuciones low/high se separan.
+[Jsup, Jinf] = gsua_MCF(T, M, Y, ydata);
+fprintf('Filtrado Monte Carlo: %d corridas por debajo y %d por encima del acumulado observado.\n\n', ...
+    numel(Jinf{1}), numel(Jsup{1}));
+
+%% 8. PREGUNTAS Y EJERCICIOS PARA EL ESTUDIANTE
+fprintf('=========================================================================\n');
+fprintf('  PREGUNTAS DE ANÁLISIS Y EJERCICIOS DOCENTES (MÓDULO 03)  \n');
+fprintf('=========================================================================\n');
+fprintf('1. Sube el ruido de 8%% a 25%%. ¿Cómo cambian cost_data y cost_band?\n');
+fprintf('2. Reduce el rango de beta a la mitad. ¿La banda P5-P95 se vuelve más angosta?\n');
+fprintf('3. En las gráficas de MCF, ¿qué parámetro separa más sus curvas low/high? ¿Por qué?\n');
+fprintf('4. ¿Puede cost_band ser bajo (banda angosta) y cost_data alto a la vez? ¿Qué significaría?\n');
+fprintf('=========================================================================\n\n');
+
+##### SOURCE END #####
+-->
+</body>
+</html>

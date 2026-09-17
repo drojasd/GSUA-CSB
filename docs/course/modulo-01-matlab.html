@@ -1,0 +1,556 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN">
+<html>
+<head>
+<META http-equiv="Content-Type" content="text/html; charset=UTF-8">
+<!--
+This HTML was auto-generated from MATLAB code.
+To make changes, update the MATLAB code and republish this document.
+      -->
+<title>demo_01_introduccion</title>
+<meta name="generator" content="MATLAB 25.2">
+<link rel="schema.DC" href="http://purl.org/dc/elements/1.1/">
+<meta name="DC.date" content="2026-09-17">
+<meta name="DC.source" content="demo_01_introduccion.m">
+<style type="text/css">
+html,body,div,span,applet,object,iframe,h1,h2,h3,h4,h5,h6,p,blockquote,pre,a,abbr,acronym,address,big,cite,code,del,dfn,em,font,img,ins,kbd,q,s,samp,small,strike,strong,tt,var,b,u,i,center,dl,dt,dd,ol,ul,li,fieldset,form,label,legend,table,caption,tbody,tfoot,thead,tr,th,td{margin:0;padding:0;border:0;outline:0;font-size:100%;vertical-align:baseline;background:transparent}body{line-height:1}ol,ul{list-style:none}blockquote,q{quotes:none}blockquote:before,blockquote:after,q:before,q:after{content:'';content:none}:focus{outine:0}ins{text-decoration:none}del{text-decoration:line-through}table{border-collapse:collapse;border-spacing:0}
+
+html { min-height:100%; margin-bottom:1px; }
+html body { height:100%; margin:0px; font-family:Arial, Helvetica, sans-serif; font-size:10px; color:#000; line-height:140%; background:#fff none; overflow-y:scroll; }
+html body td { vertical-align:top; text-align:left; }
+
+h1 { padding:0px; margin:0px 0px 25px; font-family:Arial, Helvetica, sans-serif; font-size:1.5em; color:#d55000; line-height:100%; font-weight:normal; }
+h2 { padding:0px; margin:0px 0px 8px; font-family:Arial, Helvetica, sans-serif; font-size:1.2em; color:#000; font-weight:bold; line-height:140%; border-bottom:1px solid #d6d4d4; display:block; }
+h3 { padding:0px; margin:0px 0px 5px; font-family:Arial, Helvetica, sans-serif; font-size:1.1em; color:#000; font-weight:bold; line-height:140%; }
+
+a { color:#005fce; text-decoration:none; }
+a:hover { color:#005fce; text-decoration:underline; }
+a:visited { color:#004aa0; text-decoration:none; }
+
+p { padding:0px; margin:0px 0px 20px; }
+img { padding:0px; margin:0px 0px 20px; border:none; }
+p img, pre img, tt img, li img, h1 img, h2 img { margin-bottom:0px; }
+
+ul { padding:0px; margin:0px 0px 20px 23px; list-style:square; }
+ul li { padding:0px; margin:0px 0px 7px 0px; }
+ul li ul { padding:5px 0px 0px; margin:0px 0px 7px 23px; }
+ul li ol li { list-style:decimal; }
+ol { padding:0px; margin:0px 0px 20px 0px; list-style:decimal; }
+ol li { padding:0px; margin:0px 0px 7px 23px; list-style-type:decimal; }
+ol li ol { padding:5px 0px 0px; margin:0px 0px 7px 0px; }
+ol li ol li { list-style-type:lower-alpha; }
+ol li ul { padding-top:7px; }
+ol li ul li { list-style:square; }
+
+.content { font-size:1.2em; line-height:140%; padding: 20px; }
+
+pre, code { font-size:12px; }
+tt { font-size: 1.2em; }
+pre { margin:0px 0px 20px; }
+pre.codeinput { padding:10px; border:1px solid #d3d3d3; background:#f7f7f7; }
+pre.codeoutput { padding:10px 11px; margin:0px 0px 20px; color:#4c4c4c; }
+pre.error { color:red; }
+
+@media print { pre.codeinput, pre.codeoutput { word-wrap:break-word; width:100%; } }
+
+span.keyword { color:#0000FF }
+span.comment { color:#228B22 }
+span.string { color:#A020F0 }
+span.untermstring { color:#B20000 }
+span.syscmd { color:#B28C00 }
+span.typesection { color:#A0522D }
+
+.footer { width:auto; padding:10px 0px; margin:25px 0px 0px; border-top:1px dotted #878787; font-size:0.8em; line-height:140%; font-style:italic; color:#878787; text-align:left; float:none; }
+.footer p { margin:0px; }
+.footer a { color:#878787; }
+.footer a:hover { color:#878787; text-decoration:underline; }
+.footer a:visited { color:#878787; }
+
+table th { padding:7px 5px; text-align:left; vertical-align:middle; border: 1px solid #d6d4d4; font-weight:bold; }
+table td { padding:7px 5px; text-align:left; vertical-align:top; border:1px solid #d6d4d4; }
+
+
+
+
+
+  </style>
+</head>
+<body>
+<div class="content">
+<h2>Contents</h2>
+<div>
+<ul>
+<li>
+<a href="#2">1. Configuraci&oacute;n del Entorno</a>
+</li>
+<li>
+<a href="#3">2. MODELO 1: TIEMPO DISCRETO (Crecimiento Log&iacute;stico)</a>
+</li>
+<li>
+<a href="#4">3. MODELO 2: TIEMPO CONTINUO (Modelo Epid&eacute;mico SIR)</a>
+</li>
+<li>
+<a href="#5">4. PREGUNTAS Y EJERCICIOS PARA EL ESTUDIANTE</a>
+</li>
+</ul>
+</div>
+<pre class="codeinput">
+<span class="comment">% DEMO_01_INTRODUCCION Gu&iacute;a Pr&aacute;ctica e Introducci&oacute;n a Modelos Din&aacute;micos</span>
+<span class="comment">% Curso guiado de GSUA-CSB</span>
+<span class="comment">%</span>
+<span class="comment">% Este script proporciona una introducci&oacute;n pedag&oacute;gica a la formulaci&oacute;n de</span>
+<span class="comment">% modelos en tiempo discreto y continuo definidos por el usuario,</span>
+<span class="comment">% declarando expl&iacute;citamente factores (par&aacute;metros + condiciones iniciales)</span>
+<span class="comment">% y nombres de salidas, as&iacute; como exploraciones de ensamble de incertidumbre.</span>
+</pre>
+<h2 id="2">1. Configuraci&oacute;n del Entorno</h2>
+<pre class="codeinput">clc; clear; close <span class="string">all</span>;
+
+<span class="comment">% --- Localizaci&oacute;n portable de la toolbox GSUA-CSB ---------------------------</span>
+<span class="comment">% Si la toolbox ya est&aacute; instalada como .mltbx, sus funciones est&aacute;n en el path y</span>
+<span class="comment">% no hay que hacer nada. Si no, intentamos ubicaciones habituales (sin</span>
+<span class="comment">% codificar el nombre de usuario) y, si tampoco aparece, DETENEMOS con un</span>
+<span class="comment">% mensaje claro en vez de fallar silenciosamente m&aacute;s adelante.</span>
+<span class="keyword">if</span> isempty(which(<span class="string">'gsua_dataprep'</span>))
+    candidatos = {
+        fullfile(fileparts(mfilename(<span class="string">'fullpath'</span>)), <span class="string">'..'</span>, <span class="string">'..'</span>, <span class="string">'..'</span>, <span class="string">'Functions'</span>)  <span class="comment">% dentro del repo clonado</span>
+        fullfile(getenv(<span class="string">'USERPROFILE'</span>), <span class="string">'MATLAB Drive'</span>, <span class="string">'Toolbox'</span>, <span class="string">'Functions'</span>)
+        fullfile(getenv(<span class="string">'USERPROFILE'</span>), <span class="string">'Documents'</span>, <span class="string">'MATLAB'</span>, <span class="string">'GSUA-CSB'</span>, <span class="string">'Functions'</span>)
+    };
+    <span class="keyword">for</span> k = 1:numel(candidatos)
+        <span class="keyword">if</span> isfolder(candidatos{k}), addpath(candidatos{k}); <span class="keyword">break</span>; <span class="keyword">end</span>
+    <span class="keyword">end</span>
+    <span class="keyword">if</span> isempty(which(<span class="string">'gsua_dataprep'</span>))
+        error([<span class="string">'No se encontr&oacute; la toolbox GSUA-CSB en el path de MATLAB. '</span> <span class="keyword">...</span>
+               <span class="string">'Instala GSUA-CSB.mltbx o a&ntilde;ade su carpeta Functions con addpath(...).'</span>]);
+    <span class="keyword">end</span>
+<span class="keyword">end</span>
+
+<span class="comment">% Los modelos de este m&oacute;dulo (discrete_logistic_userdefined,</span>
+<span class="comment">% sir_continuous_userdefined) viven junto a este script: ruta relativa portable.</span>
+addpath(fileparts(mfilename(<span class="string">'fullpath'</span>)));
+
+fprintf(<span class="string">'=========================================================================\n'</span>);
+fprintf(<span class="string">'  M&Oacute;DULO 01: INTRODUCCI&Oacute;N A MODELOS EN TIEMPO DISCRETO Y CONTINUO  \n'</span>);
+fprintf(<span class="string">'=========================================================================\n\n'</span>);
+</pre>
+<pre class="codeoutput">=========================================================================
+  M&Oacute;DULO 01: INTRODUCCI&Oacute;N A MODELOS EN TIEMPO DISCRETO Y CONTINUO  
+=========================================================================
+
+</pre>
+<h2 id="3">2. MODELO 1: TIEMPO DISCRETO (Crecimiento Log&iacute;stico)</h2>
+<pre class="codeinput">fprintf(<span class="string">'--- 1. MODELO LOG&Iacute;STICO DISCRETO ---\n'</span>);
+fprintf(<span class="string">'Ecuaci&oacute;n: N(t+1) = N(t) + r * N(t) * (1 - N(t) / K)\n\n'</span>);
+
+<span class="comment">% Definici&oacute;n de rangos para Factores: [Par&aacute;metros + Condici&oacute;n Inicial]</span>
+<span class="comment">%   Fila 1: r  (tasa de crecimiento)</span>
+<span class="comment">%   Fila 2: K  (capacidad de carga)</span>
+<span class="comment">%   Fila 3: N0 (poblaci&oacute;n inicial en t=0)</span>
+ranges_discrete = [
+    0.05, 0.50;  <span class="comment">% r</span>
+    100,  1000;  <span class="comment">% K</span>
+    5,    50     <span class="comment">% N0 (Condici&oacute;n inicial)</span>
+];
+
+domain_discrete = [0, 50]; <span class="comment">% 50 pasos discretos</span>
+
+<span class="comment">% Especificaci&oacute;n expl&iacute;cita de nombres de factores y nombres de salidas</span>
+factor_names_discrete = {<span class="string">'r'</span>, <span class="string">'K'</span>, <span class="string">'N0'</span>};
+out_names_discrete    = {<span class="string">'Poblacion'</span>};
+
+[T_discrete, ~] = gsua_dataprep(<span class="string">'discrete_logistic_userdefined'</span>, ranges_discrete, <span class="keyword">...</span>
+    <span class="string">'domain'</span>, domain_discrete, <span class="keyword">...</span>
+    <span class="string">'names'</span>, factor_names_discrete, <span class="keyword">...</span>
+    <span class="string">'out_names'</span>, out_names_discrete);
+
+disp(<span class="string">'Tabla Resumen del Modelo Discreto (Factores y Salida):'</span>);
+disp(T_discrete);
+
+<span class="comment">% A. Simulaci&oacute;n Nominal</span>
+xdata_discrete = 0:50;
+y_discrete_nom = gsua_eval(T_discrete.Nominal, T_discrete, xdata_discrete, [], false, false, false);
+
+<span class="comment">% B. Muestreo de Ensamble (Vista previa de incertidumbre con gsua_dmatrix)</span>
+M_discrete = gsua_dmatrix(T_discrete, 25); <span class="comment">% 25 muestras en el hipercubo</span>
+Y_discrete_ens = zeros(25, length(xdata_discrete));
+<span class="keyword">for</span> i = 1:25
+    Y_discrete_ens(i,:) = gsua_eval(M_discrete(i,:)', T_discrete, xdata_discrete, [], false, false, false);
+<span class="keyword">end</span>
+
+figure(<span class="string">'Name'</span>, <span class="string">'Modelo Log&iacute;stico Discreto - Ensamble'</span>);
+plot(xdata_discrete, Y_discrete_ens', <span class="string">'Color'</span>, [0.7 0.8 0.9], <span class="string">'LineWidth'</span>, 0.8);
+hold <span class="string">on</span>;
+plot(xdata_discrete, y_discrete_nom, <span class="string">'b-'</span>, <span class="string">'LineWidth'</span>, 2.5, <span class="string">'DisplayName'</span>, <span class="string">'Nominal'</span>);
+xlabel(<span class="string">'Paso de Tiempo (t)'</span>);
+ylabel(<span class="string">'Poblaci&oacute;n N(t)'</span>);
+title(<span class="string">'Crecimiento Log&iacute;stico Discreto: Ensamble de 25 Trayectorias'</span>);
+grid <span class="string">on</span>;
+legend(<span class="string">'Muestras'</span>, <span class="string">'Nominal'</span>, <span class="string">'Location'</span>, <span class="string">'southeast'</span>);
+</pre>
+<pre class="codeoutput">--- 1. MODELO LOG&Iacute;STICO DISCRETO ---
+Ecuaci&oacute;n: N(t+1) = N(t) + r * N(t) * (1 - N(t) / K)
+
+Setting environment to work with user-defined function
+Tabla Resumen del Modelo Discreto (Factores y Salida):
+             Range        Nominal
+          ____________    _______
+
+    r     0.05     0.5     0.275 
+    K      100    1000       550 
+    N0       5      50      27.5 
+
+</pre>
+<img vspace="5" hspace="5" src="demo_01_introduccion_01.png" alt=""> <h2 id="4">3. MODELO 2: TIEMPO CONTINUO (Modelo Epid&eacute;mico SIR)</h2>
+<pre class="codeinput">fprintf(<span class="string">'\n--- 2. MODELO EPID&Eacute;MICO SIR CONTINUO ---\n'</span>);
+fprintf(<span class="string">'Sistema EDO: dS/dt = -beta*S*I, dI/dt = beta*S*I - gamma*I, dR/dt = gamma*I\n\n'</span>);
+
+<span class="comment">% Definici&oacute;n de rangos para Factores: [Par&aacute;metros + Condiciones Iniciales]</span>
+<span class="comment">%   Fila 1: beta  (tasa de transmisi&oacute;n)</span>
+<span class="comment">%   Fila 2: gamma (tasa de recuperaci&oacute;n)</span>
+<span class="comment">%   Fila 3: S0    (Susceptibles iniciales)</span>
+<span class="comment">%   Fila 4: I0    (Infectados iniciales)</span>
+ranges_sir = [
+    0.0001, 0.0008;  <span class="comment">% beta</span>
+    0.05,   0.20;    <span class="comment">% gamma</span>
+    900,    999;     <span class="comment">% S0 (Condici&oacute;n inicial)</span>
+    1,      50       <span class="comment">% I0 (Condici&oacute;n inicial)</span>
+];
+
+domain_sir = [0, 80]; <span class="comment">% 80 d&iacute;as</span>
+
+<span class="comment">% Especificaci&oacute;n expl&iacute;cita de nombres de factores (4) y salidas (3)</span>
+factor_names_sir = {<span class="string">'beta'</span>, <span class="string">'gamma'</span>, <span class="string">'S0'</span>, <span class="string">'I0'</span>};
+out_names_sir    = {<span class="string">'Susceptibles'</span>, <span class="string">'Infectados'</span>, <span class="string">'Recuperados'</span>};
+
+[T_sir, ~] = gsua_dataprep(<span class="string">'sir_continuous_userdefined'</span>, ranges_sir, <span class="keyword">...</span>
+    <span class="string">'domain'</span>, domain_sir, <span class="keyword">...</span>
+    <span class="string">'names'</span>, factor_names_sir, <span class="keyword">...</span>
+    <span class="string">'out_names'</span>, out_names_sir);
+
+disp(<span class="string">'Tabla Resumen del Modelo SIR (Par&aacute;metros + Condiciones Iniciales):'</span>);
+disp(T_sir);
+
+<span class="comment">% A. Simulaci&oacute;n Nominal de Todos los Compartimentos (S, I, R)</span>
+xdata_sir = linspace(0, 80, 200);
+
+<span class="comment">% T_sir ya tiene las 3 salidas activas por defecto ([1 2 3])</span>
+y_sir_all = gsua_eval(T_sir.Nominal, T_sir, xdata_sir, [], false, false, false);
+<span class="comment">% gsua_eval devuelve un arreglo con forma (nSim x tiempo x nSalidas).</span>
+<span class="comment">% Aqu&iacute; nSim = 1 (punto nominal) y nSalidas = 3, por lo que y_sir_all es (1 x 200 x 3).</span>
+<span class="comment">% squeeze() elimina la dimensi&oacute;n de simulaci&oacute;n y deja (tiempo x salidas);</span>
+<span class="comment">% el guard mantiene la orientaci&oacute;n correcta aunque una versi&oacute;n futura de la</span>
+<span class="comment">% toolbox entregue (salidas x tiempo).</span>
+Y = squeeze(y_sir_all);
+<span class="keyword">if</span> size(Y, 1) == numel(T_sir.Properties.CustomProperties.Vars)
+    Y = Y.';   <span class="comment">% pasa de (salidas x tiempo) a (tiempo x salidas)</span>
+<span class="keyword">end</span>
+S_nom = Y(:,1).';   <span class="comment">% 1 x 200</span>
+I_nom = Y(:,2).';
+R_nom = Y(:,3).';
+
+<span class="comment">% C&aacute;lculo del N&uacute;mero Reproductivo B&aacute;sico R0 = (beta * S0) / gamma</span>
+beta_nom  = T_sir.Nominal(1);
+gamma_nom = T_sir.Nominal(2);
+S0_nom    = T_sir.Nominal(3);
+R0_basic  = (beta_nom * S0_nom) / gamma_nom;
+
+fprintf(<span class="string">'Par&aacute;metros Nominales: beta = %.5f, gamma = %.2f, S0 = %.0f\n'</span>, beta_nom, gamma_nom, S0_nom);
+fprintf(<span class="string">'N&uacute;mero Reproductivo B&aacute;sico Calculado: R0 = %.2f\n'</span>, R0_basic);
+<span class="keyword">if</span> R0_basic &gt; 1
+    fprintf(<span class="string">'-&gt; R0 &gt; 1: Existe brote epid&eacute;mico (El n&uacute;mero de infectados crece inicialmente).\n\n'</span>);
+<span class="keyword">else</span>
+    fprintf(<span class="string">'-&gt; R0 &lt;= 1: No hay brote epid&eacute;mico (La infecci&oacute;n se extingue directamente).\n\n'</span>);
+<span class="keyword">end</span>
+
+<span class="comment">% B. Visualizaci&oacute;n Din&aacute;mica y Plano de Fase (S vs I)</span>
+figure(<span class="string">'Name'</span>, <span class="string">'Modelo SIR Continuo - An&aacute;lisis Din&aacute;mico'</span>, <span class="string">'Position'</span>, [100 100 1000 450]);
+
+subplot(1, 2, 1);
+plot(xdata_sir, S_nom, <span class="string">'b-'</span>, <span class="string">'LineWidth'</span>, 2, <span class="string">'DisplayName'</span>, <span class="string">'S(t) Susceptibles'</span>);
+hold <span class="string">on</span>;
+plot(xdata_sir, I_nom, <span class="string">'r-'</span>, <span class="string">'LineWidth'</span>, 2, <span class="string">'DisplayName'</span>, <span class="string">'I(t) Infectados'</span>);
+plot(xdata_sir, R_nom, <span class="string">'g-'</span>, <span class="string">'LineWidth'</span>, 2, <span class="string">'DisplayName'</span>, <span class="string">'R(t) Recuperados'</span>);
+xlabel(<span class="string">'Tiempo (D&iacute;as)'</span>);
+ylabel(<span class="string">'Poblaci&oacute;n (Personas)'</span>);
+title(sprintf(<span class="string">'Evoluci&oacute;n Temporal SIR (R_0 = %.2f)'</span>, R0_basic));
+grid <span class="string">on</span>;
+legend(<span class="string">'Location'</span>, <span class="string">'east'</span>);
+
+subplot(1, 2, 2);
+plot(S_nom, I_nom, <span class="string">'m-'</span>, <span class="string">'LineWidth'</span>, 2.5);
+hold <span class="string">on</span>;
+plot(S_nom(1), I_nom(1), <span class="string">'ko'</span>, <span class="string">'MarkerFaceColor'</span>, <span class="string">'k'</span>, <span class="string">'MarkerSize'</span>, 8, <span class="string">'DisplayName'</span>, <span class="string">'Inicio (S0, I0)'</span>);
+xlabel(<span class="string">'Susceptibles S(t)'</span>);
+ylabel(<span class="string">'Infectados I(t)'</span>);
+title(<span class="string">'Plano de Fase Epidemiol&oacute;gico (S vs I)'</span>);
+grid <span class="string">on</span>;
+legend(<span class="string">'Location'</span>, <span class="string">'northeast'</span>);
+
+<span class="comment">% C. Muestreo de Ensamble para la Curva de Infectados (Salida 2)</span>
+T_sir.Properties.CustomProperties.output = 2; <span class="comment">% Filtrar a Infectados (Salida 2)</span>
+M_sir = gsua_dmatrix(T_sir, 30);
+Y_sir_ens = zeros(30, length(xdata_sir));
+<span class="keyword">for</span> i = 1:30
+    Y_sir_ens(i,:) = gsua_eval(M_sir(i,:)', T_sir, xdata_sir, [], false, false, false);
+<span class="keyword">end</span>
+
+figure(<span class="string">'Name'</span>, <span class="string">'Modelo SIR - Variabilidad de Infectados'</span>);
+plot(xdata_sir, Y_sir_ens', <span class="string">'Color'</span>, [1.0 0.8 0.8], <span class="string">'LineWidth'</span>, 0.8);
+hold <span class="string">on</span>;
+plot(xdata_sir, I_nom, <span class="string">'r-'</span>, <span class="string">'LineWidth'</span>, 2.5, <span class="string">'DisplayName'</span>, <span class="string">'Nominal'</span>);
+xlabel(<span class="string">'Tiempo (D&iacute;as)'</span>);
+ylabel(<span class="string">'N&uacute;mero de Infectados I(t)'</span>);
+title(<span class="string">'Variabilidad de la Curva de Infectados frente a Incertidumbre en Factores'</span>);
+grid <span class="string">on</span>;
+legend(<span class="string">'Ensamble (30 Muestras)'</span>, <span class="string">'Nominal'</span>, <span class="string">'Location'</span>, <span class="string">'northeast'</span>);
+</pre>
+<pre class="codeoutput">
+--- 2. MODELO EPID&Eacute;MICO SIR CONTINUO ---
+Sistema EDO: dS/dt = -beta*S*I, dI/dt = beta*S*I - gamma*I, dR/dt = gamma*I
+
+Setting environment to work with user-defined function
+Tabla Resumen del Modelo SIR (Par&aacute;metros + Condiciones Iniciales):
+                  Range          Nominal
+             ________________    _______
+
+    beta     0.0001    0.0008    0.00045
+    gamma      0.05       0.2      0.125
+    S0          900       999      949.5
+    I0            1        50       25.5
+
+Par&aacute;metros Nominales: beta = 0.00045, gamma = 0.12, S0 = 950
+N&uacute;mero Reproductivo B&aacute;sico Calculado: R0 = 3.42
+-&gt; R0 &gt; 1: Existe brote epid&eacute;mico (El n&uacute;mero de infectados crece inicialmente).
+
+</pre>
+<img vspace="5" hspace="5" src="demo_01_introduccion_02.png" alt=""> <img vspace="5" hspace="5" src="demo_01_introduccion_03.png" alt=""> <h2 id="5">4. PREGUNTAS Y EJERCICIOS PARA EL ESTUDIANTE</h2>
+<pre class="codeinput">fprintf(<span class="string">'=========================================================================\n'</span>);
+fprintf(<span class="string">'  PREGUNTAS DE AN&Aacute;LISIS Y EJERCICIOS DOCENTES  \n'</span>);
+fprintf(<span class="string">'=========================================================================\n'</span>);
+fprintf(<span class="string">'1. &iquest;C&oacute;mo cambia el tiempo de pico epid&eacute;mico (t_max) cuando beta aumenta un 20%%?\n'</span>);
+fprintf(<span class="string">'2. Si el valor inicial I0 cambia de 1 a 50, &iquest;afecta el valor m&aacute;ximo del pico I_max?\n'</span>);
+fprintf(<span class="string">'3. En el modelo log&iacute;stico discreto, &iquest;qu&eacute; sucede con la trayectoria si r = 2.2?\n'</span>);
+fprintf(<span class="string">'=========================================================================\n\n'</span>);
+</pre>
+<pre class="codeoutput">=========================================================================
+  PREGUNTAS DE AN&Aacute;LISIS Y EJERCICIOS DOCENTES  
+=========================================================================
+1. &iquest;C&oacute;mo cambia el tiempo de pico epid&eacute;mico (t_max) cuando beta aumenta un 20%?
+2. Si el valor inicial I0 cambia de 1 a 50, &iquest;afecta el valor m&aacute;ximo del pico I_max?
+3. En el modelo log&iacute;stico discreto, &iquest;qu&eacute; sucede con la trayectoria si r = 2.2?
+=========================================================================
+
+</pre>
+<p class="footer">
+<br>
+<a href="https://www.mathworks.com/products/matlab/">Published with MATLAB&reg; R2025b</a>
+<br>
+</p>
+</div>
+<!--
+##### SOURCE BEGIN #####
+% DEMO_01_INTRODUCCION Guía Práctica e Introducción a Modelos Dinámicos
+% Curso guiado de GSUA-CSB
+%
+% Este script proporciona una introducción pedagógica a la formulación de
+% modelos en tiempo discreto y continuo definidos por el usuario,
+% declarando explícitamente factores (parámetros + condiciones iniciales)
+% y nombres de salidas, así como exploraciones de ensamble de incertidumbre.
+
+%% 1. Configuración del Entorno
+clc; clear; close all;
+
+% REPLACE_WITH_DASH_DASH- Localización portable de la toolbox GSUA-CSB REPLACE_WITH_DASH_DASHREPLACE_WITH_DASH_DASHREPLACE_WITH_DASH_DASHREPLACE_WITH_DASH_DASHREPLACE_WITH_DASH_DASHREPLACE_WITH_DASH_DASHREPLACE_WITH_DASH_DASHREPLACE_WITH_DASH_DASHREPLACE_WITH_DASH_DASHREPLACE_WITH_DASH_DASHREPLACE_WITH_DASH_DASHREPLACE_WITH_DASH_DASHREPLACE_WITH_DASH_DASH-
+% Si la toolbox ya está instalada como .mltbx, sus funciones están en el path y
+% no hay que hacer nada. Si no, intentamos ubicaciones habituales (sin
+% codificar el nombre de usuario) y, si tampoco aparece, DETENEMOS con un
+% mensaje claro en vez de fallar silenciosamente más adelante.
+if isempty(which('gsua_dataprep'))
+    candidatos = {
+        fullfile(fileparts(mfilename('fullpath')), '..', '..', '..', 'Functions')  % dentro del repo clonado
+        fullfile(getenv('USERPROFILE'), 'MATLAB Drive', 'Toolbox', 'Functions')
+        fullfile(getenv('USERPROFILE'), 'Documents', 'MATLAB', 'GSUA-CSB', 'Functions')
+    };
+    for k = 1:numel(candidatos)
+        if isfolder(candidatos{k}), addpath(candidatos{k}); break; end
+    end
+    if isempty(which('gsua_dataprep'))
+        error(['No se encontró la toolbox GSUA-CSB en el path de MATLAB. ' ...
+               'Instala GSUA-CSB.mltbx o añade su carpeta Functions con addpath(...).']);
+    end
+end
+
+% Los modelos de este módulo (discrete_logistic_userdefined,
+% sir_continuous_userdefined) viven junto a este script: ruta relativa portable.
+addpath(fileparts(mfilename('fullpath')));
+
+fprintf('=========================================================================\n');
+fprintf('  MÓDULO 01: INTRODUCCIÓN A MODELOS EN TIEMPO DISCRETO Y CONTINUO  \n');
+fprintf('=========================================================================\n\n');
+
+%% 2. MODELO 1: TIEMPO DISCRETO (Crecimiento Logístico)
+fprintf('REPLACE_WITH_DASH_DASH- 1. MODELO LOGÍSTICO DISCRETO REPLACE_WITH_DASH_DASH-\n');
+fprintf('Ecuación: N(t+1) = N(t) + r * N(t) * (1 - N(t) / K)\n\n');
+
+% Definición de rangos para Factores: [Parámetros + Condición Inicial]
+%   Fila 1: r  (tasa de crecimiento)
+%   Fila 2: K  (capacidad de carga)
+%   Fila 3: N0 (población inicial en t=0)
+ranges_discrete = [
+    0.05, 0.50;  % r
+    100,  1000;  % K
+    5,    50     % N0 (Condición inicial)
+];
+
+domain_discrete = [0, 50]; % 50 pasos discretos
+
+% Especificación explícita de nombres de factores y nombres de salidas
+factor_names_discrete = {'r', 'K', 'N0'};
+out_names_discrete    = {'Poblacion'};
+
+[T_discrete, ~] = gsua_dataprep('discrete_logistic_userdefined', ranges_discrete, ...
+    'domain', domain_discrete, ...
+    'names', factor_names_discrete, ...
+    'out_names', out_names_discrete);
+
+disp('Tabla Resumen del Modelo Discreto (Factores y Salida):');
+disp(T_discrete);
+
+% A. Simulación Nominal
+xdata_discrete = 0:50;
+y_discrete_nom = gsua_eval(T_discrete.Nominal, T_discrete, xdata_discrete, [], false, false, false);
+
+% B. Muestreo de Ensamble (Vista previa de incertidumbre con gsua_dmatrix)
+M_discrete = gsua_dmatrix(T_discrete, 25); % 25 muestras en el hipercubo
+Y_discrete_ens = zeros(25, length(xdata_discrete));
+for i = 1:25
+    Y_discrete_ens(i,:) = gsua_eval(M_discrete(i,:)', T_discrete, xdata_discrete, [], false, false, false);
+end
+
+figure('Name', 'Modelo Logístico Discreto - Ensamble');
+plot(xdata_discrete, Y_discrete_ens', 'Color', [0.7 0.8 0.9], 'LineWidth', 0.8);
+hold on;
+plot(xdata_discrete, y_discrete_nom, 'b-', 'LineWidth', 2.5, 'DisplayName', 'Nominal');
+xlabel('Paso de Tiempo (t)');
+ylabel('Población N(t)');
+title('Crecimiento Logístico Discreto: Ensamble de 25 Trayectorias');
+grid on;
+legend('Muestras', 'Nominal', 'Location', 'southeast');
+
+%% 3. MODELO 2: TIEMPO CONTINUO (Modelo Epidémico SIR)
+fprintf('\nREPLACE_WITH_DASH_DASH- 2. MODELO EPIDÉMICO SIR CONTINUO REPLACE_WITH_DASH_DASH-\n');
+fprintf('Sistema EDO: dS/dt = -beta*S*I, dI/dt = beta*S*I - gamma*I, dR/dt = gamma*I\n\n');
+
+% Definición de rangos para Factores: [Parámetros + Condiciones Iniciales]
+%   Fila 1: beta  (tasa de transmisión)
+%   Fila 2: gamma (tasa de recuperación)
+%   Fila 3: S0    (Susceptibles iniciales)
+%   Fila 4: I0    (Infectados iniciales)
+ranges_sir = [
+    0.0001, 0.0008;  % beta
+    0.05,   0.20;    % gamma
+    900,    999;     % S0 (Condición inicial)
+    1,      50       % I0 (Condición inicial)
+];
+
+domain_sir = [0, 80]; % 80 días
+
+% Especificación explícita de nombres de factores (4) y salidas (3)
+factor_names_sir = {'beta', 'gamma', 'S0', 'I0'};
+out_names_sir    = {'Susceptibles', 'Infectados', 'Recuperados'};
+
+[T_sir, ~] = gsua_dataprep('sir_continuous_userdefined', ranges_sir, ...
+    'domain', domain_sir, ...
+    'names', factor_names_sir, ...
+    'out_names', out_names_sir);
+
+disp('Tabla Resumen del Modelo SIR (Parámetros + Condiciones Iniciales):');
+disp(T_sir);
+
+% A. Simulación Nominal de Todos los Compartimentos (S, I, R)
+xdata_sir = linspace(0, 80, 200);
+
+% T_sir ya tiene las 3 salidas activas por defecto ([1 2 3])
+y_sir_all = gsua_eval(T_sir.Nominal, T_sir, xdata_sir, [], false, false, false);
+% gsua_eval devuelve un arreglo con forma (nSim x tiempo x nSalidas).
+% Aquí nSim = 1 (punto nominal) y nSalidas = 3, por lo que y_sir_all es (1 x 200 x 3).
+% squeeze() elimina la dimensión de simulación y deja (tiempo x salidas);
+% el guard mantiene la orientación correcta aunque una versión futura de la
+% toolbox entregue (salidas x tiempo).
+Y = squeeze(y_sir_all);
+if size(Y, 1) == numel(T_sir.Properties.CustomProperties.Vars)
+    Y = Y.';   % pasa de (salidas x tiempo) a (tiempo x salidas)
+end
+S_nom = Y(:,1).';   % 1 x 200
+I_nom = Y(:,2).';
+R_nom = Y(:,3).';
+
+% Cálculo del Número Reproductivo Básico R0 = (beta * S0) / gamma
+beta_nom  = T_sir.Nominal(1);
+gamma_nom = T_sir.Nominal(2);
+S0_nom    = T_sir.Nominal(3);
+R0_basic  = (beta_nom * S0_nom) / gamma_nom;
+
+fprintf('Parámetros Nominales: beta = %.5f, gamma = %.2f, S0 = %.0f\n', beta_nom, gamma_nom, S0_nom);
+fprintf('Número Reproductivo Básico Calculado: R0 = %.2f\n', R0_basic);
+if R0_basic > 1
+    fprintf('-> R0 > 1: Existe brote epidémico (El número de infectados crece inicialmente).\n\n');
+else
+    fprintf('-> R0 <= 1: No hay brote epidémico (La infección se extingue directamente).\n\n');
+end
+
+% B. Visualización Dinámica y Plano de Fase (S vs I)
+figure('Name', 'Modelo SIR Continuo - Análisis Dinámico', 'Position', [100 100 1000 450]);
+
+subplot(1, 2, 1);
+plot(xdata_sir, S_nom, 'b-', 'LineWidth', 2, 'DisplayName', 'S(t) Susceptibles');
+hold on;
+plot(xdata_sir, I_nom, 'r-', 'LineWidth', 2, 'DisplayName', 'I(t) Infectados');
+plot(xdata_sir, R_nom, 'g-', 'LineWidth', 2, 'DisplayName', 'R(t) Recuperados');
+xlabel('Tiempo (Días)');
+ylabel('Población (Personas)');
+title(sprintf('Evolución Temporal SIR (R_0 = %.2f)', R0_basic));
+grid on;
+legend('Location', 'east');
+
+subplot(1, 2, 2);
+plot(S_nom, I_nom, 'm-', 'LineWidth', 2.5);
+hold on;
+plot(S_nom(1), I_nom(1), 'ko', 'MarkerFaceColor', 'k', 'MarkerSize', 8, 'DisplayName', 'Inicio (S0, I0)');
+xlabel('Susceptibles S(t)');
+ylabel('Infectados I(t)');
+title('Plano de Fase Epidemiológico (S vs I)');
+grid on;
+legend('Location', 'northeast');
+
+% C. Muestreo de Ensamble para la Curva de Infectados (Salida 2)
+T_sir.Properties.CustomProperties.output = 2; % Filtrar a Infectados (Salida 2)
+M_sir = gsua_dmatrix(T_sir, 30);
+Y_sir_ens = zeros(30, length(xdata_sir));
+for i = 1:30
+    Y_sir_ens(i,:) = gsua_eval(M_sir(i,:)', T_sir, xdata_sir, [], false, false, false);
+end
+
+figure('Name', 'Modelo SIR - Variabilidad de Infectados');
+plot(xdata_sir, Y_sir_ens', 'Color', [1.0 0.8 0.8], 'LineWidth', 0.8);
+hold on;
+plot(xdata_sir, I_nom, 'r-', 'LineWidth', 2.5, 'DisplayName', 'Nominal');
+xlabel('Tiempo (Días)');
+ylabel('Número de Infectados I(t)');
+title('Variabilidad de la Curva de Infectados frente a Incertidumbre en Factores');
+grid on;
+legend('Ensamble (30 Muestras)', 'Nominal', 'Location', 'northeast');
+
+%% 4. PREGUNTAS Y EJERCICIOS PARA EL ESTUDIANTE
+fprintf('=========================================================================\n');
+fprintf('  PREGUNTAS DE ANÁLISIS Y EJERCICIOS DOCENTES  \n');
+fprintf('=========================================================================\n');
+fprintf('1. ¿Cómo cambia el tiempo de pico epidémico (t_max) cuando beta aumenta un 20%%?\n');
+fprintf('2. Si el valor inicial I0 cambia de 1 a 50, ¿afecta el valor máximo del pico I_max?\n');
+fprintf('3. En el modelo logístico discreto, ¿qué sucede con la trayectoria si r = 2.2?\n');
+fprintf('=========================================================================\n\n');
+
+##### SOURCE END #####
+-->
+</body>
+</html>

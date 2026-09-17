@@ -1,0 +1,460 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN">
+<html>
+<head>
+<META http-equiv="Content-Type" content="text/html; charset=UTF-8">
+<!--
+This HTML was auto-generated from MATLAB code.
+To make changes, update the MATLAB code and republish this document.
+      -->
+<title>demo_05_estimacion</title>
+<meta name="generator" content="MATLAB 25.2">
+<link rel="schema.DC" href="http://purl.org/dc/elements/1.1/">
+<meta name="DC.date" content="2026-09-17">
+<meta name="DC.source" content="demo_05_estimacion.m">
+<style type="text/css">
+html,body,div,span,applet,object,iframe,h1,h2,h3,h4,h5,h6,p,blockquote,pre,a,abbr,acronym,address,big,cite,code,del,dfn,em,font,img,ins,kbd,q,s,samp,small,strike,strong,tt,var,b,u,i,center,dl,dt,dd,ol,ul,li,fieldset,form,label,legend,table,caption,tbody,tfoot,thead,tr,th,td{margin:0;padding:0;border:0;outline:0;font-size:100%;vertical-align:baseline;background:transparent}body{line-height:1}ol,ul{list-style:none}blockquote,q{quotes:none}blockquote:before,blockquote:after,q:before,q:after{content:'';content:none}:focus{outine:0}ins{text-decoration:none}del{text-decoration:line-through}table{border-collapse:collapse;border-spacing:0}
+
+html { min-height:100%; margin-bottom:1px; }
+html body { height:100%; margin:0px; font-family:Arial, Helvetica, sans-serif; font-size:10px; color:#000; line-height:140%; background:#fff none; overflow-y:scroll; }
+html body td { vertical-align:top; text-align:left; }
+
+h1 { padding:0px; margin:0px 0px 25px; font-family:Arial, Helvetica, sans-serif; font-size:1.5em; color:#d55000; line-height:100%; font-weight:normal; }
+h2 { padding:0px; margin:0px 0px 8px; font-family:Arial, Helvetica, sans-serif; font-size:1.2em; color:#000; font-weight:bold; line-height:140%; border-bottom:1px solid #d6d4d4; display:block; }
+h3 { padding:0px; margin:0px 0px 5px; font-family:Arial, Helvetica, sans-serif; font-size:1.1em; color:#000; font-weight:bold; line-height:140%; }
+
+a { color:#005fce; text-decoration:none; }
+a:hover { color:#005fce; text-decoration:underline; }
+a:visited { color:#004aa0; text-decoration:none; }
+
+p { padding:0px; margin:0px 0px 20px; }
+img { padding:0px; margin:0px 0px 20px; border:none; }
+p img, pre img, tt img, li img, h1 img, h2 img { margin-bottom:0px; }
+
+ul { padding:0px; margin:0px 0px 20px 23px; list-style:square; }
+ul li { padding:0px; margin:0px 0px 7px 0px; }
+ul li ul { padding:5px 0px 0px; margin:0px 0px 7px 23px; }
+ul li ol li { list-style:decimal; }
+ol { padding:0px; margin:0px 0px 20px 0px; list-style:decimal; }
+ol li { padding:0px; margin:0px 0px 7px 23px; list-style-type:decimal; }
+ol li ol { padding:5px 0px 0px; margin:0px 0px 7px 0px; }
+ol li ol li { list-style-type:lower-alpha; }
+ol li ul { padding-top:7px; }
+ol li ul li { list-style:square; }
+
+.content { font-size:1.2em; line-height:140%; padding: 20px; }
+
+pre, code { font-size:12px; }
+tt { font-size: 1.2em; }
+pre { margin:0px 0px 20px; }
+pre.codeinput { padding:10px; border:1px solid #d3d3d3; background:#f7f7f7; }
+pre.codeoutput { padding:10px 11px; margin:0px 0px 20px; color:#4c4c4c; }
+pre.error { color:red; }
+
+@media print { pre.codeinput, pre.codeoutput { word-wrap:break-word; width:100%; } }
+
+span.keyword { color:#0000FF }
+span.comment { color:#228B22 }
+span.string { color:#A020F0 }
+span.untermstring { color:#B20000 }
+span.syscmd { color:#B28C00 }
+span.typesection { color:#A0522D }
+
+.footer { width:auto; padding:10px 0px; margin:25px 0px 0px; border-top:1px dotted #878787; font-size:0.8em; line-height:140%; font-style:italic; color:#878787; text-align:left; float:none; }
+.footer p { margin:0px; }
+.footer a { color:#878787; }
+.footer a:hover { color:#878787; text-decoration:underline; }
+.footer a:visited { color:#878787; }
+
+table th { padding:7px 5px; text-align:left; vertical-align:middle; border: 1px solid #d6d4d4; font-weight:bold; }
+table td { padding:7px 5px; text-align:left; vertical-align:top; border:1px solid #d6d4d4; }
+
+
+
+
+
+  </style>
+</head>
+<body>
+<div class="content">
+<h2>Contents</h2>
+<div>
+<ul>
+<li>
+<a href="#2">1. Configuraci&oacute;n del Entorno</a>
+</li>
+<li>
+<a href="#3">2. Modelo SIR con I0 fijo (estimamos beta, gamma, S0)</a>
+</li>
+<li>
+<a href="#4">3. Datos "observados" sint&eacute;ticos (verdad conocida + 5% de ruido)</a>
+</li>
+<li>
+<a href="#5">4. Estimaci&oacute;n Multicomienzo sobre los datos observados</a>
+</li>
+<li>
+<a href="#6">5. Identificabilidad por Bootstrap</a>
+</li>
+<li>
+<a href="#7">6. La cantidad identificable: R0 = beta*S0/gamma</a>
+</li>
+<li>
+<a href="#8">7. PREGUNTAS Y EJERCICIOS PARA EL ESTUDIANTE</a>
+</li>
+</ul>
+</div>
+<pre class="codeinput">
+<span class="comment">% DEMO_05_ESTIMACION Estimaci&oacute;n de Par&aacute;metros e Identificabilidad Pr&aacute;ctica</span>
+<span class="comment">% Curso guiado de GSUA-CSB</span>
+<span class="comment">%</span>
+<span class="comment">% Cerramos el ciclo de calibraci&oacute;n de modelos y llegamos a la lecci&oacute;n central del</span>
+<span class="comment">% curso: UN BUEN AJUSTE NO GARANTIZA PAR&Aacute;METROS CONFIABLES.</span>
+<span class="comment">%   - ESTIMACI&Oacute;N (gsua_pe): ajustamos el modelo a datos con optimizaci&oacute;n multicomienzo.</span>
+<span class="comment">%   - IDENTIFICABILIDAD (gsua_ia): generamos un ENSAMBLE de estimaciones re-ajustando</span>
+<span class="comment">%     varias realizaciones de ruido (bootstrap) y analizamos su dispersi&oacute;n: la matriz</span>
+<span class="comment">%     de correlaci&oacute;n revela qu&eacute; par&aacute;metros est&aacute;n entrelazados.</span>
+<span class="comment">%   - CANTIDAD IDENTIFICABLE: aunque beta, gamma y S0 se dispersen mucho, su</span>
+<span class="comment">%     combinaci&oacute;n R0 = beta*S0/gamma queda determinada. Los datos identifican la</span>
+<span class="comment">%     combinaci&oacute;n, no cada par&aacute;metro por separado.</span>
+<span class="comment">%</span>
+<span class="comment">% Modelo: SIR continuo. Observamos SOLO Infectados; I0 se supone conocido (fijo) y</span>
+<span class="comment">% estimamos beta, gamma y S0.</span>
+</pre>
+<h2 id="2">1. Configuraci&oacute;n del Entorno</h2>
+<pre class="codeinput">clc; clear; close <span class="string">all</span>;
+
+<span class="comment">% --- Localizaci&oacute;n portable de la toolbox GSUA-CSB (ver M&oacute;dulo 01) -----------</span>
+<span class="keyword">if</span> isempty(which(<span class="string">'gsua_dataprep'</span>))
+    candidatos = {
+        fullfile(fileparts(mfilename(<span class="string">'fullpath'</span>)), <span class="string">'..'</span>, <span class="string">'..'</span>, <span class="string">'..'</span>, <span class="string">'Functions'</span>)  <span class="comment">% dentro del repo clonado</span>
+        fullfile(getenv(<span class="string">'USERPROFILE'</span>), <span class="string">'MATLAB Drive'</span>, <span class="string">'Toolbox'</span>, <span class="string">'Functions'</span>)
+        fullfile(getenv(<span class="string">'USERPROFILE'</span>), <span class="string">'Documents'</span>, <span class="string">'MATLAB'</span>, <span class="string">'GSUA-CSB'</span>, <span class="string">'Functions'</span>)
+    };
+    <span class="keyword">for</span> k = 1:numel(candidatos)
+        <span class="keyword">if</span> isfolder(candidatos{k}), addpath(candidatos{k}); <span class="keyword">break</span>; <span class="keyword">end</span>
+    <span class="keyword">end</span>
+    <span class="keyword">if</span> isempty(which(<span class="string">'gsua_dataprep'</span>))
+        error([<span class="string">'No se encontr&oacute; la toolbox GSUA-CSB en el path de MATLAB. '</span> <span class="keyword">...</span>
+               <span class="string">'Instala GSUA-CSB.mltbx o a&ntilde;ade su carpeta Functions con addpath(...).'</span>]);
+    <span class="keyword">end</span>
+<span class="keyword">end</span>
+model1_path = fullfile(fileparts(mfilename(<span class="string">'fullpath'</span>)), <span class="string">'..'</span>, <span class="string">'..'</span>, <span class="keyword">...</span>
+    <span class="string">'01_Introduccion_Modelos'</span>, <span class="string">'matlab'</span>);
+<span class="keyword">if</span> isfolder(model1_path), addpath(model1_path); <span class="keyword">else</span>, error(<span class="string">'Falta el M&oacute;dulo 01 en %s'</span>, model1_path); <span class="keyword">end</span>
+
+fprintf(<span class="string">'=========================================================================\n'</span>);
+fprintf(<span class="string">'  M&Oacute;DULO 05: ESTIMACI&Oacute;N DE PAR&Aacute;METROS E IDENTIFICABILIDAD PR&Aacute;CTICA  \n'</span>);
+fprintf(<span class="string">'=========================================================================\n\n'</span>);
+</pre>
+<pre class="codeoutput">=========================================================================
+  M&Oacute;DULO 05: ESTIMACI&Oacute;N DE PAR&Aacute;METROS E IDENTIFICABILIDAD PR&Aacute;CTICA  
+=========================================================================
+
+</pre>
+<h2 id="3">2. Modelo SIR con I0 fijo (estimamos beta, gamma, S0)</h2>
+<p>Un factor se FIJA d&aacute;ndole un rango degenerado [v v]. Fijamos I0 = 5 y dejamos libres beta, gamma y S0. Observamos &uacute;nicamente la curva de Infectados (output 2).</p>
+<pre class="codeinput">ranges = [
+    1e-4, 8e-4;   <span class="comment">% beta   (libre)</span>
+    0.05, 0.20;   <span class="comment">% gamma  (libre)</span>
+    900,  999;    <span class="comment">% S0     (libre)</span>
+    5,    5       <span class="comment">% I0     (FIJO en 5)</span>
+];
+[T, ~] = gsua_dataprep(<span class="string">'sir_continuous_userdefined'</span>, ranges, <span class="keyword">...</span>
+    <span class="string">'domain'</span>, [0, 80], <span class="keyword">...</span>
+    <span class="string">'names'</span>, {<span class="string">'beta'</span>, <span class="string">'gamma'</span>, <span class="string">'S0'</span>, <span class="string">'I0'</span>}, <span class="keyword">...</span>
+    <span class="string">'out_names'</span>, {<span class="string">'Susceptibles'</span>, <span class="string">'Infectados'</span>, <span class="string">'Recuperados'</span>});
+T.Properties.CustomProperties.output = 2;      <span class="comment">% solo Infectados</span>
+names = T.Properties.RowNames;                 <span class="comment">% {'beta','gamma','S0'}</span>
+xdata = linspace(0, 80, 200);
+opt   = optimoptions(<span class="string">'lsqcurvefit'</span>, <span class="string">'Display'</span>, <span class="string">'off'</span>);   <span class="comment">% silenciar el optimizador</span>
+fprintf(<span class="string">'Factores a estimar: %s (I0 fijo en 5); se observa solo Infectados.\n\n'</span>, strjoin(names, <span class="string">', '</span>));
+</pre>
+<pre class="codeoutput">Setting environment to work with user-defined function
+Factores a estimar: beta, gamma, S0 (I0 fijo en 5); se observa solo Infectados.
+
+</pre>
+<h2 id="4">3. Datos "observados" sint&eacute;ticos (verdad conocida + 5% de ruido)</h2>
+<pre class="codeinput">true_free = [5e-4; 0.12; 950];                 <span class="comment">% beta, gamma, S0 verdaderos</span>
+y_clean   = squeeze(gsua_eval(true_free, T, xdata, [], false, false, false)).';
+rng(3);
+ydata     = y_clean .* (1 + 0.05 * randn(size(y_clean)));
+</pre>
+<h2 id="5">4. Estimaci&oacute;n Multicomienzo sobre los datos observados</h2>
+<pre class="codeinput">[T, res] = gsua_pe(T, xdata, ydata, <span class="string">'N'</span>, 10, <span class="string">'solver'</span>, <span class="string">'lsqc'</span>, <span class="keyword">...</span>
+    <span class="string">'opt'</span>, opt, <span class="string">'save'</span>, false, <span class="string">'timer'</span>, false);
+[bestCost, ix] = min(res);
+best = T.Estlsqc(:, ix);
+fprintf(<span class="string">'--- Mejor ajuste ---\n'</span>);
+fprintf(<span class="string">'   beta  = %.3e   (verdad 5.000e-04)\n'</span>, best(1));
+fprintf(<span class="string">'   gamma = %.4f    (verdad 0.1200)\n'</span>, best(2));
+fprintf(<span class="string">'   S0    = %.1f     (verdad 950.0)\n'</span>, best(3));
+fprintf(<span class="string">'   El ajuste es EXCELENTE (costo = %.4g). &iquest;Significa que los par&aacute;metros son confiables?\n\n'</span>, bestCost);
+
+y_best = squeeze(gsua_eval(best, T, xdata, [], false, false, false)).';
+figure(<span class="string">'Name'</span>, <span class="string">'Mejor ajuste vs datos'</span>);
+plot(xdata, ydata, <span class="string">'r.'</span>, <span class="string">'MarkerSize'</span>, 7, <span class="string">'DisplayName'</span>, <span class="string">'Datos observados'</span>); hold <span class="string">on</span>;
+plot(xdata, y_best, <span class="string">'b-'</span>, <span class="string">'LineWidth'</span>, 2, <span class="string">'DisplayName'</span>, <span class="string">'Mejor ajuste'</span>);
+xlabel(<span class="string">'Tiempo (D&iacute;as)'</span>); ylabel(<span class="string">'Infectados I(t)'</span>);
+title(<span class="string">'Estimaci&oacute;n de par&aacute;metros: el modelo ajusta muy bien los datos'</span>);
+grid <span class="string">on</span>; legend(<span class="string">'Location'</span>, <span class="string">'northeast'</span>);
+</pre>
+<pre class="codeoutput">--- Mejor ajuste ---
+   beta  = 5.103e-04   (verdad 5.000e-04)
+   gamma = 0.1179    (verdad 0.1200)
+   S0    = 929.4     (verdad 950.0)
+   El ajuste es EXCELENTE (costo = 6980). &iquest;Significa que los par&aacute;metros son confiables?
+
+</pre>
+<img vspace="5" hspace="5" src="demo_05_estimacion_01.png" alt=""> <h2 id="6">5. Identificabilidad por Bootstrap</h2>
+<p>Una sola estimaci&oacute;n no dice cu&aacute;nta CONFIANZA merece cada par&aacute;metro. Generamos un ENSAMBLE re-ajustando B realizaciones de ruido distintas: la dispersi&oacute;n resultante es la incertidumbre de cada par&aacute;metro, y su ESTRUCTURA (correlaci&oacute;n) revela los entrelazamientos.</p>
+<pre class="codeinput">B = 20;
+Est = zeros(numel(names), B);
+fprintf(<span class="string">'Generando ensamble bootstrap (%d re-ajustes)...\n'</span>, B);
+<span class="keyword">for</span> b = 1:B
+    yb = y_clean .* (1 + 0.05 * randn(size(y_clean)));   <span class="comment">% nueva realizaci&oacute;n de ruido</span>
+    [Tb, resb] = gsua_pe(T, xdata, yb, <span class="string">'N'</span>, 3, <span class="string">'solver'</span>, <span class="string">'lsqc'</span>, <span class="keyword">...</span>
+        <span class="string">'opt'</span>, opt, <span class="string">'save'</span>, false, <span class="string">'timer'</span>, false);
+    [~, jx] = min(resb);
+    Est(:, b) = Tb.Estlsqc(:, jx);
+<span class="keyword">end</span>
+
+<span class="comment">% gsua_ia analiza el ensamble: actualiza rangos a un IC de la mediana, calcula el</span>
+<span class="comment">% &iacute;ndice de identificabilidad por par&aacute;metro (0 = bien, 1 = mal) y abre las figuras</span>
+<span class="comment">% diagn&oacute;sticas (incluida la matriz de correlaci&oacute;n).</span>
+[T, ci] = gsua_ia(T, Est, false, false, true, false); <span class="comment">%#ok&lt;ASGLU&gt;</span>
+
+fprintf(<span class="string">'\n--- Dispersi&oacute;n del ensamble (coeficiente de variaci&oacute;n) ---\n'</span>);
+cv = @(v) std(v) / mean(v) * 100;
+<span class="keyword">for</span> i = 1:numel(names)
+    fprintf(<span class="string">'   %-6s CV = %5.1f%%   &iacute;ndice identif = %.2f\n'</span>, names{i}, cv(Est(i,:)), T.index(i));
+<span class="keyword">end</span>
+
+R = corrcoef(Est.');
+fprintf(<span class="string">'\n--- Correlaci&oacute;n entre par&aacute;metros ---\n'</span>);
+disp(array2table(R, <span class="string">'RowNames'</span>, names, <span class="string">'VariableNames'</span>, names));
+Rabs = abs(R); Rabs(1:size(R,1)+1:end) = 0;
+[mx, pos] = max(Rabs(:)); [a, b2] = ind2sub(size(R), pos);
+fprintf(<span class="string">'Par m&aacute;s entrelazado: %s &lt;-&gt; %s  (|corr| = %.2f)\n'</span>, names{a}, names{b2}, mx);
+<span class="keyword">if</span> mx &gt; 0.9
+    fprintf(<span class="string">'=&gt; |corr| &gt; 0.9: aunque el ajuste sea perfecto, los datos identifican su\n'</span>);
+    fprintf(<span class="string">'   COMBINACI&Oacute;N, no cada par&aacute;metro por separado (no-identificabilidad pr&aacute;ctica).\n\n'</span>);
+<span class="keyword">end</span>
+</pre>
+<pre class="codeoutput">Generando ensamble bootstrap (20 re-ajustes)...
+
+--- Dispersi&oacute;n del ensamble (coeficiente de variaci&oacute;n) ---
+   beta   CV =   1.8%   &iacute;ndice identif = 0.50
+   gamma  CV =   1.7%   &iacute;ndice identif = 0.50
+   S0     CV =   2.0%   &iacute;ndice identif = 0.59
+
+--- Correlaci&oacute;n entre par&aacute;metros ---
+               beta       gamma        S0   
+             ________    ________    _______
+
+    beta            1    -0.96115    -0.9828
+    gamma    -0.96115           1    0.95703
+    S0        -0.9828     0.95703          1
+
+Par m&aacute;s entrelazado: S0 &lt;-&gt; beta  (|corr| = 0.98)
+=&gt; |corr| &gt; 0.9: aunque el ajuste sea perfecto, los datos identifican su
+   COMBINACI&Oacute;N, no cada par&aacute;metro por separado (no-identificabilidad pr&aacute;ctica).
+
+</pre>
+<img vspace="5" hspace="5" src="demo_05_estimacion_02.png" alt=""> <img vspace="5" hspace="5" src="demo_05_estimacion_03.png" alt=""> <img vspace="5" hspace="5" src="demo_05_estimacion_04.png" alt=""> <img vspace="5" hspace="5" src="demo_05_estimacion_05.png" alt=""> <img vspace="5" hspace="5" src="demo_05_estimacion_06.png" alt=""> <img vspace="5" hspace="5" src="demo_05_estimacion_07.png" alt=""> <h2 id="7">6. La cantidad identificable: R0 = beta*S0/gamma</h2>
+<p>Aunque beta, gamma y S0 se dispersen, su combinaci&oacute;n R0 deber&iacute;a quedar fija: es lo que la curva de Infectados realmente determina.</p>
+<pre class="codeinput">R0_ens   = (Est(1,:) .* Est(3,:)) ./ Est(2,:);
+R0_true  = (true_free(1) * true_free(3)) / true_free(2);
+fprintf(<span class="string">'--- N&uacute;mero reproductivo b&aacute;sico R0 = beta*S0/gamma ---\n'</span>);
+fprintf(<span class="string">'   CV de los par&aacute;metros individuales ~ %.1f%%, pero CV de R0 = %.2f%%\n'</span>, <span class="keyword">...</span>
+    mean([cv(Est(1,:)), cv(Est(2,:)), cv(Est(3,:))]), cv(R0_ens));
+fprintf(<span class="string">'   R0 estimado = %.2f &plusmn; %.2f   (verdad = %.2f)\n'</span>, mean(R0_ens), std(R0_ens), R0_true);
+fprintf(<span class="string">'=&gt; Moraleja: la COMBINACI&Oacute;N identificable (R0) es confiable aunque sus\n'</span>);
+fprintf(<span class="string">'   componentes por separado no lo sean.\n\n'</span>);
+</pre>
+<pre class="codeoutput">--- N&uacute;mero reproductivo b&aacute;sico R0 = beta*S0/gamma ---
+   CV de los par&aacute;metros individuales ~ 1.8%, pero CV de R0 = 1.56%
+   R0 estimado = 3.95 &plusmn; 0.06   (verdad = 3.96)
+=&gt; Moraleja: la COMBINACI&Oacute;N identificable (R0) es confiable aunque sus
+   componentes por separado no lo sean.
+
+</pre>
+<h2 id="8">7. PREGUNTAS Y EJERCICIOS PARA EL ESTUDIANTE</h2>
+<pre class="codeinput">fprintf(<span class="string">'=========================================================================\n'</span>);
+fprintf(<span class="string">'  PREGUNTAS DE AN&Aacute;LISIS Y EJERCICIOS DOCENTES (M&Oacute;DULO 05)  \n'</span>);
+fprintf(<span class="string">'=========================================================================\n'</span>);
+fprintf(<span class="string">'1. Explica la correlaci&oacute;n beta&lt;-&gt;S0 usando R0 = beta*S0/gamma.\n'</span>);
+fprintf(<span class="string">'2. Fija S0 en su valor real (rango [950 950]) y repite. &iquest;Mejora la identificabilidad?\n'</span>);
+fprintf(<span class="string">'3. Observa los 3 compartimentos (output = [1 2 3]) en vez de solo Infectados.\n'</span>);
+fprintf(<span class="string">'   &iquest;Se rompen los entrelazamientos? &iquest;Bajan los CV individuales?\n'</span>);
+fprintf(<span class="string">'4. Sube el ruido de 5%% a 15%%. &iquest;C&oacute;mo cambian los CV y el CV de R0?\n'</span>);
+fprintf(<span class="string">'=========================================================================\n\n'</span>);
+</pre>
+<pre class="codeoutput">=========================================================================
+  PREGUNTAS DE AN&Aacute;LISIS Y EJERCICIOS DOCENTES (M&Oacute;DULO 05)  
+=========================================================================
+1. Explica la correlaci&oacute;n beta&lt;-&gt;S0 usando R0 = beta*S0/gamma.
+2. Fija S0 en su valor real (rango [950 950]) y repite. &iquest;Mejora la identificabilidad?
+3. Observa los 3 compartimentos (output = [1 2 3]) en vez de solo Infectados.
+   &iquest;Se rompen los entrelazamientos? &iquest;Bajan los CV individuales?
+4. Sube el ruido de 5% a 15%. &iquest;C&oacute;mo cambian los CV y el CV de R0?
+=========================================================================
+
+</pre>
+<p class="footer">
+<br>
+<a href="https://www.mathworks.com/products/matlab/">Published with MATLAB&reg; R2025b</a>
+<br>
+</p>
+</div>
+<!--
+##### SOURCE BEGIN #####
+% DEMO_05_ESTIMACION Estimación de Parámetros e Identificabilidad Práctica
+% Curso guiado de GSUA-CSB
+%
+% Cerramos el ciclo de calibración de modelos y llegamos a la lección central del
+% curso: UN BUEN AJUSTE NO GARANTIZA PARÁMETROS CONFIABLES.
+%   - ESTIMACIÓN (gsua_pe): ajustamos el modelo a datos con optimización multicomienzo.
+%   - IDENTIFICABILIDAD (gsua_ia): generamos un ENSAMBLE de estimaciones re-ajustando
+%     varias realizaciones de ruido (bootstrap) y analizamos su dispersión: la matriz
+%     de correlación revela qué parámetros están entrelazados.
+%   - CANTIDAD IDENTIFICABLE: aunque beta, gamma y S0 se dispersen mucho, su
+%     combinación R0 = beta*S0/gamma queda determinada. Los datos identifican la
+%     combinación, no cada parámetro por separado.
+%
+% Modelo: SIR continuo. Observamos SOLO Infectados; I0 se supone conocido (fijo) y
+% estimamos beta, gamma y S0.
+
+%% 1. Configuración del Entorno
+clc; clear; close all;
+
+% REPLACE_WITH_DASH_DASH- Localización portable de la toolbox GSUA-CSB (ver Módulo 01) REPLACE_WITH_DASH_DASHREPLACE_WITH_DASH_DASHREPLACE_WITH_DASH_DASHREPLACE_WITH_DASH_DASHREPLACE_WITH_DASH_DASH-
+if isempty(which('gsua_dataprep'))
+    candidatos = {
+        fullfile(fileparts(mfilename('fullpath')), '..', '..', '..', 'Functions')  % dentro del repo clonado
+        fullfile(getenv('USERPROFILE'), 'MATLAB Drive', 'Toolbox', 'Functions')
+        fullfile(getenv('USERPROFILE'), 'Documents', 'MATLAB', 'GSUA-CSB', 'Functions')
+    };
+    for k = 1:numel(candidatos)
+        if isfolder(candidatos{k}), addpath(candidatos{k}); break; end
+    end
+    if isempty(which('gsua_dataprep'))
+        error(['No se encontró la toolbox GSUA-CSB en el path de MATLAB. ' ...
+               'Instala GSUA-CSB.mltbx o añade su carpeta Functions con addpath(...).']);
+    end
+end
+model1_path = fullfile(fileparts(mfilename('fullpath')), '..', '..', ...
+    '01_Introduccion_Modelos', 'matlab');
+if isfolder(model1_path), addpath(model1_path); else, error('Falta el Módulo 01 en %s', model1_path); end
+
+fprintf('=========================================================================\n');
+fprintf('  MÓDULO 05: ESTIMACIÓN DE PARÁMETROS E IDENTIFICABILIDAD PRÁCTICA  \n');
+fprintf('=========================================================================\n\n');
+
+%% 2. Modelo SIR con I0 fijo (estimamos beta, gamma, S0)
+% Un factor se FIJA dándole un rango degenerado [v v]. Fijamos I0 = 5 y dejamos
+% libres beta, gamma y S0. Observamos únicamente la curva de Infectados (output 2).
+ranges = [
+    1e-4, 8e-4;   % beta   (libre)
+    0.05, 0.20;   % gamma  (libre)
+    900,  999;    % S0     (libre)
+    5,    5       % I0     (FIJO en 5)
+];
+[T, ~] = gsua_dataprep('sir_continuous_userdefined', ranges, ...
+    'domain', [0, 80], ...
+    'names', {'beta', 'gamma', 'S0', 'I0'}, ...
+    'out_names', {'Susceptibles', 'Infectados', 'Recuperados'});
+T.Properties.CustomProperties.output = 2;      % solo Infectados
+names = T.Properties.RowNames;                 % {'beta','gamma','S0'}
+xdata = linspace(0, 80, 200);
+opt   = optimoptions('lsqcurvefit', 'Display', 'off');   % silenciar el optimizador
+fprintf('Factores a estimar: %s (I0 fijo en 5); se observa solo Infectados.\n\n', strjoin(names, ', '));
+
+%% 3. Datos "observados" sintéticos (verdad conocida + 5% de ruido)
+true_free = [5e-4; 0.12; 950];                 % beta, gamma, S0 verdaderos
+y_clean   = squeeze(gsua_eval(true_free, T, xdata, [], false, false, false)).';
+rng(3);
+ydata     = y_clean .* (1 + 0.05 * randn(size(y_clean)));
+
+%% 4. Estimación Multicomienzo sobre los datos observados
+[T, res] = gsua_pe(T, xdata, ydata, 'N', 10, 'solver', 'lsqc', ...
+    'opt', opt, 'save', false, 'timer', false);
+[bestCost, ix] = min(res);
+best = T.Estlsqc(:, ix);
+fprintf('REPLACE_WITH_DASH_DASH- Mejor ajuste REPLACE_WITH_DASH_DASH-\n');
+fprintf('   beta  = %.3e   (verdad 5.000e-04)\n', best(1));
+fprintf('   gamma = %.4f    (verdad 0.1200)\n', best(2));
+fprintf('   S0    = %.1f     (verdad 950.0)\n', best(3));
+fprintf('   El ajuste es EXCELENTE (costo = %.4g). ¿Significa que los parámetros son confiables?\n\n', bestCost);
+
+y_best = squeeze(gsua_eval(best, T, xdata, [], false, false, false)).';
+figure('Name', 'Mejor ajuste vs datos');
+plot(xdata, ydata, 'r.', 'MarkerSize', 7, 'DisplayName', 'Datos observados'); hold on;
+plot(xdata, y_best, 'b-', 'LineWidth', 2, 'DisplayName', 'Mejor ajuste');
+xlabel('Tiempo (Días)'); ylabel('Infectados I(t)');
+title('Estimación de parámetros: el modelo ajusta muy bien los datos');
+grid on; legend('Location', 'northeast');
+
+%% 5. Identificabilidad por Bootstrap
+% Una sola estimación no dice cuánta CONFIANZA merece cada parámetro. Generamos un
+% ENSAMBLE re-ajustando B realizaciones de ruido distintas: la dispersión resultante
+% es la incertidumbre de cada parámetro, y su ESTRUCTURA (correlación) revela los
+% entrelazamientos.
+B = 20;
+Est = zeros(numel(names), B);
+fprintf('Generando ensamble bootstrap (%d re-ajustes)...\n', B);
+for b = 1:B
+    yb = y_clean .* (1 + 0.05 * randn(size(y_clean)));   % nueva realización de ruido
+    [Tb, resb] = gsua_pe(T, xdata, yb, 'N', 3, 'solver', 'lsqc', ...
+        'opt', opt, 'save', false, 'timer', false);
+    [~, jx] = min(resb);
+    Est(:, b) = Tb.Estlsqc(:, jx);
+end
+
+% gsua_ia analiza el ensamble: actualiza rangos a un IC de la mediana, calcula el
+% índice de identificabilidad por parámetro (0 = bien, 1 = mal) y abre las figuras
+% diagnósticas (incluida la matriz de correlación).
+[T, ci] = gsua_ia(T, Est, false, false, true, false); %#ok<ASGLU>
+
+fprintf('\nREPLACE_WITH_DASH_DASH- Dispersión del ensamble (coeficiente de variación) REPLACE_WITH_DASH_DASH-\n');
+cv = @(v) std(v) / mean(v) * 100;
+for i = 1:numel(names)
+    fprintf('   %-6s CV = %5.1f%%   índice identif = %.2f\n', names{i}, cv(Est(i,:)), T.index(i));
+end
+
+R = corrcoef(Est.');
+fprintf('\nREPLACE_WITH_DASH_DASH- Correlación entre parámetros REPLACE_WITH_DASH_DASH-\n');
+disp(array2table(R, 'RowNames', names, 'VariableNames', names));
+Rabs = abs(R); Rabs(1:size(R,1)+1:end) = 0;
+[mx, pos] = max(Rabs(:)); [a, b2] = ind2sub(size(R), pos);
+fprintf('Par más entrelazado: %s <-> %s  (|corr| = %.2f)\n', names{a}, names{b2}, mx);
+if mx > 0.9
+    fprintf('=> |corr| > 0.9: aunque el ajuste sea perfecto, los datos identifican su\n');
+    fprintf('   COMBINACIÓN, no cada parámetro por separado (no-identificabilidad práctica).\n\n');
+end
+
+%% 6. La cantidad identificable: R0 = beta*S0/gamma
+% Aunque beta, gamma y S0 se dispersen, su combinación R0 debería quedar fija:
+% es lo que la curva de Infectados realmente determina.
+R0_ens   = (Est(1,:) .* Est(3,:)) ./ Est(2,:);
+R0_true  = (true_free(1) * true_free(3)) / true_free(2);
+fprintf('REPLACE_WITH_DASH_DASH- Número reproductivo básico R0 = beta*S0/gamma REPLACE_WITH_DASH_DASH-\n');
+fprintf('   CV de los parámetros individuales ~ %.1f%%, pero CV de R0 = %.2f%%\n', ...
+    mean([cv(Est(1,:)), cv(Est(2,:)), cv(Est(3,:))]), cv(R0_ens));
+fprintf('   R0 estimado = %.2f ± %.2f   (verdad = %.2f)\n', mean(R0_ens), std(R0_ens), R0_true);
+fprintf('=> Moraleja: la COMBINACIÓN identificable (R0) es confiable aunque sus\n');
+fprintf('   componentes por separado no lo sean.\n\n');
+
+%% 7. PREGUNTAS Y EJERCICIOS PARA EL ESTUDIANTE
+fprintf('=========================================================================\n');
+fprintf('  PREGUNTAS DE ANÁLISIS Y EJERCICIOS DOCENTES (MÓDULO 05)  \n');
+fprintf('=========================================================================\n');
+fprintf('1. Explica la correlación beta<->S0 usando R0 = beta*S0/gamma.\n');
+fprintf('2. Fija S0 en su valor real (rango [950 950]) y repite. ¿Mejora la identificabilidad?\n');
+fprintf('3. Observa los 3 compartimentos (output = [1 2 3]) en vez de solo Infectados.\n');
+fprintf('   ¿Se rompen los entrelazamientos? ¿Bajan los CV individuales?\n');
+fprintf('4. Sube el ruido de 5%% a 15%%. ¿Cómo cambian los CV y el CV de R0?\n');
+fprintf('=========================================================================\n\n');
+
+##### SOURCE END #####
+-->
+</body>
+</html>

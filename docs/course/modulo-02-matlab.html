@@ -1,0 +1,413 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN">
+<html>
+<head>
+<META http-equiv="Content-Type" content="text/html; charset=UTF-8">
+<!--
+This HTML was auto-generated from MATLAB code.
+To make changes, update the MATLAB code and republish this document.
+      -->
+<title>demo_02_muestreo</title>
+<meta name="generator" content="MATLAB 25.2">
+<link rel="schema.DC" href="http://purl.org/dc/elements/1.1/">
+<meta name="DC.date" content="2026-09-17">
+<meta name="DC.source" content="demo_02_muestreo.m">
+<style type="text/css">
+html,body,div,span,applet,object,iframe,h1,h2,h3,h4,h5,h6,p,blockquote,pre,a,abbr,acronym,address,big,cite,code,del,dfn,em,font,img,ins,kbd,q,s,samp,small,strike,strong,tt,var,b,u,i,center,dl,dt,dd,ol,ul,li,fieldset,form,label,legend,table,caption,tbody,tfoot,thead,tr,th,td{margin:0;padding:0;border:0;outline:0;font-size:100%;vertical-align:baseline;background:transparent}body{line-height:1}ol,ul{list-style:none}blockquote,q{quotes:none}blockquote:before,blockquote:after,q:before,q:after{content:'';content:none}:focus{outine:0}ins{text-decoration:none}del{text-decoration:line-through}table{border-collapse:collapse;border-spacing:0}
+
+html { min-height:100%; margin-bottom:1px; }
+html body { height:100%; margin:0px; font-family:Arial, Helvetica, sans-serif; font-size:10px; color:#000; line-height:140%; background:#fff none; overflow-y:scroll; }
+html body td { vertical-align:top; text-align:left; }
+
+h1 { padding:0px; margin:0px 0px 25px; font-family:Arial, Helvetica, sans-serif; font-size:1.5em; color:#d55000; line-height:100%; font-weight:normal; }
+h2 { padding:0px; margin:0px 0px 8px; font-family:Arial, Helvetica, sans-serif; font-size:1.2em; color:#000; font-weight:bold; line-height:140%; border-bottom:1px solid #d6d4d4; display:block; }
+h3 { padding:0px; margin:0px 0px 5px; font-family:Arial, Helvetica, sans-serif; font-size:1.1em; color:#000; font-weight:bold; line-height:140%; }
+
+a { color:#005fce; text-decoration:none; }
+a:hover { color:#005fce; text-decoration:underline; }
+a:visited { color:#004aa0; text-decoration:none; }
+
+p { padding:0px; margin:0px 0px 20px; }
+img { padding:0px; margin:0px 0px 20px; border:none; }
+p img, pre img, tt img, li img, h1 img, h2 img { margin-bottom:0px; }
+
+ul { padding:0px; margin:0px 0px 20px 23px; list-style:square; }
+ul li { padding:0px; margin:0px 0px 7px 0px; }
+ul li ul { padding:5px 0px 0px; margin:0px 0px 7px 23px; }
+ul li ol li { list-style:decimal; }
+ol { padding:0px; margin:0px 0px 20px 0px; list-style:decimal; }
+ol li { padding:0px; margin:0px 0px 7px 23px; list-style-type:decimal; }
+ol li ol { padding:5px 0px 0px; margin:0px 0px 7px 0px; }
+ol li ol li { list-style-type:lower-alpha; }
+ol li ul { padding-top:7px; }
+ol li ul li { list-style:square; }
+
+.content { font-size:1.2em; line-height:140%; padding: 20px; }
+
+pre, code { font-size:12px; }
+tt { font-size: 1.2em; }
+pre { margin:0px 0px 20px; }
+pre.codeinput { padding:10px; border:1px solid #d3d3d3; background:#f7f7f7; }
+pre.codeoutput { padding:10px 11px; margin:0px 0px 20px; color:#4c4c4c; }
+pre.error { color:red; }
+
+@media print { pre.codeinput, pre.codeoutput { word-wrap:break-word; width:100%; } }
+
+span.keyword { color:#0000FF }
+span.comment { color:#228B22 }
+span.string { color:#A020F0 }
+span.untermstring { color:#B20000 }
+span.syscmd { color:#B28C00 }
+span.typesection { color:#A0522D }
+
+.footer { width:auto; padding:10px 0px; margin:25px 0px 0px; border-top:1px dotted #878787; font-size:0.8em; line-height:140%; font-style:italic; color:#878787; text-align:left; float:none; }
+.footer p { margin:0px; }
+.footer a { color:#878787; }
+.footer a:hover { color:#878787; text-decoration:underline; }
+.footer a:visited { color:#878787; }
+
+table th { padding:7px 5px; text-align:left; vertical-align:middle; border: 1px solid #d6d4d4; font-weight:bold; }
+table td { padding:7px 5px; text-align:left; vertical-align:top; border:1px solid #d6d4d4; }
+
+
+
+
+
+  </style>
+</head>
+<body>
+<div class="content">
+<h2>Contents</h2>
+<div>
+<ul>
+<li>
+<a href="#2">1. Configuraci&oacute;n del Entorno</a>
+</li>
+<li>
+<a href="#3">2. Definici&oacute;n del Modelo Epid&eacute;mico SIR</a>
+</li>
+<li>
+<a href="#4">3. Generaci&oacute;n de Matrices de Dise&ntilde;o (N = 250 muestras)</a>
+</li>
+<li>
+<a href="#5">4. Comparaci&oacute;n de la Cobertura del Espacio (Proyecci&oacute;n beta vs gamma)</a>
+</li>
+<li>
+<a href="#6">5. An&aacute;lisis del Llenado de Espacio y Proyecciones Multidimensionales</a>
+</li>
+<li>
+<a href="#7">6. Ilustraci&oacute;n del Muestreo en Escala Logar&iacute;tmica</a>
+</li>
+<li>
+<a href="#8">7. PREGUNTAS DE AN&Aacute;LISIS Y EJERCICIOS DOCENTES</a>
+</li>
+</ul>
+</div>
+<pre class="codeinput">
+<span class="comment">% DEMO_02_MUESTREO Muestreo del Espacio de Par&aacute;metros</span>
+<span class="comment">% Curso guiado de GSUA-CSB</span>
+<span class="comment">%</span>
+<span class="comment">% Este script explora y compara las diferentes estrategias de dise&ntilde;o de experimentos</span>
+<span class="comment">% computacionales (Design of Experiments - DoE) para el muestreo de hipercubos:</span>
+<span class="comment">% 1. Muestreo Aleatorio Uniforme ('Uniform')</span>
+<span class="comment">% 2. Muestreo por Hipercubo Latino ('LatinHypercube' / LHS)</span>
+<span class="comment">% 3. Muestreo por Secuencias de Sobol ('Sobol')</span>
+</pre>
+<h2 id="2">1. Configuraci&oacute;n del Entorno</h2>
+<pre class="codeinput">clc; clear; close <span class="string">all</span>;
+
+<span class="comment">% --- Localizaci&oacute;n portable de la toolbox GSUA-CSB (ver M&oacute;dulo 01) -----------</span>
+<span class="keyword">if</span> isempty(which(<span class="string">'gsua_dataprep'</span>))
+    candidatos = {
+        fullfile(fileparts(mfilename(<span class="string">'fullpath'</span>)), <span class="string">'..'</span>, <span class="string">'..'</span>, <span class="string">'..'</span>, <span class="string">'Functions'</span>)  <span class="comment">% dentro del repo clonado</span>
+        fullfile(getenv(<span class="string">'USERPROFILE'</span>), <span class="string">'MATLAB Drive'</span>, <span class="string">'Toolbox'</span>, <span class="string">'Functions'</span>)
+        fullfile(getenv(<span class="string">'USERPROFILE'</span>), <span class="string">'Documents'</span>, <span class="string">'MATLAB'</span>, <span class="string">'GSUA-CSB'</span>, <span class="string">'Functions'</span>)
+    };
+    <span class="keyword">for</span> k = 1:numel(candidatos)
+        <span class="keyword">if</span> isfolder(candidatos{k}), addpath(candidatos{k}); <span class="keyword">break</span>; <span class="keyword">end</span>
+    <span class="keyword">end</span>
+    <span class="keyword">if</span> isempty(which(<span class="string">'gsua_dataprep'</span>))
+        error([<span class="string">'No se encontr&oacute; la toolbox GSUA-CSB en el path de MATLAB. '</span> <span class="keyword">...</span>
+               <span class="string">'Instala GSUA-CSB.mltbx o a&ntilde;ade su carpeta Functions con addpath(...).'</span>]);
+    <span class="keyword">end</span>
+<span class="keyword">end</span>
+
+<span class="comment">% El modelo SIR se reutiliza del M&oacute;dulo 01. Resolvemos su carpeta de forma</span>
+<span class="comment">% relativa a este script (../../01_Introduccion_Modelos/matlab), no con una</span>
+<span class="comment">% ruta absoluta, para que funcione en cualquier equipo donde se clone el curso.</span>
+model1_path = fullfile(fileparts(mfilename(<span class="string">'fullpath'</span>)), <span class="string">'..'</span>, <span class="string">'..'</span>, <span class="keyword">...</span>
+    <span class="string">'01_Introduccion_Modelos'</span>, <span class="string">'matlab'</span>);
+<span class="keyword">if</span> isfolder(model1_path)
+    addpath(model1_path);
+<span class="keyword">else</span>
+    error(<span class="string">'No se encontr&oacute; la carpeta del M&oacute;dulo 01 en: %s'</span>, model1_path);
+<span class="keyword">end</span>
+
+fprintf(<span class="string">'=========================================================================\n'</span>);
+fprintf(<span class="string">'  M&Oacute;DULO 02: MUESTREO DEL ESPACIO DE PAR&Aacute;METROS (DESIGN OF EXPERIMENTS)  \n'</span>);
+fprintf(<span class="string">'=========================================================================\n\n'</span>);
+</pre>
+<pre class="codeoutput">=========================================================================
+  M&Oacute;DULO 02: MUESTREO DEL ESPACIO DE PAR&Aacute;METROS (DESIGN OF EXPERIMENTS)  
+=========================================================================
+
+</pre>
+<h2 id="3">2. Definici&oacute;n del Modelo Epid&eacute;mico SIR</h2>
+<p>Rango de variaci&oacute;n para 4 factores: [beta, gamma, S0, I0]</p>
+<pre class="codeinput">ranges_sir = [
+    0.0001, 0.0008;  <span class="comment">% beta  (tasa de transmisi&oacute;n)</span>
+    0.05,   0.20;    <span class="comment">% gamma (tasa de recuperaci&oacute;n)</span>
+    900,    999;     <span class="comment">% S0    (Susceptibles iniciales)</span>
+    1,      50       <span class="comment">% I0    (Infectados iniciales)</span>
+];
+
+[T_sir, ~] = gsua_dataprep(<span class="string">'sir_continuous_userdefined'</span>, ranges_sir, <span class="keyword">...</span>
+    <span class="string">'domain'</span>, [0, 80], <span class="keyword">...</span>
+    <span class="string">'names'</span>, {<span class="string">'beta'</span>, <span class="string">'gamma'</span>, <span class="string">'S0'</span>, <span class="string">'I0'</span>}, <span class="keyword">...</span>
+    <span class="string">'out_names'</span>, {<span class="string">'Susceptibles'</span>, <span class="string">'Infectados'</span>, <span class="string">'Recuperados'</span>});
+
+disp(<span class="string">'Tabla de Factores del Modelo SIR:'</span>);
+disp(T_sir);
+</pre>
+<pre class="codeoutput">Setting environment to work with user-defined function
+Tabla de Factores del Modelo SIR:
+                  Range          Nominal
+             ________________    _______
+
+    beta     0.0001    0.0008    0.00045
+    gamma      0.05       0.2      0.125
+    S0          900       999      949.5
+    I0            1        50       25.5
+
+</pre>
+<h2 id="4">3. Generaci&oacute;n de Matrices de Dise&ntilde;o (N = 250 muestras)</h2>
+<pre class="codeinput">N_samples = 250;
+
+<span class="comment">% A. Muestreo Aleatorio Uniforme</span>
+M_uni = gsua_dmatrix(T_sir, N_samples, <span class="string">'Method'</span>, <span class="string">'Uniform'</span>);
+
+<span class="comment">% B. Hipercubo Latino (LHS)</span>
+M_lhs = gsua_dmatrix(T_sir, N_samples, <span class="string">'Method'</span>, <span class="string">'LatinHypercube'</span>);
+
+<span class="comment">% C. Secuencia de Baja Discrepancia de Sobol</span>
+M_sobol = gsua_dmatrix(T_sir, N_samples, <span class="string">'Method'</span>, <span class="string">'Sobol'</span>);
+</pre>
+<h2 id="5">4. Comparaci&oacute;n de la Cobertura del Espacio (Proyecci&oacute;n beta vs gamma)</h2>
+<pre class="codeinput">figure(<span class="string">'Name'</span>, <span class="string">'Comparaci&oacute;n de M&eacute;todos de Muestreo (2D)'</span>, <span class="string">'Position'</span>, [100 100 1100 350]);
+
+subplot(1, 3, 1);
+plot(M_uni(:,1), M_uni(:,2), <span class="string">'o'</span>, <span class="string">'Color'</span>, [0.8 0.2 0.2], <span class="string">'MarkerFaceColor'</span>, [0.8 0.2 0.2], <span class="string">'MarkerSize'</span>, 4);
+xlabel(<span class="string">'beta'</span>); ylabel(<span class="string">'gamma'</span>);
+title(<span class="string">'Muestreo Uniforme Aleatorio'</span>);
+grid <span class="string">on</span>; axis <span class="string">square</span>;
+
+subplot(1, 3, 2);
+plot(M_lhs(:,1), M_lhs(:,2), <span class="string">'o'</span>, <span class="string">'Color'</span>, [0.2 0.6 0.2], <span class="string">'MarkerFaceColor'</span>, [0.2 0.6 0.2], <span class="string">'MarkerSize'</span>, 4);
+xlabel(<span class="string">'beta'</span>); ylabel(<span class="string">'gamma'</span>);
+title(<span class="string">'Hipercubo Latino (LHS)'</span>);
+grid <span class="string">on</span>; axis <span class="string">square</span>;
+
+subplot(1, 3, 3);
+plot(M_sobol(:,1), M_sobol(:,2), <span class="string">'o'</span>, <span class="string">'Color'</span>, [0.2 0.2 0.8], <span class="string">'MarkerFaceColor'</span>, [0.2 0.2 0.8], <span class="string">'MarkerSize'</span>, 4);
+xlabel(<span class="string">'beta'</span>); ylabel(<span class="string">'gamma'</span>);
+title(<span class="string">'Secuencias de Sobol'</span>);
+grid <span class="string">on</span>; axis <span class="string">square</span>;
+</pre>
+<img vspace="5" hspace="5" src="demo_02_muestreo_01.png" alt=""> <h2 id="6">5. An&aacute;lisis del Llenado de Espacio y Proyecciones Multidimensionales</h2>
+<p>Matriz de dispersi&oacute;n (Pairplot) para Hipercubo Latino</p>
+<pre class="codeinput">figure(<span class="string">'Name'</span>, <span class="string">'Matriz de Dispersi&oacute;n DoE (Latin Hypercube)'</span>);
+plotmatrix(M_lhs);
+title(<span class="string">'Distribuci&oacute;n Multidimensional por Pares (LHS)'</span>);
+</pre>
+<img vspace="5" hspace="5" src="demo_02_muestreo_02.png" alt=""> <h2 id="7">6. Ilustraci&oacute;n del Muestreo en Escala Logar&iacute;tmica</h2>
+<pre class="codeinput">fprintf(<span class="string">'\n--- Demostraci&oacute;n de Escala Logar&iacute;tmica ---\n'</span>);
+fprintf(<span class="string">'Para par&aacute;metros que var&iacute;an en &oacute;rdenes de magnitud (ej. 1e-6 a 1e-1):\n'</span>);
+
+<span class="comment">% Rango de 5 &oacute;rdenes de magnitud para beta_log</span>
+beta_min = 1e-6; beta_max = 1e-1;
+n_log = 500;
+
+<span class="comment">% Muestreo Lineal (Uniforme en escala directa)</span>
+samples_lin = beta_min + (beta_max - beta_min) * rand(n_log, 1);
+
+<span class="comment">% Muestreo Logar&iacute;tmico (Uniforme en log10)</span>
+samples_log = 10.^( log10(beta_min) + (log10(beta_max) - log10(beta_min)) * rand(n_log, 1) );
+
+figure(<span class="string">'Name'</span>, <span class="string">'Muestreo Lineal vs Logar&iacute;tmico'</span>, <span class="string">'Position'</span>, [150 150 900 350]);
+subplot(1, 2, 1);
+histogram(samples_lin, 20, <span class="string">'FaceColor'</span>, [0.7 0.3 0.3]);
+xlabel(<span class="string">'beta (Escala Lineal)'</span>); ylabel(<span class="string">'Frecuencia'</span>);
+title(<span class="string">'Muestreo Lineal (Concentrado en la d&eacute;cada superior)'</span>);
+
+subplot(1, 2, 2);
+histogram(log10(samples_log), 20, <span class="string">'FaceColor'</span>, [0.3 0.6 0.3]);
+xlabel(<span class="string">'log10(beta) (Escala Logar&iacute;tmica)'</span>); ylabel(<span class="string">'Frecuencia'</span>);
+title(<span class="string">'Muestreo Logar&iacute;tmico (Uniforme a trav&eacute;s de d&eacute;cadas)'</span>);
+</pre>
+<pre class="codeoutput">
+--- Demostraci&oacute;n de Escala Logar&iacute;tmica ---
+Para par&aacute;metros que var&iacute;an en &oacute;rdenes de magnitud (ej. 1e-6 a 1e-1):
+</pre>
+<img vspace="5" hspace="5" src="demo_02_muestreo_03.png" alt=""> <h2 id="8">7. PREGUNTAS DE AN&Aacute;LISIS Y EJERCICIOS DOCENTES</h2>
+<pre class="codeinput">fprintf(<span class="string">'\n=========================================================================\n'</span>);
+fprintf(<span class="string">'  PREGUNTAS DE AN&Aacute;LISIS Y EJERCICIOS DOCENTES (M&Oacute;DULO 02)  \n'</span>);
+fprintf(<span class="string">'=========================================================================\n'</span>);
+fprintf(<span class="string">'1. Al observar la proyecci&oacute;n 2D (beta vs gamma), &iquest;cu&aacute;l m&eacute;todo muestra mayores huecos o aglomeraciones?\n'</span>);
+fprintf(<span class="string">'2. &iquest;Por qu&eacute; el Hipercubo Latino garantiza que no haya dos muestras en el mismo intervalo unidimensional?\n'</span>);
+fprintf(<span class="string">'3. Si un par&aacute;metro var&iacute;a entre 1e-5 y 100, &iquest;qu&eacute; ocurre si usamos muestreo lineal vs logar&iacute;tmico?\n'</span>);
+fprintf(<span class="string">'=========================================================================\n\n'</span>);
+</pre>
+<pre class="codeoutput">
+=========================================================================
+  PREGUNTAS DE AN&Aacute;LISIS Y EJERCICIOS DOCENTES (M&Oacute;DULO 02)  
+=========================================================================
+1. Al observar la proyecci&oacute;n 2D (beta vs gamma), &iquest;cu&aacute;l m&eacute;todo muestra mayores huecos o aglomeraciones?
+2. &iquest;Por qu&eacute; el Hipercubo Latino garantiza que no haya dos muestras en el mismo intervalo unidimensional?
+3. Si un par&aacute;metro var&iacute;a entre 1e-5 y 100, &iquest;qu&eacute; ocurre si usamos muestreo lineal vs logar&iacute;tmico?
+=========================================================================
+
+</pre>
+<p class="footer">
+<br>
+<a href="https://www.mathworks.com/products/matlab/">Published with MATLAB&reg; R2025b</a>
+<br>
+</p>
+</div>
+<!--
+##### SOURCE BEGIN #####
+% DEMO_02_MUESTREO Muestreo del Espacio de Parámetros
+% Curso guiado de GSUA-CSB
+%
+% Este script explora y compara las diferentes estrategias de diseño de experimentos
+% computacionales (Design of Experiments - DoE) para el muestreo de hipercubos:
+% 1. Muestreo Aleatorio Uniforme ('Uniform')
+% 2. Muestreo por Hipercubo Latino ('LatinHypercube' / LHS)
+% 3. Muestreo por Secuencias de Sobol ('Sobol')
+
+%% 1. Configuración del Entorno
+clc; clear; close all;
+
+% REPLACE_WITH_DASH_DASH- Localización portable de la toolbox GSUA-CSB (ver Módulo 01) REPLACE_WITH_DASH_DASHREPLACE_WITH_DASH_DASHREPLACE_WITH_DASH_DASHREPLACE_WITH_DASH_DASHREPLACE_WITH_DASH_DASH-
+if isempty(which('gsua_dataprep'))
+    candidatos = {
+        fullfile(fileparts(mfilename('fullpath')), '..', '..', '..', 'Functions')  % dentro del repo clonado
+        fullfile(getenv('USERPROFILE'), 'MATLAB Drive', 'Toolbox', 'Functions')
+        fullfile(getenv('USERPROFILE'), 'Documents', 'MATLAB', 'GSUA-CSB', 'Functions')
+    };
+    for k = 1:numel(candidatos)
+        if isfolder(candidatos{k}), addpath(candidatos{k}); break; end
+    end
+    if isempty(which('gsua_dataprep'))
+        error(['No se encontró la toolbox GSUA-CSB en el path de MATLAB. ' ...
+               'Instala GSUA-CSB.mltbx o añade su carpeta Functions con addpath(...).']);
+    end
+end
+
+% El modelo SIR se reutiliza del Módulo 01. Resolvemos su carpeta de forma
+% relativa a este script (../../01_Introduccion_Modelos/matlab), no con una
+% ruta absoluta, para que funcione en cualquier equipo donde se clone el curso.
+model1_path = fullfile(fileparts(mfilename('fullpath')), '..', '..', ...
+    '01_Introduccion_Modelos', 'matlab');
+if isfolder(model1_path)
+    addpath(model1_path);
+else
+    error('No se encontró la carpeta del Módulo 01 en: %s', model1_path);
+end
+
+fprintf('=========================================================================\n');
+fprintf('  MÓDULO 02: MUESTREO DEL ESPACIO DE PARÁMETROS (DESIGN OF EXPERIMENTS)  \n');
+fprintf('=========================================================================\n\n');
+
+%% 2. Definición del Modelo Epidémico SIR
+% Rango de variación para 4 factores: [beta, gamma, S0, I0]
+ranges_sir = [
+    0.0001, 0.0008;  % beta  (tasa de transmisión)
+    0.05,   0.20;    % gamma (tasa de recuperación)
+    900,    999;     % S0    (Susceptibles iniciales)
+    1,      50       % I0    (Infectados iniciales)
+];
+
+[T_sir, ~] = gsua_dataprep('sir_continuous_userdefined', ranges_sir, ...
+    'domain', [0, 80], ...
+    'names', {'beta', 'gamma', 'S0', 'I0'}, ...
+    'out_names', {'Susceptibles', 'Infectados', 'Recuperados'});
+
+disp('Tabla de Factores del Modelo SIR:');
+disp(T_sir);
+
+%% 3. Generación de Matrices de Diseño (N = 250 muestras)
+N_samples = 250;
+
+% A. Muestreo Aleatorio Uniforme
+M_uni = gsua_dmatrix(T_sir, N_samples, 'Method', 'Uniform');
+
+% B. Hipercubo Latino (LHS)
+M_lhs = gsua_dmatrix(T_sir, N_samples, 'Method', 'LatinHypercube');
+
+% C. Secuencia de Baja Discrepancia de Sobol
+M_sobol = gsua_dmatrix(T_sir, N_samples, 'Method', 'Sobol');
+
+%% 4. Comparación de la Cobertura del Espacio (Proyección beta vs gamma)
+figure('Name', 'Comparación de Métodos de Muestreo (2D)', 'Position', [100 100 1100 350]);
+
+subplot(1, 3, 1);
+plot(M_uni(:,1), M_uni(:,2), 'o', 'Color', [0.8 0.2 0.2], 'MarkerFaceColor', [0.8 0.2 0.2], 'MarkerSize', 4);
+xlabel('beta'); ylabel('gamma');
+title('Muestreo Uniforme Aleatorio');
+grid on; axis square;
+
+subplot(1, 3, 2);
+plot(M_lhs(:,1), M_lhs(:,2), 'o', 'Color', [0.2 0.6 0.2], 'MarkerFaceColor', [0.2 0.6 0.2], 'MarkerSize', 4);
+xlabel('beta'); ylabel('gamma');
+title('Hipercubo Latino (LHS)');
+grid on; axis square;
+
+subplot(1, 3, 3);
+plot(M_sobol(:,1), M_sobol(:,2), 'o', 'Color', [0.2 0.2 0.8], 'MarkerFaceColor', [0.2 0.2 0.8], 'MarkerSize', 4);
+xlabel('beta'); ylabel('gamma');
+title('Secuencias de Sobol');
+grid on; axis square;
+
+%% 5. Análisis del Llenado de Espacio y Proyecciones Multidimensionales
+% Matriz de dispersión (Pairplot) para Hipercubo Latino
+figure('Name', 'Matriz de Dispersión DoE (Latin Hypercube)');
+plotmatrix(M_lhs);
+title('Distribución Multidimensional por Pares (LHS)');
+
+%% 6. Ilustración del Muestreo en Escala Logarítmica
+fprintf('\nREPLACE_WITH_DASH_DASH- Demostración de Escala Logarítmica REPLACE_WITH_DASH_DASH-\n');
+fprintf('Para parámetros que varían en órdenes de magnitud (ej. 1e-6 a 1e-1):\n');
+
+% Rango de 5 órdenes de magnitud para beta_log
+beta_min = 1e-6; beta_max = 1e-1;
+n_log = 500;
+
+% Muestreo Lineal (Uniforme en escala directa)
+samples_lin = beta_min + (beta_max - beta_min) * rand(n_log, 1);
+
+% Muestreo Logarítmico (Uniforme en log10)
+samples_log = 10.^( log10(beta_min) + (log10(beta_max) - log10(beta_min)) * rand(n_log, 1) );
+
+figure('Name', 'Muestreo Lineal vs Logarítmico', 'Position', [150 150 900 350]);
+subplot(1, 2, 1);
+histogram(samples_lin, 20, 'FaceColor', [0.7 0.3 0.3]);
+xlabel('beta (Escala Lineal)'); ylabel('Frecuencia');
+title('Muestreo Lineal (Concentrado en la década superior)');
+
+subplot(1, 2, 2);
+histogram(log10(samples_log), 20, 'FaceColor', [0.3 0.6 0.3]);
+xlabel('log10(beta) (Escala Logarítmica)'); ylabel('Frecuencia');
+title('Muestreo Logarítmico (Uniforme a través de décadas)');
+
+%% 7. PREGUNTAS DE ANÁLISIS Y EJERCICIOS DOCENTES
+fprintf('\n=========================================================================\n');
+fprintf('  PREGUNTAS DE ANÁLISIS Y EJERCICIOS DOCENTES (MÓDULO 02)  \n');
+fprintf('=========================================================================\n');
+fprintf('1. Al observar la proyección 2D (beta vs gamma), ¿cuál método muestra mayores huecos o aglomeraciones?\n');
+fprintf('2. ¿Por qué el Hipercubo Latino garantiza que no haya dos muestras en el mismo intervalo unidimensional?\n');
+fprintf('3. Si un parámetro varía entre 1e-5 y 100, ¿qué ocurre si usamos muestreo lineal vs logarítmico?\n');
+fprintf('=========================================================================\n\n');
+
+##### SOURCE END #####
+-->
+</body>
+</html>

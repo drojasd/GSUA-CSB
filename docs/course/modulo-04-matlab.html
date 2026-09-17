@@ -1,0 +1,383 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN">
+<html>
+<head>
+<META http-equiv="Content-Type" content="text/html; charset=UTF-8">
+<!--
+This HTML was auto-generated from MATLAB code.
+To make changes, update the MATLAB code and republish this document.
+      -->
+<title>demo_04_sensibilidad</title>
+<meta name="generator" content="MATLAB 25.2">
+<link rel="schema.DC" href="http://purl.org/dc/elements/1.1/">
+<meta name="DC.date" content="2026-09-17">
+<meta name="DC.source" content="demo_04_sensibilidad.m">
+<style type="text/css">
+html,body,div,span,applet,object,iframe,h1,h2,h3,h4,h5,h6,p,blockquote,pre,a,abbr,acronym,address,big,cite,code,del,dfn,em,font,img,ins,kbd,q,s,samp,small,strike,strong,tt,var,b,u,i,center,dl,dt,dd,ol,ul,li,fieldset,form,label,legend,table,caption,tbody,tfoot,thead,tr,th,td{margin:0;padding:0;border:0;outline:0;font-size:100%;vertical-align:baseline;background:transparent}body{line-height:1}ol,ul{list-style:none}blockquote,q{quotes:none}blockquote:before,blockquote:after,q:before,q:after{content:'';content:none}:focus{outine:0}ins{text-decoration:none}del{text-decoration:line-through}table{border-collapse:collapse;border-spacing:0}
+
+html { min-height:100%; margin-bottom:1px; }
+html body { height:100%; margin:0px; font-family:Arial, Helvetica, sans-serif; font-size:10px; color:#000; line-height:140%; background:#fff none; overflow-y:scroll; }
+html body td { vertical-align:top; text-align:left; }
+
+h1 { padding:0px; margin:0px 0px 25px; font-family:Arial, Helvetica, sans-serif; font-size:1.5em; color:#d55000; line-height:100%; font-weight:normal; }
+h2 { padding:0px; margin:0px 0px 8px; font-family:Arial, Helvetica, sans-serif; font-size:1.2em; color:#000; font-weight:bold; line-height:140%; border-bottom:1px solid #d6d4d4; display:block; }
+h3 { padding:0px; margin:0px 0px 5px; font-family:Arial, Helvetica, sans-serif; font-size:1.1em; color:#000; font-weight:bold; line-height:140%; }
+
+a { color:#005fce; text-decoration:none; }
+a:hover { color:#005fce; text-decoration:underline; }
+a:visited { color:#004aa0; text-decoration:none; }
+
+p { padding:0px; margin:0px 0px 20px; }
+img { padding:0px; margin:0px 0px 20px; border:none; }
+p img, pre img, tt img, li img, h1 img, h2 img { margin-bottom:0px; }
+
+ul { padding:0px; margin:0px 0px 20px 23px; list-style:square; }
+ul li { padding:0px; margin:0px 0px 7px 0px; }
+ul li ul { padding:5px 0px 0px; margin:0px 0px 7px 23px; }
+ul li ol li { list-style:decimal; }
+ol { padding:0px; margin:0px 0px 20px 0px; list-style:decimal; }
+ol li { padding:0px; margin:0px 0px 7px 23px; list-style-type:decimal; }
+ol li ol { padding:5px 0px 0px; margin:0px 0px 7px 0px; }
+ol li ol li { list-style-type:lower-alpha; }
+ol li ul { padding-top:7px; }
+ol li ul li { list-style:square; }
+
+.content { font-size:1.2em; line-height:140%; padding: 20px; }
+
+pre, code { font-size:12px; }
+tt { font-size: 1.2em; }
+pre { margin:0px 0px 20px; }
+pre.codeinput { padding:10px; border:1px solid #d3d3d3; background:#f7f7f7; }
+pre.codeoutput { padding:10px 11px; margin:0px 0px 20px; color:#4c4c4c; }
+pre.error { color:red; }
+
+@media print { pre.codeinput, pre.codeoutput { word-wrap:break-word; width:100%; } }
+
+span.keyword { color:#0000FF }
+span.comment { color:#228B22 }
+span.string { color:#A020F0 }
+span.untermstring { color:#B20000 }
+span.syscmd { color:#B28C00 }
+span.typesection { color:#A0522D }
+
+.footer { width:auto; padding:10px 0px; margin:25px 0px 0px; border-top:1px dotted #878787; font-size:0.8em; line-height:140%; font-style:italic; color:#878787; text-align:left; float:none; }
+.footer p { margin:0px; }
+.footer a { color:#878787; }
+.footer a:hover { color:#878787; text-decoration:underline; }
+.footer a:visited { color:#878787; }
+
+table th { padding:7px 5px; text-align:left; vertical-align:middle; border: 1px solid #d6d4d4; font-weight:bold; }
+table td { padding:7px 5px; text-align:left; vertical-align:top; border:1px solid #d6d4d4; }
+
+
+
+
+
+  </style>
+</head>
+<body>
+<div class="content">
+<h2>Contents</h2>
+<div>
+<ul>
+<li>
+<a href="#2">1. Configuraci&oacute;n del Entorno</a>
+</li>
+<li>
+<a href="#3">2. Modelo SIR sobre TODO el espacio de factores (salida: Infectados)</a>
+</li>
+<li>
+<a href="#4">3. Muestreo base para el estimador de &iacute;ndices</a>
+</li>
+<li>
+<a href="#5">4. An&aacute;lisis de sensibilidad (m&eacute;todo Xiao, el estimador propio de la toolbox)</a>
+</li>
+<li>
+<a href="#6">5. Gr&aacute;fica de barras: S_i vs ST_i por factor</a>
+</li>
+<li>
+<a href="#7">6. Sensibilidad dependiente del tiempo (&iquest;cu&aacute;ndo importa cada factor?)</a>
+</li>
+<li>
+<a href="#8">7. Comparaci&oacute;n entre m&eacute;todos estimadores (robustez del resultado)</a>
+</li>
+<li>
+<a href="#9">8. PREGUNTAS Y EJERCICIOS PARA EL ESTUDIANTE</a>
+</li>
+</ul>
+</div>
+<pre class="codeinput">
+<span class="comment">% DEMO_04_SENSIBILIDAD An&aacute;lisis de Sensibilidad Global (GSA)</span>
+<span class="comment">% Curso guiado de GSUA-CSB</span>
+<span class="comment">%</span>
+<span class="comment">% Cuantificamos cu&aacute;nto contribuye cada factor a la varianza de la salida:</span>
+<span class="comment">%   - &Iacute;ndices de Sobol de primer orden  S_i  (efecto propio del factor),</span>
+<span class="comment">%   - &Iacute;ndices de orden total            ST_i (efecto propio + interacciones),</span>
+<span class="comment">%   - &Iacute;ndices dependientes del tiempo   S_i(t), ST_i(t),</span>
+<span class="comment">%   - Comparaci&oacute;n entre m&eacute;todos estimadores (Xiao vs Saltelli).</span>
+<span class="comment">%</span>
+<span class="comment">% Con esto decidimos qu&eacute; par&aacute;metros ESTIMAR (los influyentes) y cu&aacute;les FIJAR</span>
+<span class="comment">% (los que casi no afectan la salida). Modelo: SIR continuo, salida Infectados.</span>
+</pre>
+<h2 id="2">1. Configuraci&oacute;n del Entorno</h2>
+<pre class="codeinput">clc; clear; close <span class="string">all</span>;
+
+<span class="comment">% --- Localizaci&oacute;n portable de la toolbox GSUA-CSB (ver M&oacute;dulo 01) -----------</span>
+<span class="keyword">if</span> isempty(which(<span class="string">'gsua_dataprep'</span>))
+    candidatos = {
+        fullfile(fileparts(mfilename(<span class="string">'fullpath'</span>)), <span class="string">'..'</span>, <span class="string">'..'</span>, <span class="string">'..'</span>, <span class="string">'Functions'</span>)  <span class="comment">% dentro del repo clonado</span>
+        fullfile(getenv(<span class="string">'USERPROFILE'</span>), <span class="string">'MATLAB Drive'</span>, <span class="string">'Toolbox'</span>, <span class="string">'Functions'</span>)
+        fullfile(getenv(<span class="string">'USERPROFILE'</span>), <span class="string">'Documents'</span>, <span class="string">'MATLAB'</span>, <span class="string">'GSUA-CSB'</span>, <span class="string">'Functions'</span>)
+    };
+    <span class="keyword">for</span> k = 1:numel(candidatos)
+        <span class="keyword">if</span> isfolder(candidatos{k}), addpath(candidatos{k}); <span class="keyword">break</span>; <span class="keyword">end</span>
+    <span class="keyword">end</span>
+    <span class="keyword">if</span> isempty(which(<span class="string">'gsua_dataprep'</span>))
+        error([<span class="string">'No se encontr&oacute; la toolbox GSUA-CSB en el path de MATLAB. '</span> <span class="keyword">...</span>
+               <span class="string">'Instala GSUA-CSB.mltbx o a&ntilde;ade su carpeta Functions con addpath(...).'</span>]);
+    <span class="keyword">end</span>
+<span class="keyword">end</span>
+model1_path = fullfile(fileparts(mfilename(<span class="string">'fullpath'</span>)), <span class="string">'..'</span>, <span class="string">'..'</span>, <span class="keyword">...</span>
+    <span class="string">'01_Introduccion_Modelos'</span>, <span class="string">'matlab'</span>);
+<span class="keyword">if</span> isfolder(model1_path), addpath(model1_path); <span class="keyword">else</span>, error(<span class="string">'Falta el M&oacute;dulo 01 en %s'</span>, model1_path); <span class="keyword">end</span>
+
+fprintf(<span class="string">'=========================================================================\n'</span>);
+fprintf(<span class="string">'  M&Oacute;DULO 04: AN&Aacute;LISIS DE SENSIBILIDAD GLOBAL (GSA)  \n'</span>);
+fprintf(<span class="string">'=========================================================================\n\n'</span>);
+</pre>
+<pre class="codeoutput">=========================================================================
+  M&Oacute;DULO 04: AN&Aacute;LISIS DE SENSIBILIDAD GLOBAL (GSA)  
+=========================================================================
+
+</pre>
+<h2 id="3">2. Modelo SIR sobre TODO el espacio de factores (salida: Infectados)</h2>
+<p>Para GSA usamos rangos amplios: el an&aacute;lisis mide la importancia de cada factor a lo largo de todo su rango de variaci&oacute;n plausible.</p>
+<pre class="codeinput">ranges_sir = [
+    0.0001, 0.0008;  <span class="comment">% beta</span>
+    0.05,   0.20;    <span class="comment">% gamma</span>
+    900,    999;     <span class="comment">% S0</span>
+    1,      50       <span class="comment">% I0</span>
+];
+[T, ~] = gsua_dataprep(<span class="string">'sir_continuous_userdefined'</span>, ranges_sir, <span class="keyword">...</span>
+    <span class="string">'domain'</span>, [0, 80], <span class="keyword">...</span>
+    <span class="string">'names'</span>, {<span class="string">'beta'</span>, <span class="string">'gamma'</span>, <span class="string">'S0'</span>, <span class="string">'I0'</span>}, <span class="keyword">...</span>
+    <span class="string">'out_names'</span>, {<span class="string">'Susceptibles'</span>, <span class="string">'Infectados'</span>, <span class="string">'Recuperados'</span>});
+T.Properties.CustomProperties.output = 2;     <span class="comment">% Infectados</span>
+</pre>
+<pre class="codeoutput">Setting environment to work with user-defined function
+</pre>
+<h2 id="4">3. Muestreo base para el estimador de &iacute;ndices</h2>
+<p>El m&eacute;todo necesita N*(Np/2+1) evaluaciones. Con N=500 y 4 factores =&gt; 1500 corridas.</p>
+<pre class="codeinput">N = 500;
+M = gsua_dmatrix(T, N, <span class="string">'Method'</span>, <span class="string">'LatinHypercube'</span>);
+</pre>
+<h2 id="5">4. An&aacute;lisis de sensibilidad (m&eacute;todo Xiao, el estimador propio de la toolbox)</h2>
+<p>Salidas: T con los &iacute;ndices escritos dentro (T.Si, T.STi, T.Si_vec, T.STi_vec), Y = matriz de trayectorias, J = costo escalar por corrida.</p>
+<pre class="codeinput">[T, Y, J] = gsua_sa(M, T, <span class="string">'SensMethod'</span>, <span class="string">'Xiao'</span>, <span class="string">'parallel'</span>, false, <span class="string">'verbose'</span>, false); <span class="comment">%#ok&lt;ASGLU&gt;</span>
+
+names = T.Properties.RowNames;
+fprintf(<span class="string">'&Iacute;ndices de sensibilidad (m&eacute;todo Xiao):\n'</span>);
+disp(table(T.Si, T.STi, <span class="string">'RowNames'</span>, names, <span class="string">'VariableNames'</span>, {<span class="string">'S_i'</span>,<span class="string">'ST_i'</span>}));
+
+[~, idxMax] = max(T.STi);
+[~, idxMin] = min(T.STi);
+fprintf(<span class="string">'Factor M&Aacute;S influyente : %s (ST_i = %.3f)\n'</span>, names{idxMax}, T.STi(idxMax));
+fprintf(<span class="string">'Factor MENOS influyente: %s (ST_i = %.3f)\n'</span>, names{idxMin}, T.STi(idxMin));
+fprintf(<span class="string">'=&gt; Regla pr&aacute;ctica: estima los factores con ST_i alto; considera FIJAR los de ST_i ~ 0.\n\n'</span>);
+</pre>
+<pre class="codeoutput">&Iacute;ndices de sensibilidad (m&eacute;todo Xiao):
+                S_i         ST_i  
+             _________    ________
+
+    beta        0.2453     0.71937
+    gamma       0.2165     0.64413
+    S0       0.0021145    0.070469
+    I0        0.041585     0.30662
+
+Factor M&Aacute;S influyente : beta (ST_i = 0.719)
+Factor MENOS influyente: S0 (ST_i = 0.070)
+=&gt; Regla pr&aacute;ctica: estima los factores con ST_i alto; considera FIJAR los de ST_i ~ 0.
+
+</pre>
+<h2 id="6">5. Gr&aacute;fica de barras: S_i vs ST_i por factor</h2>
+<pre class="codeinput">figure(<span class="string">'Name'</span>, <span class="string">'&Iacute;ndices de Sensibilidad S_i y ST_i'</span>);
+bar([T.Si, T.STi]);
+set(gca, <span class="string">'XTickLabel'</span>, names);
+ylabel(<span class="string">'&Iacute;ndice de sensibilidad'</span>);
+title(<span class="string">'Sensibilidad Global: primer orden (S_i) vs orden total (ST_i)'</span>);
+legend({<span class="string">'S_i (efecto propio)'</span>, <span class="string">'ST_i (propio + interacciones)'</span>}, <span class="string">'Location'</span>, <span class="string">'northwest'</span>);
+grid <span class="string">on</span>;
+<span class="comment">% Lectura: ST_i notablemente mayor que S_i indica INTERACCIONES entre factores.</span>
+</pre>
+<img vspace="5" hspace="5" src="demo_04_sensibilidad_01.png" alt=""> <h2 id="7">6. Sensibilidad dependiente del tiempo (&iquest;cu&aacute;ndo importa cada factor?)</h2>
+<pre class="codeinput">time = linspace(0, 80, size(T.STi_vec, 2));
+figure(<span class="string">'Name'</span>, <span class="string">'Sensibilidad total dependiente del tiempo'</span>);
+gsua_plot(<span class="string">'FractionalSensitivityArea'</span>, T, T.STi_vec, time);
+title(<span class="string">'Fracci&oacute;n de ST_i(t): qu&eacute; factor domina la varianza en cada instante'</span>);
+</pre>
+<img vspace="5" hspace="5" src="demo_04_sensibilidad_02.png" alt=""> <h2 id="8">7. Comparaci&oacute;n entre m&eacute;todos estimadores (robustez del resultado)</h2>
+<p>Un buen resultado de GSA no deber&iacute;a depender fuertemente del estimador elegido. Partimos de una tabla FRESCA para el segundo m&eacute;todo: la anterior ya lleva escritas las propiedades del m&eacute;todo Xiao y reutilizarla generar&iacute;a un warning inofensivo.</p>
+<pre class="codeinput">[Tcmp, ~] = gsua_dataprep(<span class="string">'sir_continuous_userdefined'</span>, ranges_sir, <span class="keyword">...</span>
+    <span class="string">'domain'</span>, [0, 80], <span class="keyword">...</span>
+    <span class="string">'names'</span>, {<span class="string">'beta'</span>, <span class="string">'gamma'</span>, <span class="string">'S0'</span>, <span class="string">'I0'</span>}, <span class="keyword">...</span>
+    <span class="string">'out_names'</span>, {<span class="string">'Susceptibles'</span>, <span class="string">'Infectados'</span>, <span class="string">'Recuperados'</span>});
+Tcmp.Properties.CustomProperties.output = 2;
+[Tsalt, ~, ~] = gsua_sa(M, Tcmp, <span class="string">'SensMethod'</span>, <span class="string">'Saltelli'</span>, <span class="string">'parallel'</span>, false, <span class="string">'verbose'</span>, false);
+fprintf(<span class="string">'Comparaci&oacute;n ST_i (Xiao vs Saltelli):\n'</span>);
+disp(table(T.STi, Tsalt.STi, <span class="string">'RowNames'</span>, names, <span class="string">'VariableNames'</span>, {<span class="string">'Xiao'</span>,<span class="string">'Saltelli'</span>}));
+</pre>
+<pre class="codeoutput">Setting environment to work with user-defined function
+Comparaci&oacute;n ST_i (Xiao vs Saltelli):
+               Xiao      Saltelli
+             ________    ________
+
+    beta      0.71937     0.56491
+    gamma     0.64413     0.58365
+    S0       0.070469    0.023159
+    I0        0.30662     0.13353
+
+</pre>
+<h2 id="9">8. PREGUNTAS Y EJERCICIOS PARA EL ESTUDIANTE</h2>
+<pre class="codeinput">fprintf(<span class="string">'\n=========================================================================\n'</span>);
+fprintf(<span class="string">'  PREGUNTAS DE AN&Aacute;LISIS Y EJERCICIOS DOCENTES (M&Oacute;DULO 04)  \n'</span>);
+fprintf(<span class="string">'=========================================================================\n'</span>);
+fprintf(<span class="string">'1. &iquest;Qu&eacute; factor domina la varianza de Infectados? &iquest;Coincide con tu intuici&oacute;n epidemiol&oacute;gica?\n'</span>);
+fprintf(<span class="string">'2. &iquest;Para alg&uacute;n factor ST_i &gt;&gt; S_i? &iquest;Con qui&eacute;n interact&uacute;a? (pista: beta, S0 y gamma via R0).\n'</span>);
+fprintf(<span class="string">'3. Cambia N de 500 a 2000. &iquest;Se estabilizan los &iacute;ndices? (convergencia del estimador).\n'</span>);
+fprintf(<span class="string">'4. Si fijas el factor menos sensible, &iquest;cambia mucho la banda de incertidumbre del M&oacute;dulo 03?\n'</span>);
+fprintf(<span class="string">'=========================================================================\n\n'</span>);
+</pre>
+<pre class="codeoutput">
+=========================================================================
+  PREGUNTAS DE AN&Aacute;LISIS Y EJERCICIOS DOCENTES (M&Oacute;DULO 04)  
+=========================================================================
+1. &iquest;Qu&eacute; factor domina la varianza de Infectados? &iquest;Coincide con tu intuici&oacute;n epidemiol&oacute;gica?
+2. &iquest;Para alg&uacute;n factor ST_i &gt;&gt; S_i? &iquest;Con qui&eacute;n interact&uacute;a? (pista: beta, S0 y gamma via R0).
+3. Cambia N de 500 a 2000. &iquest;Se estabilizan los &iacute;ndices? (convergencia del estimador).
+4. Si fijas el factor menos sensible, &iquest;cambia mucho la banda de incertidumbre del M&oacute;dulo 03?
+=========================================================================
+
+</pre>
+<p class="footer">
+<br>
+<a href="https://www.mathworks.com/products/matlab/">Published with MATLAB&reg; R2025b</a>
+<br>
+</p>
+</div>
+<!--
+##### SOURCE BEGIN #####
+% DEMO_04_SENSIBILIDAD Análisis de Sensibilidad Global (GSA)
+% Curso guiado de GSUA-CSB
+%
+% Cuantificamos cuánto contribuye cada factor a la varianza de la salida:
+%   - Índices de Sobol de primer orden  S_i  (efecto propio del factor),
+%   - Índices de orden total            ST_i (efecto propio + interacciones),
+%   - Índices dependientes del tiempo   S_i(t), ST_i(t),
+%   - Comparación entre métodos estimadores (Xiao vs Saltelli).
+%
+% Con esto decidimos qué parámetros ESTIMAR (los influyentes) y cuáles FIJAR
+% (los que casi no afectan la salida). Modelo: SIR continuo, salida Infectados.
+
+%% 1. Configuración del Entorno
+clc; clear; close all;
+
+% REPLACE_WITH_DASH_DASH- Localización portable de la toolbox GSUA-CSB (ver Módulo 01) REPLACE_WITH_DASH_DASHREPLACE_WITH_DASH_DASHREPLACE_WITH_DASH_DASHREPLACE_WITH_DASH_DASHREPLACE_WITH_DASH_DASH-
+if isempty(which('gsua_dataprep'))
+    candidatos = {
+        fullfile(fileparts(mfilename('fullpath')), '..', '..', '..', 'Functions')  % dentro del repo clonado
+        fullfile(getenv('USERPROFILE'), 'MATLAB Drive', 'Toolbox', 'Functions')
+        fullfile(getenv('USERPROFILE'), 'Documents', 'MATLAB', 'GSUA-CSB', 'Functions')
+    };
+    for k = 1:numel(candidatos)
+        if isfolder(candidatos{k}), addpath(candidatos{k}); break; end
+    end
+    if isempty(which('gsua_dataprep'))
+        error(['No se encontró la toolbox GSUA-CSB en el path de MATLAB. ' ...
+               'Instala GSUA-CSB.mltbx o añade su carpeta Functions con addpath(...).']);
+    end
+end
+model1_path = fullfile(fileparts(mfilename('fullpath')), '..', '..', ...
+    '01_Introduccion_Modelos', 'matlab');
+if isfolder(model1_path), addpath(model1_path); else, error('Falta el Módulo 01 en %s', model1_path); end
+
+fprintf('=========================================================================\n');
+fprintf('  MÓDULO 04: ANÁLISIS DE SENSIBILIDAD GLOBAL (GSA)  \n');
+fprintf('=========================================================================\n\n');
+
+%% 2. Modelo SIR sobre TODO el espacio de factores (salida: Infectados)
+% Para GSA usamos rangos amplios: el análisis mide la importancia de cada factor
+% a lo largo de todo su rango de variación plausible.
+ranges_sir = [
+    0.0001, 0.0008;  % beta
+    0.05,   0.20;    % gamma
+    900,    999;     % S0
+    1,      50       % I0
+];
+[T, ~] = gsua_dataprep('sir_continuous_userdefined', ranges_sir, ...
+    'domain', [0, 80], ...
+    'names', {'beta', 'gamma', 'S0', 'I0'}, ...
+    'out_names', {'Susceptibles', 'Infectados', 'Recuperados'});
+T.Properties.CustomProperties.output = 2;     % Infectados
+
+%% 3. Muestreo base para el estimador de índices
+% El método necesita N*(Np/2+1) evaluaciones. Con N=500 y 4 factores => 1500 corridas.
+N = 500;
+M = gsua_dmatrix(T, N, 'Method', 'LatinHypercube');
+
+%% 4. Análisis de sensibilidad (método Xiao, el estimador propio de la toolbox)
+% Salidas: T con los índices escritos dentro (T.Si, T.STi, T.Si_vec, T.STi_vec),
+% Y = matriz de trayectorias, J = costo escalar por corrida.
+[T, Y, J] = gsua_sa(M, T, 'SensMethod', 'Xiao', 'parallel', false, 'verbose', false); %#ok<ASGLU>
+
+names = T.Properties.RowNames;
+fprintf('Índices de sensibilidad (método Xiao):\n');
+disp(table(T.Si, T.STi, 'RowNames', names, 'VariableNames', {'S_i','ST_i'}));
+
+[~, idxMax] = max(T.STi);
+[~, idxMin] = min(T.STi);
+fprintf('Factor MÁS influyente : %s (ST_i = %.3f)\n', names{idxMax}, T.STi(idxMax));
+fprintf('Factor MENOS influyente: %s (ST_i = %.3f)\n', names{idxMin}, T.STi(idxMin));
+fprintf('=> Regla práctica: estima los factores con ST_i alto; considera FIJAR los de ST_i ~ 0.\n\n');
+
+%% 5. Gráfica de barras: S_i vs ST_i por factor
+figure('Name', 'Índices de Sensibilidad S_i y ST_i');
+bar([T.Si, T.STi]);
+set(gca, 'XTickLabel', names);
+ylabel('Índice de sensibilidad');
+title('Sensibilidad Global: primer orden (S_i) vs orden total (ST_i)');
+legend({'S_i (efecto propio)', 'ST_i (propio + interacciones)'}, 'Location', 'northwest');
+grid on;
+% Lectura: ST_i notablemente mayor que S_i indica INTERACCIONES entre factores.
+
+%% 6. Sensibilidad dependiente del tiempo (¿cuándo importa cada factor?)
+time = linspace(0, 80, size(T.STi_vec, 2));
+figure('Name', 'Sensibilidad total dependiente del tiempo');
+gsua_plot('FractionalSensitivityArea', T, T.STi_vec, time);
+title('Fracción de ST_i(t): qué factor domina la varianza en cada instante');
+
+%% 7. Comparación entre métodos estimadores (robustez del resultado)
+% Un buen resultado de GSA no debería depender fuertemente del estimador elegido.
+% Partimos de una tabla FRESCA para el segundo método: la anterior ya lleva escritas
+% las propiedades del método Xiao y reutilizarla generaría un warning inofensivo.
+[Tcmp, ~] = gsua_dataprep('sir_continuous_userdefined', ranges_sir, ...
+    'domain', [0, 80], ...
+    'names', {'beta', 'gamma', 'S0', 'I0'}, ...
+    'out_names', {'Susceptibles', 'Infectados', 'Recuperados'});
+Tcmp.Properties.CustomProperties.output = 2;
+[Tsalt, ~, ~] = gsua_sa(M, Tcmp, 'SensMethod', 'Saltelli', 'parallel', false, 'verbose', false);
+fprintf('Comparación ST_i (Xiao vs Saltelli):\n');
+disp(table(T.STi, Tsalt.STi, 'RowNames', names, 'VariableNames', {'Xiao','Saltelli'}));
+
+%% 8. PREGUNTAS Y EJERCICIOS PARA EL ESTUDIANTE
+fprintf('\n=========================================================================\n');
+fprintf('  PREGUNTAS DE ANÁLISIS Y EJERCICIOS DOCENTES (MÓDULO 04)  \n');
+fprintf('=========================================================================\n');
+fprintf('1. ¿Qué factor domina la varianza de Infectados? ¿Coincide con tu intuición epidemiológica?\n');
+fprintf('2. ¿Para algún factor ST_i >> S_i? ¿Con quién interactúa? (pista: beta, S0 y gamma via R0).\n');
+fprintf('3. Cambia N de 500 a 2000. ¿Se estabilizan los índices? (convergencia del estimador).\n');
+fprintf('4. Si fijas el factor menos sensible, ¿cambia mucho la banda de incertidumbre del Módulo 03?\n');
+fprintf('=========================================================================\n\n');
+
+##### SOURCE END #####
+-->
+</body>
+</html>
