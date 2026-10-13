@@ -108,7 +108,7 @@ parfor (i=1:Np,parforArg)
         try
             cost=(sum((y_Nom-y_temp).^2,2)/len)./limit;
             for j=1:inputs
-                cost(j)=((2-corr2(y_Nom(j,:),y_temp(j,:)))*cost(j)).^2;
+                cost(j)=((2-gsua_corr2(y_Nom(j,:),y_temp(j,:)))*cost(j)).^2;
             end
             J_temp=sum(cost);
         catch

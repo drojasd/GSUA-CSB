@@ -57,7 +57,7 @@ parfor (j=1:reps,parforArg)
     cost=zeros(1,inputs);
     try
         for i=1:inputs
-            icorre=(2-corr2(ydata(j,:,i),yfunction(i,:)));
+            icorre=(2-gsua_corr2(ydata(j,:,i),yfunction(i,:)));
             if isnan(icorre)
                 icorre=1;
             end

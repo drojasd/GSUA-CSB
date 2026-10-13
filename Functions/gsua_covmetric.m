@@ -112,7 +112,7 @@ regulator=sum((a-a*margin).^2,2)/len;
 regulator(regulator==0)=eps;
 cost=sum((a-b).^2,2)/len./regulator;
 for i=1:inputs
-    r=corr2(a(i,:),b(i,:));
+    r=gsua_corr2(a(i,:),b(i,:));
     if isnan(r)
         r=1;
     end

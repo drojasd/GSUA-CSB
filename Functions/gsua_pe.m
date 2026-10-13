@@ -177,7 +177,7 @@ end
                      desv = abs((ydata*margin).^2);
                      obj =@(pars) sum(log(2*pi*desv) +(ydata-gsua_deval(pars,T,xdata)).^2./desv,'all','omitnan')/2;
                  else
-                    obj=@(pars) immse(ydata,gsua_deval(pars,T,xdata));
+                    obj=@(pars) gsua_mse(ydata,gsua_deval(pars,T,xdata));
                  end
              end
             switch OS
@@ -246,4 +246,21 @@ if strcmp(show,'on')||strcmp(show,'on2')
         gsua_ia(Table,x')
     end
 end
+end
+
+function e = gsua_mse(A,B)
+%GSUA_MSE Mean squared error between two equally sized arrays.
+%   e = gsua_mse(A,B) returns mean((A(:)-B(:)).^2), i.e. sum of squared
+%   differences divided by the number of elements. This reproduces the
+%   Image Processing Toolbox function IMMSE for double-valued data, so the
+%   fmincon/ga/particleswarm plain-MSE objective in gsua_pe no longer
+%   depends on that toolbox. A and B must be the same size; as with immse,
+%   any NaN propagates to the result.
+if ~isequal(size(A),size(B))
+    error('GSUA:gsua_mse:SizeMismatch', ...
+        'A and B must be the same size (got %s and %s).', ...
+        mat2str(size(A)), mat2str(size(B)));
+end
+d = double(A) - double(B);
+e = sum(d(:).^2) / numel(d);
 end

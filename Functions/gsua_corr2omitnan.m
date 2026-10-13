@@ -27,6 +27,6 @@ b = b(valid);
 if numel(a) < 2
     r = 0;
 else
-    r = corr2(a,b);
+    r = gsua_corr2(a,b);
 end
 end

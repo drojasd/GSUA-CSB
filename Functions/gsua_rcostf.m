@@ -44,7 +44,7 @@ cost=(sum((ydata-yfunction).^2,2)/lon)./regulator;
 
 
 for i=1:inputs
-    factor = 2-corr2(ydata(i,:),yfunction(i,:));
+    factor = 2-gsua_corr2(ydata(i,:),yfunction(i,:));
     if isnan(factor)
         factor = 1;
     end
