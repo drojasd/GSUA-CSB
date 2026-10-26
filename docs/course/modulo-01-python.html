@@ -7510,7 +7510,7 @@ a.anchor-link {
 </style>
 <!-- End of mermaid configuration --></head>
 <body class="jp-Notebook" data-jp-theme-light="true" data-jp-theme-name="JupyterLab Light">
-<main><div class="jp-Cell jp-CodeCell jp-Notebook-cell jp-mod-noOutputs" id="cell-id=ac65c970">
+<main><div class="jp-Cell jp-CodeCell jp-Notebook-cell jp-mod-noOutputs" id="cell-id=cadcba28">
 <div class="jp-Cell-inputWrapper" tabindex="0">
 <div class="jp-Collapser jp-InputCollapser jp-Cell-inputCollapser">
 </div>
@@ -7535,12 +7535,164 @@ a.anchor-link {
 </div>
 </div>
 </div>
-</div><div class="jp-Cell jp-CodeCell jp-Notebook-cell jp-mod-noOutputs" id="cell-id=53740f94">
+</div>
+<div class="jp-Cell jp-MarkdownCell jp-Notebook-cell" id="cell-id=93f2c8c0">
+<div class="jp-Cell-inputWrapper" tabindex="0">
+<div class="jp-Collapser jp-InputCollapser jp-Cell-inputCollapser">
+</div>
+<div class="jp-InputArea jp-Cell-inputArea"><div class="jp-InputPrompt jp-InputArea-prompt">
+</div><div class="jp-RenderedHTMLCommon jp-RenderedMarkdown jp-MarkdownOutput" data-mime-type="text/markdown">
+<h2 id="Los-modelos-de-este-m%C3%B3dulo">Los modelos de este módulo<a class="anchor-link" href="#Los-modelos-de-este-m%C3%B3dulo">¶</a></h2><p>Este módulo usa dos modelos de usuario ya escritos. Así están, completos (el módulo 0
+explica paso a paso cómo se escribe uno: la firma <code>func(pars, domain)</code>, el orden de los
+factores y la forma (salidas, tiempo) de la salida). Lo que ve gsua_csb son las funciones
+<code>discrete_logistic_func</code> y <code>sir_continuous_func</code>; <code>create_*_model</code> las envuelve en
+<code>UserFunctionModel</code>.</p>
+<p>Nota: ambos modelos arrancan la simulación en <code>domain[0]</code>. Es correcto en este curso, donde la
+rejilla siempre empieza en 0; si pides una rejilla que empiece después, la condición inicial
+se desplazaría con ella. El módulo 0 muestra cómo fijar <code>t0</code> para evitarlo.</p>
+</div>
+</div>
+</div>
+</div><div class="jp-Cell jp-CodeCell jp-Notebook-cell" id="cell-id=a4a02923">
 <div class="jp-Cell-inputWrapper" tabindex="0">
 <div class="jp-Collapser jp-InputCollapser jp-Cell-inputCollapser">
 </div>
 <div class="jp-InputArea jp-Cell-inputArea">
 <div class="jp-InputPrompt jp-InputArea-prompt">In [3]:</div>
+<div class="jp-CodeMirrorEditor jp-Editor jp-InputArea-editor" data-type="inline">
+<div class="cm-editor cm-s-jupyter">
+<div class="highlight hl-ipython3"><pre><span></span><span class="kn">import</span><span class="w"> </span><span class="nn">inspect</span>
+<span class="kn">import</span><span class="w"> </span><span class="nn">discrete_logistic_userdefined</span><span class="w"> </span><span class="k">as</span><span class="w"> </span><span class="nn">_dl</span>
+<span class="kn">import</span><span class="w"> </span><span class="nn">sir_continuous_userdefined</span><span class="w"> </span><span class="k">as</span><span class="w"> </span><span class="nn">_sir</span>
+<span class="k">for</span> <span class="n">_f</span> <span class="ow">in</span> <span class="p">(</span><span class="n">_dl</span><span class="o">.</span><span class="n">discrete_logistic_func</span><span class="p">,</span> <span class="n">_dl</span><span class="o">.</span><span class="n">create_discrete_logistic_model</span><span class="p">,</span>
+           <span class="n">_sir</span><span class="o">.</span><span class="n">_sir_rhs</span><span class="p">,</span> <span class="n">_sir</span><span class="o">.</span><span class="n">sir_continuous_func</span><span class="p">,</span> <span class="n">_sir</span><span class="o">.</span><span class="n">create_sir_continuous_model</span><span class="p">):</span>
+    <span class="nb">print</span><span class="p">(</span><span class="n">inspect</span><span class="o">.</span><span class="n">getsource</span><span class="p">(</span><span class="n">_f</span><span class="p">))</span>
+</pre></div>
+</div>
+</div>
+</div>
+</div>
+<div class="jp-Cell-outputWrapper">
+<div class="jp-Collapser jp-OutputCollapser jp-Cell-outputCollapser">
+</div>
+<div class="jp-OutputArea jp-Cell-outputArea">
+<div class="jp-OutputArea-child">
+<div class="jp-OutputPrompt jp-OutputArea-prompt"></div>
+<div class="jp-RenderedText jp-OutputArea-output" data-mime-type="text/plain" tabindex="0">
+<pre>def discrete_logistic_func(params, domain):
+    """
+    Función del modelo de crecimiento logístico discreto.
+    N(t+1) = N(t) + r * N(t) * (1 - N(t) / K)
+    """
+    r = params[0]
+    K = params[1]
+    N0 = params[2] if len(params) &gt;= 3 else 10.0
+    
+    num_steps = len(domain)
+    N = np.zeros(num_steps, dtype=float)
+    N[0] = N0
+    
+    for t in range(num_steps - 1):
+        N[t + 1] = N[t] + r * N[t] * (1.0 - N[t] / K)
+        if N[t + 1] &lt; 0:
+            N[t + 1] = 0.0
+            
+    return N
+
+def create_discrete_logistic_model(
+    r_range=(0.05, 0.50),
+    K_range=(100.0, 1000.0),
+    N0_range=(5.0, 50.0),
+    t_max=50
+):
+    """
+    Construye y retorna una instancia de UserFunctionModel (Objeto de Control del Sistema).
+    """
+    domain = np.arange(0, t_max + 1)
+    names = ["r", "K", "N0"]
+    param_ranges = np.array([r_range, K_range, N0_range])
+    
+    model = UserFunctionModel(
+        func=discrete_logistic_func,
+        names=names,
+        range=param_ranges,
+        domain=domain,
+        output_names=["Poblacion"]
+    )
+    return model
+
+def _sir_rhs(t, y, beta, gamma):
+    S, I, R = y
+    dSdt = -beta * S * I
+    dIdt =  beta * S * I - gamma * I
+    dRdt =  gamma * I
+    return [dSdt, dIdt, dRdt]
+
+def sir_continuous_func(params, domain):
+    """
+    Función de evaluación para el modelo SIR continuo resuelto con solve_ivp.
+    """
+    beta = params[0]
+    gamma = params[1]
+    S0 = params[2] if len(params) &gt;= 3 else 990.0
+    I0 = params[3] if len(params) &gt;= 4 else 10.0
+    R0_pop = params[4] if len(params) &gt;= 5 else 0.0
+        
+    y0 = [S0, I0, R0_pop]
+    
+    sol = solve_ivp(
+        _sir_rhs,
+        t_span=(domain[0], domain[-1]),
+        y0=y0,
+        args=(beta, gamma),
+        t_eval=domain,
+        method="RK45",
+        rtol=1e-6,
+        atol=1e-8
+    )
+    return sol.y
+
+def create_sir_continuous_model(
+    beta_range=(0.0001, 0.0008),
+    gamma_range=(0.05, 0.20),
+    S0_range=(900.0, 999.0),
+    I0_range=(1.0, 50.0),
+    t_max=80,
+    n_points=200,
+    output_selection=None
+):
+    """
+    Construye y retorna una instancia de UserFunctionModel (Objeto de Control del Sistema).
+    """
+    domain = np.linspace(0, t_max, n_points)
+    names = ["beta", "gamma", "S0", "I0"]
+    param_ranges = np.array([beta_range, gamma_range, S0_range, I0_range])
+    output_names = ["Susceptibles", "Infectados", "Recuperados"]
+    
+    model = UserFunctionModel(
+        func=sir_continuous_func,
+        names=names,
+        range=param_ranges,
+        domain=domain,
+        output_names=output_names
+    )
+    
+    if output_selection is not None:
+        model.set_output(output_selection)
+        
+    return model
+
+</pre>
+</div>
+</div>
+</div>
+</div>
+</div><div class="jp-Cell jp-CodeCell jp-Notebook-cell jp-mod-noOutputs" id="cell-id=ff1d8404">
+<div class="jp-Cell-inputWrapper" tabindex="0">
+<div class="jp-Collapser jp-InputCollapser jp-Cell-inputCollapser">
+</div>
+<div class="jp-InputArea jp-Cell-inputArea">
+<div class="jp-InputPrompt jp-InputArea-prompt">In [4]:</div>
 <div class="jp-CodeMirrorEditor jp-Editor jp-InputArea-editor" data-type="inline">
 <div class="cm-editor cm-s-jupyter">
 <div class="highlight hl-ipython3"><pre><span></span><span class="k">def</span><span class="w"> </span><span class="nf">run_demo</span><span class="p">():</span>
@@ -7657,12 +7809,12 @@ a.anchor-link {
 </div>
 </div>
 </div>
-</div><div class="jp-Cell jp-CodeCell jp-Notebook-cell" id="cell-id=9a6d843b">
+</div><div class="jp-Cell jp-CodeCell jp-Notebook-cell" id="cell-id=158b2397">
 <div class="jp-Cell-inputWrapper" tabindex="0">
 <div class="jp-Collapser jp-InputCollapser jp-Cell-inputCollapser">
 </div>
 <div class="jp-InputArea jp-Cell-inputArea">
-<div class="jp-InputPrompt jp-InputArea-prompt">In [4]:</div>
+<div class="jp-InputPrompt jp-InputArea-prompt">In [5]:</div>
 <div class="jp-CodeMirrorEditor jp-Editor jp-InputArea-editor" data-type="inline">
 <div class="cm-editor cm-s-jupyter">
 <div class="highlight hl-ipython3"><pre><span></span><span class="k">if</span> <span class="vm">__name__</span> <span class="o">==</span> <span class="s2">"__main__"</span><span class="p">:</span>

@@ -20,12 +20,13 @@ paso e incluyen preguntas y ejercicios.
 Los módulos siguen el mismo orden del flujo de trabajo de la toolbox:
 
 ```
-  Modelo  ─►  Muestreo  ─►  Incertidumbre  ─►  Sensibilidad  ─►  Estimación + Identificabilidad
- (Módulo 1)  (Módulo 2)      (Módulo 3)         (Módulo 4)             (Módulo 5)
+ Escribir el modelo ─►  Modelo  ─►  Muestreo  ─►  Incertidumbre  ─►  Sensibilidad  ─►  Estimación + Identificabilidad
+     (Módulo 0)        (Módulo 1)  (Módulo 2)      (Módulo 3)         (Módulo 4)             (Módulo 5)
 ```
 
 | # | Módulo | Tema | Funciones clave (MATLAB → Python) |
 |---|--------|------|-----------------------------------|
+| 00 | `00_Escribir_Modelos` | Cómo se escribe un modelo de usuario: firma, orden de factores, salida, `gsua_dataprep`/`gsua_eval`, errores típicos, ejercicio | `gsua_dataprep`, `gsua_eval` → `UserFunctionModel`, `.evaluate`, `.set_output` |
 | 01 | `01_Introduccion_Modelos` | Definir modelos discretos y continuos; simulación nominal y ensamble | `gsua_dataprep`, `gsua_eval` → `UserFunctionModel`, `.evaluate` |
 | 02 | `02_Muestreo` | Diseño de experimentos: Uniforme, Hipercubo Latino, Sobol; escala log | `gsua_dmatrix` → `gc.design_matrix` |
 | 03 | `03_Incertidumbre_MonteCarlo` | Propagación de incertidumbre, percentiles P5/P95, filtrado Monte Carlo | `gsua_ua`, `gsua_covmetric`, `gsua_MCF` → `gc.uncertainty_analysis`, `gc.coverage_metric`, `gc.monte_carlo_filter` |
@@ -42,6 +43,10 @@ continuo** (resuelto con `ode45` / `solve_ivp`), que se reutilizan a lo largo de
 ```
 course/
 ├── README.md                     ← este archivo (índice del curso)
+├── 00_Escribir_Modelos/
+│   ├── README.md
+│   ├── matlab/                    ← demo_00_escribir_modelos.m + modelos, plantilla, verificar_modelo.m
+│   └── python/                    ← demo_00_escribir_modelos.py + plantilla, verificar_modelo.py
 ├── 01_Introduccion_Modelos/
 │   ├── README.md
 │   ├── matlab/                    ← demo_01_introduccion.m + modelos .m
@@ -53,7 +58,7 @@ course/
 ```
 
 Cada módulo trae, dentro de `matlab/` y `python/`, un **demo ejecutable** (`demo_NN_*`) más
-los **archivos de modelo** que ese demo utiliza. Los cinco módulos están implementados en
+los **archivos de modelo** que ese demo utiliza. Los seis módulos están implementados en
 ambos lenguajes.
 
 ---

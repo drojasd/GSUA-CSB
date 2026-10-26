@@ -9,7 +9,7 @@ To make changes, update the MATLAB code and republish this document.
 <title>demo_01_introduccion</title>
 <meta name="generator" content="MATLAB 25.2">
 <link rel="schema.DC" href="http://purl.org/dc/elements/1.1/">
-<meta name="DC.date" content="2026-09-17">
+<meta name="DC.date" content="2026-10-26">
 <meta name="DC.source" content="demo_01_introduccion.m">
 <style type="text/css">
 html,body,div,span,applet,object,iframe,h1,h2,h3,h4,h5,h6,p,blockquote,pre,a,abbr,acronym,address,big,cite,code,del,dfn,em,font,img,ins,kbd,q,s,samp,small,strike,strong,tt,var,b,u,i,center,dl,dt,dd,ol,ul,li,fieldset,form,label,legend,table,caption,tbody,tfoot,thead,tr,th,td{margin:0;padding:0;border:0;outline:0;font-size:100%;vertical-align:baseline;background:transparent}body{line-height:1}ol,ul{list-style:none}blockquote,q{quotes:none}blockquote:before,blockquote:after,q:before,q:after{content:'';content:none}:focus{outine:0}ins{text-decoration:none}del{text-decoration:line-through}table{border-collapse:collapse;border-spacing:0}
@@ -83,13 +83,16 @@ table td { padding:7px 5px; text-align:left; vertical-align:top; border:1px soli
 <a href="#2">1. Configuraci&oacute;n del Entorno</a>
 </li>
 <li>
-<a href="#3">2. MODELO 1: TIEMPO DISCRETO (Crecimiento Log&iacute;stico)</a>
+<a href="#3">Los modelos de este m&oacute;dulo</a>
 </li>
 <li>
-<a href="#4">3. MODELO 2: TIEMPO CONTINUO (Modelo Epid&eacute;mico SIR)</a>
+<a href="#4">2. MODELO 1: TIEMPO DISCRETO (Crecimiento Log&iacute;stico)</a>
 </li>
 <li>
-<a href="#5">4. PREGUNTAS Y EJERCICIOS PARA EL ESTUDIANTE</a>
+<a href="#5">3. MODELO 2: TIEMPO CONTINUO (Modelo Epid&eacute;mico SIR)</a>
+</li>
+<li>
+<a href="#6">4. PREGUNTAS Y EJERCICIOS PARA EL ESTUDIANTE</a>
 </li>
 </ul>
 </div>
@@ -138,7 +141,114 @@ fprintf(<span class="string">'==================================================
 =========================================================================
 
 </pre>
-<h2 id="3">2. MODELO 1: TIEMPO DISCRETO (Crecimiento Log&iacute;stico)</h2>
+<h2 id="3">Los modelos de este m&oacute;dulo</h2>
+<p>Este m&oacute;dulo usa dos modelos de usuario ya escritos. As&iacute; est&aacute;n, completos (el m&oacute;dulo 0 explica paso a paso c&oacute;mo se escribe uno: la firma <tt>sol = f(pars, domain, opt)</tt>, el orden de los factores y la forma de <tt>sol.y</tt>).</p>
+<pre class="language-matlab">
+<span class="keyword">function</span> sol = discrete_logistic_userdefined(params, domain, ~)
+<span class="comment">% DISCRETE_LOGISTIC_USERDEFINED Modelo de crecimiento log&iacute;stico en tiempo discreto.</span>
+<span class="comment">%</span>
+<span class="comment">%   sol = discrete_logistic_userdefined(params, domain, opt)</span>
+<span class="comment">%</span>
+<span class="comment">%   Ecuaci&oacute;n en diferencias:</span>
+<span class="comment">%       N(t+1) = N(t) + r * N(t) * (1 - N(t) / K)</span>
+<span class="comment">%</span>
+<span class="comment">%   Par&aacute;metros:</span>
+<span class="comment">%       params(1) -&gt; r : Tasa intr&iacute;nseca de crecimiento (1/tiempo)</span>
+<span class="comment">%       params(2) -&gt; K : Capacidad de carga poblacional</span>
+<span class="comment">%       params(3) -&gt; N0: Poblaci&oacute;n inicial en t = t0</span>
+<span class="comment">%</span>
+<span class="comment">%   Dominio:</span>
+<span class="comment">%       domain = [t0, tf] (pasos discretos de tiempo)</span>
+<span class="comment">%</span>
+<span class="comment">%   Retorna:</span>
+<span class="comment">%       Estructura sol con campos sol.x (puntos de tiempo) y sol.y (poblaci&oacute;n).</span>
+
+r  = params(1);
+K  = params(2);
+<span class="keyword">if</span> length(params) &gt;= 3
+    N0 = params(3);
+<span class="keyword">else</span>
+    N0 = 10; <span class="comment">% Valor por defecto si N0 se fija exteriormente</span>
+<span class="keyword">end</span>
+
+t0 = floor(domain(1));
+tf = ceil(domain(2));
+time_steps = t0:tf;
+num_steps = length(time_steps);
+
+N = zeros(1, num_steps);
+N(1) = N0;
+
+<span class="keyword">for</span> t = 1:(num_steps - 1)
+    N(t+1) = N(t) + r * N(t) * (1 - N(t) / K);
+    <span class="keyword">if</span> N(t+1) &lt; 0
+        N(t+1) = 0;
+    <span class="keyword">end</span>
+<span class="keyword">end</span>
+
+sol.x = time_steps;
+sol.y = N;
+<span class="keyword">end</span>
+
+</pre>
+<pre class="language-matlab">
+<span class="keyword">function</span> sol = sir_continuous_userdefined(params, domain, ~)
+<span class="comment">% SIR_CONTINUOUS_USERDEFINED Modelo epid&eacute;mico SIR continuo resuelto con ode45.</span>
+<span class="comment">%</span>
+<span class="comment">%   sol = sir_continuous_userdefined(params, domain, opt)</span>
+<span class="comment">%</span>
+<span class="comment">%   Factores (Par&aacute;metros + Condiciones Iniciales):</span>
+<span class="comment">%       params(1) -&gt; beta  : Tasa de transmisi&oacute;n / contacto infectivo (1/(persona*d&iacute;a))</span>
+<span class="comment">%       params(2) -&gt; gamma : Tasa de recuperaci&oacute;n (1/d&iacute;a)</span>
+<span class="comment">%       params(3) -&gt; S0    : Susceptibles iniciales en t0</span>
+<span class="comment">%       params(4) -&gt; I0    : Infectados iniciales en t0</span>
+<span class="comment">%       params(5) -&gt; R0_pop: Recuperados iniciales en t0 (opcional, por defecto 0)</span>
+<span class="comment">%</span>
+<span class="comment">%   Salidas (3 componentes):</span>
+<span class="comment">%       Fila 1 -&gt; S(t): Susceptibles</span>
+<span class="comment">%       Fila 2 -&gt; I(t): Infectados</span>
+<span class="comment">%       Fila 3 -&gt; R(t): Recuperados</span>
+<span class="comment">%</span>
+<span class="comment">%   Retorna:</span>
+<span class="comment">%       Estructura sol compatible con GSUA_EVAL / GSUA_INTRP.</span>
+
+beta  = params(1);
+gamma = params(2);
+S0    = params(3);
+I0    = params(4);
+
+<span class="keyword">if</span> length(params) &gt;= 5
+    R0_pop = params(5);
+<span class="keyword">else</span>
+    R0_pop = 0;
+<span class="keyword">end</span>
+
+y0 = [S0; I0; R0_pop];
+
+<span class="comment">% Opciones para precisi&oacute;n num&eacute;rica del integrador ode45</span>
+options = odeset(<span class="string">'RelTol'</span>, 1e-6, <span class="string">'AbsTol'</span>, 1e-8);
+
+<span class="comment">% Integrar el sistema EDO continuo</span>
+sol = ode45(@(t, y) sir_rhs(t, y, beta, gamma), domain, y0, options);
+
+<span class="comment">% Asignar sol.solver = '' para compatibilidad con el interpolador gsua_intrp</span>
+sol.solver = <span class="string">''</span>;
+<span class="keyword">end</span>
+
+<span class="keyword">function</span> dydt = sir_rhs(~, y, beta, gamma)
+S = y(1);
+I = y(2);
+
+dSdt = -beta * S * I;
+dIdt =  beta * S * I - gamma * I;
+dRdt =  gamma * I;
+
+dydt = [dSdt; dIdt; dRdt];
+<span class="keyword">end</span>
+
+</pre>
+<p>Nota: <tt>sir_continuous_userdefined</tt> devuelve la estructura de <tt>ode45</tt> tal cual, y <tt>gsua_eval</tt> interpola linealmente entre sus pasos. Con las tolerancias estrictas que usa (<tt>RelTol</tt> 1e-6) el error es peque&ntilde;o (unas 2 personas en un pico de ~356); el m&oacute;dulo 0 muestra el patr&oacute;n m&aacute;s seguro (<tt>deval</tt> en una rejilla fina).</p>
+<h2 id="4">2. MODELO 1: TIEMPO DISCRETO (Crecimiento Log&iacute;stico)</h2>
 <pre class="codeinput">fprintf(<span class="string">'--- 1. MODELO LOG&Iacute;STICO DISCRETO ---\n'</span>);
 fprintf(<span class="string">'Ecuaci&oacute;n: N(t+1) = N(t) + r * N(t) * (1 - N(t) / K)\n\n'</span>);
 
@@ -200,7 +310,7 @@ Tabla Resumen del Modelo Discreto (Factores y Salida):
     N0       5      50      27.5 
 
 </pre>
-<img vspace="5" hspace="5" src="demo_01_introduccion_01.png" alt=""> <h2 id="4">3. MODELO 2: TIEMPO CONTINUO (Modelo Epid&eacute;mico SIR)</h2>
+<img vspace="5" hspace="5" src="demo_01_introduccion_01.png" alt=""> <h2 id="5">3. MODELO 2: TIEMPO CONTINUO (Modelo Epid&eacute;mico SIR)</h2>
 <pre class="codeinput">fprintf(<span class="string">'\n--- 2. MODELO EPID&Eacute;MICO SIR CONTINUO ---\n'</span>);
 fprintf(<span class="string">'Sistema EDO: dS/dt = -beta*S*I, dI/dt = beta*S*I - gamma*I, dR/dt = gamma*I\n\n'</span>);
 
@@ -323,7 +433,7 @@ N&uacute;mero Reproductivo B&aacute;sico Calculado: R0 = 3.42
 -&gt; R0 &gt; 1: Existe brote epid&eacute;mico (El n&uacute;mero de infectados crece inicialmente).
 
 </pre>
-<img vspace="5" hspace="5" src="demo_01_introduccion_02.png" alt=""> <img vspace="5" hspace="5" src="demo_01_introduccion_03.png" alt=""> <h2 id="5">4. PREGUNTAS Y EJERCICIOS PARA EL ESTUDIANTE</h2>
+<img vspace="5" hspace="5" src="demo_01_introduccion_02.png" alt=""> <img vspace="5" hspace="5" src="demo_01_introduccion_03.png" alt=""> <h2 id="6">4. PREGUNTAS Y EJERCICIOS PARA EL ESTUDIANTE</h2>
 <pre class="codeinput">fprintf(<span class="string">'=========================================================================\n'</span>);
 fprintf(<span class="string">'  PREGUNTAS DE AN&Aacute;LISIS Y EJERCICIOS DOCENTES  \n'</span>);
 fprintf(<span class="string">'=========================================================================\n'</span>);
@@ -387,6 +497,21 @@ addpath(fileparts(mfilename('fullpath')));
 fprintf('=========================================================================\n');
 fprintf('  MÓDULO 01: INTRODUCCIÓN A MODELOS EN TIEMPO DISCRETO Y CONTINUO  \n');
 fprintf('=========================================================================\n\n');
+
+%% Los modelos de este módulo
+% Este módulo usa dos modelos de usuario ya escritos. Así están, completos
+% (el módulo 0 explica paso a paso cómo se escribe uno: la firma
+% |sol = f(pars, domain, opt)|, el orden de los factores y la forma de |sol.y|).
+%
+% <include>discrete_logistic_userdefined.m</include>
+%
+% <include>sir_continuous_userdefined.m</include>
+%
+% Nota: |sir_continuous_userdefined| devuelve la estructura de |ode45| tal
+% cual, y |gsua_eval| interpola linealmente entre sus pasos. Con las
+% tolerancias estrictas que usa (|RelTol| 1e-6) el error es pequeño (unas
+% 2 personas en un pico de ~356); el módulo 0 muestra el patrón más seguro
+% (|deval| en una rejilla fina).
 
 %% 2. MODELO 1: TIEMPO DISCRETO (Crecimiento Logístico)
 fprintf('REPLACE_WITH_DASH_DASH- 1. MODELO LOGÍSTICO DISCRETO REPLACE_WITH_DASH_DASH-\n');

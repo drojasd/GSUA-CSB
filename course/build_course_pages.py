@@ -7,10 +7,12 @@ the Python counterpart of course/build_course_pages.m.
 
 Requires: jupytext, nbconvert, nbformat, ipykernel (all in the dev environment).
 Run from anywhere:  python course/build_course_pages.py
+Only some modules:  python course/build_course_pages.py 00 01
 
 This file lives in course/, which toolbox.ignore excludes from the packaged toolbox.
 """
 import os
+import sys
 import jupytext
 from nbformat.v4 import new_code_cell
 from nbconvert.preprocessors import ExecutePreprocessor, TagRemovePreprocessor
@@ -23,6 +25,7 @@ OUT = os.path.join(ROOT, "docs", "course")
 os.makedirs(OUT, exist_ok=True)
 
 DEMOS = [
+    ("00_Escribir_Modelos",             "demo_00_escribir_modelos", "modulo-00-python.html"),
     ("01_Introduccion_Modelos",         "demo_01_introduccion",  "modulo-01-python.html"),
     ("02_Muestreo",                     "demo_02_muestreo",      "modulo-02-python.html"),
     ("03_Incertidumbre_MonteCarlo",     "demo_03_incertidumbre", "modulo-03-python.html"),
@@ -36,6 +39,9 @@ _cfg.TagRemovePreprocessor.remove_cell_tags = ("hide_setup",)
 _cfg.TagRemovePreprocessor.enabled = True
 html_exporter = HTMLExporter(config=_cfg)
 html_exporter.register_preprocessor(TagRemovePreprocessor(config=_cfg), enabled=True)
+
+if len(sys.argv) > 1:
+    DEMOS = [d for d in DEMOS if d[0][:2] in sys.argv[1:]]
 
 for mod, demo, out_name in DEMOS:
     pydir = os.path.join(COURSE, mod, "python")

@@ -1,7 +1,8 @@
-function build_course_pages()
+function build_course_pages(modulos)
 %BUILD_COURSE_PAGES Render the course's MATLAB demos to docs/course/*.html.
 %
 %   build_course_pages()
+%   build_course_pages({'00','01'})   % solo esos módulos
 %
 %   Runs each module's MATLAB demo with PUBLISH and writes its rendered HTML
 %   (sectioned code, console output and figures) into docs/course/, which
@@ -22,11 +23,16 @@ outDir = fullfile(root, 'docs', 'course');
 if ~isfolder(outDir), mkdir(outDir); end
 
 demos = { ...
+    '00_Escribir_Modelos',             'demo_00_escribir_modelos', 'modulo-00-matlab.html'
     '01_Introduccion_Modelos',         'demo_01_introduccion',  'modulo-01-matlab.html'
     '02_Muestreo',                     'demo_02_muestreo',      'modulo-02-matlab.html'
     '03_Incertidumbre_MonteCarlo',     'demo_03_incertidumbre', 'modulo-03-matlab.html'
     '04_Analisis_Sensibilidad',        'demo_04_sensibilidad',  'modulo-04-matlab.html'
     '05_Estimacion_Identificabilidad', 'demo_05_estimacion',    'modulo-05-matlab.html' };
+
+if nargin >= 1
+    demos = demos(startsWith(demos(:,1), string(modulos)), :);
+end
 
 opts = struct('format','html', 'outputDir',outDir, 'showCode',true, ...
               'evalCode',true, 'maxWidth',620, 'catchError',false);

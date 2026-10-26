@@ -4,6 +4,10 @@ Punto de partida del curso: cómo describir un modelo para la toolbox GSUA-CSB, 
 explícitamente sus factores (parámetros + condiciones iniciales) y las salidas, y cómo
 simularlo y explorar su variabilidad.
 
+> **Antes de este módulo:** el [módulo 00](../00_Escribir_Modelos/) enseña a escribir un modelo
+> de usuario paso a paso (firma, orden de los factores, forma de la salida, errores típicos).
+> Aquí los dos modelos ya están escritos; la página muestra su código completo al inicio.
+
 ## Contenidos
 * Modelo en **tiempo discreto**: crecimiento logístico $N(t+1)=N(t)+rN(t)(1-N(t)/K)$.
 * Modelo en **tiempo continuo**: sistema epidémico SIR resuelto con `ode45` / `solve_ivp`.

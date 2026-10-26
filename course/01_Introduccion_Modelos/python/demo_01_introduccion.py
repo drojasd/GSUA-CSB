@@ -11,6 +11,24 @@ from gsua_csb import design_matrix
 from discrete_logistic_userdefined import create_discrete_logistic_model
 from sir_continuous_userdefined import create_sir_continuous_model
 
+# ## Los modelos de este módulo
+# Este módulo usa dos modelos de usuario ya escritos. Así están, completos (el módulo 0
+# explica paso a paso cómo se escribe uno: la firma `func(pars, domain)`, el orden de los
+# factores y la forma (salidas, tiempo) de la salida). Lo que ve gsua_csb son las funciones
+# `discrete_logistic_func` y `sir_continuous_func`; `create_*_model` las envuelve en
+# `UserFunctionModel`.
+#
+# Nota: ambos modelos arrancan la simulación en `domain[0]`. Es correcto en este curso, donde la
+# rejilla siempre empieza en 0; si pides una rejilla que empiece después, la condición inicial
+# se desplazaría con ella. El módulo 0 muestra cómo fijar `t0` para evitarlo.
+
+import inspect
+import discrete_logistic_userdefined as _dl
+import sir_continuous_userdefined as _sir
+for _f in (_dl.discrete_logistic_func, _dl.create_discrete_logistic_model,
+           _sir._sir_rhs, _sir.sir_continuous_func, _sir.create_sir_continuous_model):
+    print(inspect.getsource(_f))
+
 def run_demo():
     print("=========================================================================")
     print("  MÓDULO 01: INTRODUCCIÓN A MODELOS EN TIEMPO DISCRETO Y CONTINUO (PYTHON)")

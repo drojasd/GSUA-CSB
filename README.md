@@ -81,8 +81,8 @@ All four pages are executed output, not illustrative snippets. Browse them from
 
 ## Guided course
 
-A step-by-step course for new users lives in [`course/`](course/): five modules that walk the
-whole toolbox workflow — models, sampling, uncertainty, sensitivity, and estimation/identifiability
+A step-by-step course for new users lives in [`course/`](course/): six modules that walk the
+whole toolbox workflow — writing a model, models, sampling, uncertainty, sensitivity, and estimation/identifiability
 — each written twice, in **MATLAB and Python**, with commented demos and exercises (in Spanish).
 Clone the repo and run any demo (it locates the toolbox automatically), or read every module
 executed online at **[drojasd.github.io/GSUA-CSB](https://drojasd.github.io/GSUA-CSB/#guided-course)**.

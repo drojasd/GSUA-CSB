@@ -37,6 +37,21 @@ fprintf('=======================================================================
 fprintf('  MÓDULO 01: INTRODUCCIÓN A MODELOS EN TIEMPO DISCRETO Y CONTINUO  \n');
 fprintf('=========================================================================\n\n');
 
+%% Los modelos de este módulo
+% Este módulo usa dos modelos de usuario ya escritos. Así están, completos
+% (el módulo 0 explica paso a paso cómo se escribe uno: la firma
+% |sol = f(pars, domain, opt)|, el orden de los factores y la forma de |sol.y|).
+%
+% <include>discrete_logistic_userdefined.m</include>
+%
+% <include>sir_continuous_userdefined.m</include>
+%
+% Nota: |sir_continuous_userdefined| devuelve la estructura de |ode45| tal
+% cual, y |gsua_eval| interpola linealmente entre sus pasos. Con las
+% tolerancias estrictas que usa (|RelTol| 1e-6) el error es pequeño (unas
+% 2 personas en un pico de ~356); el módulo 0 muestra el patrón más seguro
+% (|deval| en una rejilla fina).
+
 %% 2. MODELO 1: TIEMPO DISCRETO (Crecimiento Logístico)
 fprintf('--- 1. MODELO LOGÍSTICO DISCRETO ---\n');
 fprintf('Ecuación: N(t+1) = N(t) + r * N(t) * (1 - N(t) / K)\n\n');
