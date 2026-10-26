@@ -22,6 +22,9 @@ function [Table,res,IP] = gsua_pe(Table,xdata,ydata,varargin)
 % estimate and the same number of rows as N.
 % 'Show',{'off','on'}. If activated, the function plot optimizer results
 % Default: off.
+% 'save',{true,false} <-- if true (default), writes Estimations.mat to the CURRENT
+% folder after each estimation, OVERWRITING any existing Estimations.mat there. Set
+% 'save',false to disable. Default: true.
 % [T,res] = gsua_pe(T,xdata,ydata,'Show','on','solver','particle','N',3)
 %
 % See also GSUA_DMATRIX, GSUA_DEVAL, GSUA_COSTF, GSUA_IA, GSUA_DIA.
@@ -117,6 +120,29 @@ end
 
 x=zeros(N,Np);
 res=inf(N,1);
+lastME=[];   % remember the last genuine estimation error, for the diagnostics below
+
+% Pre-flight: the most common reason gsua_pe "returns only Inf" is a model that does
+% not evaluate to finite output (bad model, wrong sol orientation, xdata outside the
+% integration domain, ...). gsua_deval swallows the model error and returns Inf, so the
+% optimizer "succeeds" with an Inf cost and the user is left with an all-Inf res and no
+% cause. Catch it here, before spending the optimizer budget, with a message that says
+% what to inspect.
+if ismember('Nominal', T.Properties.VariableNames)
+    lastwarn('');
+    y_nom_check = gsua_deval(T.Nominal', T, xdata);
+    [wmsg, ~] = lastwarn;
+    if ~all(isfinite(y_nom_check(:)))
+        hint = 'Check that your model returns finite output over xdata; inspect it with  gsua_deval(T.Nominal'',T,xdata).';
+        if isempty(wmsg)
+            error('GSUA:gsua_pe:ModelNotFinite', ...
+                'The model returns non-finite output at the nominal parameters, so no estimation can succeed.\n%s', hint);
+        else
+            error('GSUA:gsua_pe:ModelNotFinite', ...
+                'The model returns non-finite output at the nominal parameters, so no estimation can succeed.\n%s\nLast model warning: %s', hint, wmsg);
+        end
+    end
+end
 % try
 %     TP=T.Properties.CustomProperties;   
 % catch
@@ -202,12 +228,20 @@ end
     catch ME
         err_counter=err_counter+1;
         if err_counter>err_limit
-            warning('Limit of errors in estimation reached')
+            warning('GSUA:gsua_pe:ErrorLimit', ...
+                ['Reached the %d-error limit on estimation %d of %d; %d estimation(s) left unattempted.\n' ...
+                 'Last error (%s): %s'], err_limit, i, N, N-i, ME.identifier, ME.message);
             [res,index] = sort(res);
             %res=res(res ~= inf);
             res=res';
             x=x(index(1:size(res,2)),:);
             eval(strcat('Table.Est',OS,"=x';"));
+            if all(~isfinite(res))
+                error('GSUA:gsua_pe:AllEstimationsFailed', ...
+                    ['Every estimation failed before any converged (error limit hit on #%d).\n' ...
+                     'Check that your model returns finite output over xdata; inspect it with  gsua_deval(T.Nominal'',T,xdata).\n' ...
+                     'Last error (%s): %s'], i, ME.identifier, ME.message);
+            end
             return
         end
         switch ME.identifier
@@ -221,8 +255,9 @@ end
             case 'MATLAB:warning:invalidMessageType'
                 throw(ME)
             otherwise
+                lastME=ME;
                 warning(ME.message)
-                IP(i,:)=gsua_dmatrix(T,1); 
+                IP(i,:)=gsua_dmatrix(T,1);
         end
     end
     end
@@ -238,6 +273,20 @@ end
 res=res';
 x=x(index(1:size(res,2)),:);
 eval(strcat('Table.Est',OS,"=x';"));
+if all(~isfinite(res))
+    % Every estimation returned a non-finite cost. Fail loudly with the likely cause
+    % instead of handing back an all-Inf res the caller has to decode.
+    if isempty(lastME)
+        error('GSUA:gsua_pe:AllEstimationsFailed', ...
+            ['All %d estimations returned non-finite cost; none converged.\n' ...
+             'Check that your model returns finite output over xdata; inspect it with  gsua_deval(T.Nominal'',T,xdata).'], N);
+    else
+        error('GSUA:gsua_pe:AllEstimationsFailed', ...
+            ['All %d estimations returned non-finite cost; none converged.\n' ...
+             'Check that your model returns finite output over xdata; inspect it with  gsua_deval(T.Nominal'',T,xdata).\n' ...
+             'Last error (%s): %s'], N, lastME.identifier, lastME.message);
+    end
+end
 if strcmp(show,'on')||strcmp(show,'on2')
     figure(1);
     clf
