@@ -6,7 +6,7 @@
 This HTML was auto-generated from MATLAB code.
 To make changes, update the MATLAB code and republish this document.
       -->
-<title>M&oacute;dulo 00: C&oacute;mo se escribe un modelo para GSUA-CSB</title>
+<title>M&oacute;dulo 00: C&oacute;mo se escribe un modelo para GSUA-CSB (MATLAB)</title>
 <meta name="generator" content="MATLAB 25.2">
 <link rel="schema.DC" href="http://purl.org/dc/elements/1.1/">
 <meta name="DC.date" content="2026-10-26">
@@ -76,17 +76,17 @@ table td { padding:7px 5px; text-align:left; vertical-align:top; border:1px soli
 </head>
 <body>
 <div class="content">
-<h1>M&oacute;dulo 00: C&oacute;mo se escribe un modelo para GSUA-CSB</h1>
+<h1>M&oacute;dulo 00: C&oacute;mo se escribe un modelo para GSUA-CSB (MATLAB)</h1>
 <!--introduction-->
 <p>Curso guiado de GSUA-CSB</p>
-<p>Todo el curso (muestreo, incertidumbre, sensibilidad, estimaci&oacute;n) trabaja sobre un <b>modelo de usuario</b>: una funci&oacute;n de MATLAB que t&uacute; escribes. La toolbox no ve tus ecuaciones; solo llama a esa funci&oacute;n con un vector de factores y lee lo que devuelve. Este m&oacute;dulo ense&ntilde;a ese contrato paso a paso:</p>
+<p>Todo el curso (muestreo, incertidumbre, sensibilidad, estimaci&oacute;n) trabaja sobre un <b>modelo de usuario</b>: una funci&oacute;n que t&uacute; escribes. La toolbox no ve tus ecuaciones; solo llama a esa funci&oacute;n con un vector de factores y lee lo que devuelve. Este m&oacute;dulo ense&ntilde;a ese contrato paso a paso, en espejo con la versi&oacute;n Python (mismas secciones, mismos modelos, mismos resultados):</p>
 <div>
 <ol>
-<li>la firma <tt>sol = modelo(pars, domain, opt)</tt> y la forma de <tt>sol.x</tt> y <tt>sol.y</tt>;</li>
+<li>la firma del modelo y la forma de su salida;</li>
 <li>el orden de los factores: primero los par&aacute;metros, despu&eacute;s las condiciones iniciales;</li>
-<li>un modelo discreto (un bucle) y uno continuo (<tt>ode45</tt> + <tt>deval</tt> en una rejilla);</li>
-<li>c&oacute;mo declararlo con <tt>gsua_dataprep</tt> (rangos, <tt>names</tt>, <tt>out_names</tt>), qu&eacute; es la tabla <tt>T</tt> y c&oacute;mo se eval&uacute;a con <tt>gsua_eval</tt>;</li>
-<li>los errores t&iacute;picos (firma, orientaci&oacute;n, rejilla, unidades);</li>
+<li>un modelo discreto (un bucle) y uno continuo (un integrador de EDO evaluado en una rejilla);</li>
+<li>c&oacute;mo se declaran los rangos, los nombres de los factores y de las salidas, qu&eacute; guarda la toolbox del modelo y c&oacute;mo se eval&uacute;a;</li>
+<li>los errores t&iacute;picos (firma, nombres de salidas, orientaci&oacute;n, rejilla, pasos del integrador, unidades);</li>
 <li>un ejercicio: programar un SIR discreto desde cero.</li>
 </ol>
 </div>
@@ -105,28 +105,28 @@ table td { padding:7px 5px; text-align:left; vertical-align:top; border:1px soli
 <a href="#3">3. Paso 1 &mdash; un modelo discreto: la log&iacute;stica</a>
 </li>
 <li>
-<a href="#4">4. Paso 2 &mdash; declararlo con gsua_dataprep: rangos, names y out_names</a>
+<a href="#4">4. Paso 2 &mdash; declararlo ante la toolbox: rangos, nombres de factores y de salidas</a>
 </li>
 <li>
-<a href="#7">5. Paso 3 &mdash; evaluar con gsua_eval</a>
+<a href="#6">5. Paso 3 &mdash; evaluarlo</a>
 </li>
 <li>
-<a href="#8">6. Paso 4 &mdash; un modelo continuo: el SIR con ode45</a>
+<a href="#7">6. Paso 4 &mdash; un modelo continuo: el SIR</a>
 </li>
 <li>
-<a href="#11">7. Fijar un factor: rango degenerado</a>
+<a href="#10">7. Fijar un factor: rango degenerado</a>
 </li>
 <li>
-<a href="#12">8. Errores t&iacute;picos</a>
+<a href="#11">8. Errores t&iacute;picos</a>
 </li>
 <li>
-<a href="#18">9. Comprobar tu modelo antes de usarlo</a>
+<a href="#17">9. Comprobar tu modelo antes de usarlo</a>
 </li>
 <li>
-<a href="#19">10. Ejercicio: programa un SIR discreto desde cero</a>
+<a href="#18">10. Ejercicio: programa un SIR discreto desde cero</a>
 </li>
 <li>
-<a href="#20">11. Resumen: lista de chequeo</a>
+<a href="#19">11. Resumen: lista de chequeo</a>
 </li>
 </ul>
 </div>
@@ -151,12 +151,13 @@ table td { padding:7px 5px; text-align:left; vertical-align:top; border:1px soli
     <span class="keyword">end</span>
 <span class="keyword">end</span>
 
-<span class="comment">% Los modelos de este m&oacute;dulo viven junto a este script (y en errores/).</span>
+<span class="comment">% Los modelos de este m&oacute;dulo viven junto a este script (y los que tienen</span>
+<span class="comment">% errores a prop&oacute;sito, en errores/).</span>
 aqui = fileparts(mfilename(<span class="string">'fullpath'</span>));
 addpath(aqui, fullfile(aqui, <span class="string">'errores'</span>));
 </pre>
 <h2 id="2">2. El contrato de un modelo de usuario</h2>
-<p>Un modelo de usuario es un archivo <tt>.m</tt> propio (por ejemplo <tt>mi_modelo.m</tt>) que contiene una funci&oacute;n con esta firma:</p>
+<p>En MATLAB un modelo de usuario es un archivo <tt>.m</tt> propio (por ejemplo <tt>mi_modelo.m</tt>), en el path, con una funci&oacute;n de esta firma:</p>
 <pre class="language-matlab">sol = mi_modelo(pars, domain, opt)
 </pre>
 <p>
@@ -165,11 +166,11 @@ addpath(aqui, fullfile(aqui, <span class="string">'errores'</span>));
 <div>
 <ul>
 <li>
-<tt>pars</tt>: vector columna con los factores. La posici&oacute;n manda: <tt>pars(1)</tt> es el factor de la fila 1 de los rangos, <tt>pars(2)</tt> el de la fila 2, etc. Convenci&oacute;n del curso: <b>primero los par&aacute;metros, despu&eacute;s las condiciones iniciales</b>.</li>
+<tt>pars</tt>: vector con los factores. La posici&oacute;n manda: <tt>pars(1)</tt> es el factor de la fila 1 de los rangos, <tt>pars(2)</tt> el de la fila 2, etc. Convenci&oacute;n del curso: <b>primero los par&aacute;metros, despu&eacute;s las condiciones iniciales</b>.</li>
 <li>
-<tt>domain</tt>: <tt>[t0, tf]</tt>, el intervalo de simulaci&oacute;n. Es el mismo que declaras con <tt>'domain'</tt> en <tt>gsua_dataprep</tt>; la toolbox no lo cambia.</li>
+<tt>domain</tt>: <tt>[t0, tf]</tt>, el intervalo de simulaci&oacute;n. Es el que declaras con <tt>'domain'</tt> en <tt>gsua_dataprep</tt>; la toolbox no lo cambia, as&iacute; que la condici&oacute;n inicial vale siempre en <tt>t0 = domain(1)</tt>.</li>
 <li>
-<tt>opt</tt>: cualquier cosa que pases con <tt>'opt'</tt> en <tt>gsua_dataprep</tt> (por defecto, una estructura que puedes ignorar con <tt>~</tt>).</li>
+<tt>opt</tt>: opciones del modelo que no son factores; llega lo que pases con <tt>'opt'</tt> en <tt>gsua_dataprep</tt>. Aunque no lo uses, declara el argumento (<tt>~</tt>).</li>
 </ul>
 </div>
 <p>
@@ -179,10 +180,12 @@ addpath(aqui, fullfile(aqui, <span class="string">'errores'</span>));
 <li>
 <tt>sol.x</tt>: vector de tiempos, 1 x Nt, de <tt>t0</tt> a <tt>tf</tt>;</li>
 <li>
-<tt>sol.y</tt>: matriz <b>salidas x tiempo</b> (nSalidas x Nt): una fila por salida, en el mismo orden de <tt>out_names</tt>.</li>
+<tt>sol.y</tt>: matriz <b>salidas x tiempo</b> (nSalidas x Nt): una fila por salida, en el mismo orden de los nombres de salida.</li>
 </ul>
 </div>
 <p>Despu&eacute;s, <tt>gsua_eval</tt> interpola linealmente <tt>sol.y</tt> en los tiempos que le pidas (<tt>xdata</tt>). Por eso <tt>sol.x</tt> debe cubrir todo el dominio y ser lo bastante fino.</p>
+<p>
+<b>En Python</b> el contrato es <tt>func(pars, domain, **opt)</tt>, pero <tt>domain</tt> es la rejilla misma de puntos pedidos, la funci&oacute;n devuelve un arreglo (salidas, tiempo) evaluado en esos puntos y nadie interpola por ti.</p>
 <h2 id="3">3. Paso 1 &mdash; un modelo discreto: la log&iacute;stica</h2>
 <p>
 <img src="demo_00_escribir_modelos_eq08468183966608813050.png" alt="$N(t+1) = N(t) + r\,N(t)\,(1 - N(t)/K)$">, con tres factores: <tt>r</tt>, <tt>K</tt> (par&aacute;metros) y <tt>N0</tt> (condici&oacute;n inicial). Un bucle avanza un paso de tiempo por iteraci&oacute;n. Este es el archivo <tt>logistica_discreta.m</tt> completo:</p>
@@ -226,16 +229,15 @@ sol.y = N;
 <pre class="codeinput">sol = logistica_discreta([0.3; 500; 10], [0 50], []);
 fprintf(<span class="string">'sol.x: %d x %d   (tiempos t0:tf)\n'</span>, size(sol.x));
 fprintf(<span class="string">'sol.y: %d x %d   (1 salida x %d tiempos)\n'</span>, size(sol.y), numel(sol.x));
-fprintf(<span class="string">'N(0) = %.1f,  N(50) = %.1f\n\n'</span>, sol.y(1), sol.y(end));
+fprintf(<span class="string">'N(0) = %.1f,  N(50) = %.1f\n'</span>, sol.y(1), sol.y(end));
 </pre>
 <pre class="codeoutput">sol.x: 1 x 51   (tiempos t0:tf)
 sol.y: 1 x 51   (1 salida x 51 tiempos)
 N(0) = 10.0,  N(50) = 500.0
-
 </pre>
-<h2 id="4">4. Paso 2 &mdash; declararlo con gsua_dataprep: rangos, names y out_names</h2>
+<h2 id="4">4. Paso 2 &mdash; declararlo ante la toolbox: rangos, nombres de factores y de salidas</h2>
 <p>
-<tt>gsua_dataprep</tt> recibe el <b>nombre</b> del archivo (texto, no un handle) y una matriz de rangos <tt>Np x 2</tt> con <tt>[m&iacute;nimo, m&aacute;ximo]</tt> por fila. La fila i corresponde a <tt>pars(i)</tt> y a <tt>names{i}</tt>: las tres listas deben ir en el mismo orden. <tt>out_names</tt> nombra las filas de <tt>sol.y</tt>, tambi&eacute;n en orden.</p>
+<tt>gsua_dataprep</tt> recibe el <b>nombre</b> del archivo (texto, no un handle) y una matriz de rangos <tt>Np x 2</tt> con <tt>[m&iacute;nimo, m&aacute;ximo]</tt> por fila. La fila i corresponde a <tt>pars(i)</tt> y a <tt>names{i}</tt>: las tres listas van en el mismo orden. <tt>out_names</tt> nombra las filas de <tt>sol.y</tt>, tambi&eacute;n en orden.</p>
 <pre class="codeinput">rangos_log = [
     0.05,  0.50;   <span class="comment">% r   (par&aacute;metro)</span>
     100,   1000;   <span class="comment">% K   (par&aacute;metro)</span>
@@ -249,8 +251,14 @@ N(0) = 10.0,  N(50) = 500.0
 </pre>
 <pre class="codeoutput">Setting environment to work with user-defined function
 </pre>
-<p>El resultado <tt>T</tt> es una <b>tabla</b>: una fila por factor libre, con su rango y su valor nominal (por defecto, el punto medio del rango).</p>
+<p>El resultado <tt>T</tt> es una <b>tabla</b>: una fila por factor libre, con su rango y su valor nominal (por defecto, el punto medio del rango). Lo dem&aacute;s que necesita la toolbox va en las propiedades de la tabla. Todas las funciones del curso (<tt>gsua_dmatrix</tt>, <tt>gsua_ua</tt>, <tt>gsua_sa</tt>, <tt>gsua_pe</tt>...) leen el modelo desde aqu&iacute;.</p>
 <pre class="codeinput">disp(T_log)
+P = T_log.Properties.CustomProperties;
+fprintf(<span class="string">'Solver : %s\n'</span>, func2str(P.Solver));
+fprintf(<span class="string">'Kind   : %d   (5 = funci&oacute;n de usuario con dominio)\n'</span>, P.Kind);
+fprintf(<span class="string">'Domain : [%g %g]\n'</span>, P.Domain);
+fprintf(<span class="string">'Vars   : %s   (nombres de salida)\n'</span>, strjoin(P.Vars, <span class="string">', '</span>));
+fprintf(<span class="string">'output : %s   (salidas activas)\n'</span>, mat2str(P.output));
 </pre>
 <pre class="codeoutput">             Range        Nominal
           ____________    _______
@@ -259,44 +267,35 @@ N(0) = 10.0,  N(50) = 500.0
     K      100    1000       550 
     N0       5      50      27.5 
 
-</pre>
-<p>Lo dem&aacute;s que necesita la toolbox va guardado en las propiedades de la tabla. Todas las funciones del curso (<tt>gsua_dmatrix</tt>, <tt>gsua_ua</tt>, <tt>gsua_sa</tt>, <tt>gsua_pe</tt>...) leen el modelo desde aqu&iacute;:</p>
-<pre class="codeinput">P = T_log.Properties.CustomProperties;
-fprintf(<span class="string">'Solver : %s\n'</span>, func2str(P.Solver));
-fprintf(<span class="string">'Kind   : %d   (5 = funci&oacute;n de usuario con dominio)\n'</span>, P.Kind);
-fprintf(<span class="string">'Domain : [%g %g]\n'</span>, P.Domain);
-fprintf(<span class="string">'Vars   : %s   (out_names)\n'</span>, strjoin(P.Vars, <span class="string">', '</span>));
-fprintf(<span class="string">'output : %s   (salidas activas)\n\n'</span>, mat2str(P.output));
-</pre>
-<pre class="codeoutput">Solver : @(pars,domain,opt)user_func(pars',domain,opt)
+Solver : @(pars,domain,opt)user_func(pars',domain,opt)
 Kind   : 5   (5 = funci&oacute;n de usuario con dominio)
 Domain : [0 50]
-Vars   : Poblacion   (out_names)
+Vars   : Poblacion   (nombres de salida)
 output : 1   (salidas activas)
-
 </pre>
-<h2 id="7">5. Paso 3 &mdash; evaluar con gsua_eval</h2>
+<h2 id="6">5. Paso 3 &mdash; evaluarlo</h2>
 <p>
 <tt>y = gsua_eval(par, T, xdata, ydata, parallel, show, verbose)</tt>. <tt>par</tt> es <b>Np x N</b>: una columna por simulaci&oacute;n. Los cuatro &uacute;ltimos argumentos son opcionales; aqu&iacute; los ponemos para no graficar ni imprimir progreso. La salida tiene forma <b>N x numel(xdata) x nSalidasActivas</b>.</p>
+<p>
+<b>En Python</b> es al rev&eacute;s: <tt>M</tt> es N x Np (una fila por simulaci&oacute;n) y la salida de <tt>evaluate_batch</tt> es N x salidas x tiempo.</p>
 <pre class="codeinput">xdata = 0:50;
 y_nom = gsua_eval(T_log.Nominal, T_log, xdata, [], false, false, false);
-fprintf(<span class="string">'Una simulaci&oacute;n:  size(y) = %s\n'</span>, mat2str(size(y_nom)));
+fprintf(<span class="string">'una simulaci&oacute;n   : size(y) = %s\n'</span>, mat2str(size(y_nom)));
 
 par3 = [T_log.Nominal, [0.45; 800; 10], [0.10; 300; 40]];   <span class="comment">% 3 columnas = 3 simulaciones</span>
 y3 = gsua_eval(par3, T_log, xdata, [], false, false, false);
-fprintf(<span class="string">'Tres simulaciones: size(y) = %s\n\n'</span>, mat2str(size(y3)));
+fprintf(<span class="string">'tres simulaciones: size(y) = %s\n'</span>, mat2str(size(y3)));
 
-figure(<span class="string">'Name'</span>, <span class="string">'Log&iacute;stica discreta evaluada con gsua_eval'</span>);
+figure(<span class="string">'Name'</span>, <span class="string">'Log&iacute;stica discreta'</span>);
 plot(xdata, y3', <span class="string">'LineWidth'</span>, 1.5);
 xlabel(<span class="string">'Paso de tiempo t'</span>); ylabel(<span class="string">'Poblaci&oacute;n N(t)'</span>); grid <span class="string">on</span>;
 legend(<span class="string">'nominal'</span>, <span class="string">'r=0.45, K=800, N0=10'</span>, <span class="string">'r=0.10, K=300, N0=40'</span>, <span class="string">'Location'</span>, <span class="string">'southeast'</span>);
-title(<span class="string">'Cada columna de par es una simulaci&oacute;n'</span>);
+title(<span class="string">'Cada simulaci&oacute;n es un vector de factores'</span>);
 </pre>
-<pre class="codeoutput">Una simulaci&oacute;n:  size(y) = [1 51]
-Tres simulaciones: size(y) = [3 51]
-
+<pre class="codeoutput">una simulaci&oacute;n   : size(y) = [1 51]
+tres simulaciones: size(y) = [3 51]
 </pre>
-<img vspace="5" hspace="5" src="demo_00_escribir_modelos_01.png" alt=""> <h2 id="8">6. Paso 4 &mdash; un modelo continuo: el SIR con ode45</h2>
+<img vspace="5" hspace="5" src="demo_00_escribir_modelos_01.png" alt=""> <h2 id="7">6. Paso 4 &mdash; un modelo continuo: el SIR</h2>
 <p>Un modelo continuo resuelve sus EDO <b>dentro</b> de la funci&oacute;n. El patr&oacute;n es:</p>
 <div>
 <ol>
@@ -353,12 +352,11 @@ sol.y = deval(ode, sol.x);      <span class="comment">% 3 x Nt</span>
 
 </pre>
 <pre class="codeinput">sol = sir_continuo([4.5e-4; 0.125; 950; 25], [0 80], struct(<span class="string">'dt'</span>, 0.5));
-fprintf(<span class="string">'sol.x: %d x %d,  sol.y: %d x %d  (S, I, R x tiempo)\n\n'</span>, size(sol.x), size(sol.y));
+fprintf(<span class="string">'sol.x: %d x %d,  sol.y: %d x %d  (S, I, R x tiempo)\n'</span>, size(sol.x), size(sol.y));
 </pre>
 <pre class="codeoutput">sol.x: 1 x 161,  sol.y: 3 x 161  (S, I, R x tiempo)
-
 </pre>
-<p>Al declararlo, <tt>out_names</tt> tiene tres nombres porque <tt>sol.y</tt> tiene tres filas. El argumento <tt>'opt'</tt> llega tal cual como tercer argumento del modelo.</p>
+<p>Al declararlo, <tt>out_names</tt> tiene tres nombres porque <tt>sol.y</tt> tiene tres filas. Lo que pases con <tt>'opt'</tt> llega tal cual como tercer argumento del modelo: aqu&iacute;, la separaci&oacute;n de la rejilla de salida.</p>
 <pre class="codeinput">rangos_sir = [
     1e-4,  8e-4;   <span class="comment">% beta  (1/(persona*d&iacute;a))</span>
     0.05,  0.20;   <span class="comment">% gamma (1/d&iacute;a)</span>
@@ -371,48 +369,46 @@ fprintf(<span class="string">'sol.x: %d x %d,  sol.y: %d x %d  (S, I, R x tiempo
     <span class="string">'names'</span>,     {<span class="string">'beta'</span>, <span class="string">'gamma'</span>, <span class="string">'S0'</span>, <span class="string">'I0'</span>}, <span class="keyword">...</span>
     <span class="string">'out_names'</span>, {<span class="string">'S'</span>, <span class="string">'I'</span>, <span class="string">'R'</span>}, <span class="keyword">...</span>
     <span class="string">'opt'</span>,       struct(<span class="string">'dt'</span>, 0.1));
-disp(T_sir)
 
 xs = linspace(0, 80, 161);
 y_sir = gsua_eval(T_sir.Nominal, T_sir, xs, [], false, false, false);
-fprintf(<span class="string">'Tres salidas activas: size(y) = %s  (1 simulaci&oacute;n x tiempos x 3 salidas)\n'</span>, mat2str(size(y_sir)));
+fprintf(<span class="string">'tres salidas activas: size(y) = %s\n'</span>, mat2str(size(y_sir)));
+
+M = gsua_dmatrix(T_sir, 5);                       <span class="comment">% 5 x Np: una fila por muestra</span>
+Y5 = gsua_eval(M', T_sir, xs, [], false, false, false);   <span class="comment">% gsua_eval quiere Np x N</span>
+fprintf(<span class="string">'gsua_dmatrix: %s  -&gt;  gsua_eval: %s\n'</span>, mat2str(size(M)), mat2str(size(Y5)));
 </pre>
 <pre class="codeoutput">Setting environment to work with user-defined function
-                  Range          Nominal
-             ________________    _______
-
-    beta     0.0001    0.0008    0.00045
-    gamma      0.05       0.2      0.125
-    S0          900       999      949.5
-    I0            1        50       25.5
-
-Tres salidas activas: size(y) = [1 161 3]  (1 simulaci&oacute;n x tiempos x 3 salidas)
+tres salidas activas: size(y) = [1 161 3]
+gsua_dmatrix: [5 4]  -&gt;  gsua_eval: [5 161 3]
 </pre>
 <p>Para quedarte con una sola salida (por ejemplo, la que tienes medida), cambia <tt>output</tt> en la tabla. Afecta a todas las funciones que reciban <tt>T</tt>.</p>
 <pre class="codeinput">T_I = T_sir;
 T_I.Properties.CustomProperties.output = 2;     <span class="comment">% fila 2 de sol.y = I</span>
 y_I = gsua_eval(T_I.Nominal, T_I, xs, [], false, false, false);
-fprintf(<span class="string">'Solo I: size(y) = %s,  pico de I = %.1f personas\n\n'</span>, mat2str(size(y_I)), max(y_I));
+fprintf(<span class="string">'solo I: size(y) = %s,  pico de I = %.1f personas\n'</span>, mat2str(size(y_I)), max(y_I));
 
-figure(<span class="string">'Name'</span>, <span class="string">'SIR continuo evaluado con gsua_eval'</span>);
+figure(<span class="string">'Name'</span>, <span class="string">'SIR continuo'</span>);
 plot(xs, squeeze(y_sir), <span class="string">'LineWidth'</span>, 1.8);
 xlabel(<span class="string">'Tiempo (d&iacute;as)'</span>); ylabel(<span class="string">'Personas'</span>); grid <span class="string">on</span>;
 legend(<span class="string">'S'</span>, <span class="string">'I'</span>, <span class="string">'R'</span>, <span class="string">'Location'</span>, <span class="string">'east'</span>);
-title(<span class="string">'Las tres salidas: y(1,:,j) es la salida j'</span>);
+title(<span class="string">'Las tres salidas del SIR continuo'</span>);
 </pre>
-<pre class="codeoutput">Solo I: size(y) = [1 161],  pico de I = 355.7 personas
-
+<pre class="codeoutput">solo I: size(y) = [1 161],  pico de I = 355.7 personas
 </pre>
-<img vspace="5" hspace="5" src="demo_00_escribir_modelos_02.png" alt=""> <h2 id="11">7. Fijar un factor: rango degenerado</h2>
-<p>Si un factor no te interesa, dale un rango con m&iacute;nimo = m&aacute;ximo. Desaparece de <tt>T</tt> (ya no se muestrea ni se estima), pero el modelo lo sigue recibiendo en su posici&oacute;n: <tt>pars</tt> siempre llega completo. Lo que cambia es <tt>par</tt> en <tt>gsua_eval</tt>, que solo lleva los factores <b>libres</b>.</p>
+<img vspace="5" hspace="5" src="demo_00_escribir_modelos_02.png" alt=""> <h2 id="10">7. Fijar un factor: rango degenerado</h2>
+<p>Si un factor no te interesa, dale un rango con m&iacute;nimo = m&aacute;ximo. Queda fuera del muestreo y de la estimaci&oacute;n, pero el modelo lo sigue recibiendo en su posici&oacute;n: <tt>pars</tt> siempre llega completo. En MATLAB el factor fijo desaparece de <tt>T</tt>, y <tt>par</tt> en <tt>gsua_eval</tt> lleva solo los factores <b>libres</b>.</p>
+<p>
+<b>En Python</b> el factor sigue en el modelo y <tt>pars</tt> lleva siempre los Np factores; <tt>design_matrix</tt> mantiene constante la columna del fijo.</p>
 <pre class="codeinput">rangos_fijo = rangos_sir;
 rangos_fijo(4, :) = [10 10];                    <span class="comment">% I0 fijo en 10</span>
 [T_fijo, ~] = gsua_dataprep(<span class="string">'sir_continuo'</span>, rangos_fijo, <span class="string">'domain'</span>, [0 80], <span class="keyword">...</span>
     <span class="string">'names'</span>, {<span class="string">'beta'</span>, <span class="string">'gamma'</span>, <span class="string">'S0'</span>, <span class="string">'I0'</span>}, <span class="string">'out_names'</span>, {<span class="string">'S'</span>, <span class="string">'I'</span>, <span class="string">'R'</span>});
 disp(T_fijo)
-y_fijo = gsua_eval(T_fijo.Nominal, T_fijo, xs, [], false, false, false);   <span class="comment">% par: 3 x 1</span>
-fprintf(<span class="string">'par con %d factores libres; el modelo recibi&oacute; I0 = 10 en pars(4). I(0) = %.1f\n\n'</span>, <span class="keyword">...</span>
-    height(T_fijo), y_fijo(1, 1, 2));
+M_fijo = gsua_dmatrix(T_fijo, 4);
+fprintf(<span class="string">'gsua_dmatrix: %s (solo factores libres)\n'</span>, mat2str(size(M_fijo)));
+y_fijo = gsua_eval(T_fijo.Nominal, T_fijo, xs, [], false, false, false);
+fprintf(<span class="string">'el modelo recibi&oacute; I0 = 10 en pars(4): I(0) = %.1f\n'</span>, y_fijo(1, 1, 2));
 </pre>
 <pre class="codeoutput">Setting environment to work with user-defined function
                   Range          Nominal
@@ -422,47 +418,96 @@ fprintf(<span class="string">'par con %d factores libres; el modelo recibi&oacut
     gamma      0.05       0.2      0.125
     S0          900       999      949.5
 
-par con 3 factores libres; el modelo recibi&oacute; I0 = 10 en pars(4). I(0) = 10.0
+gsua_dmatrix: [4 3] (solo factores libres)
+el modelo recibi&oacute; I0 = 10 en pars(4): I(0) = 10.0
+</pre>
+<h2 id="11">8. Errores t&iacute;picos</h2>
+<p>
+<b>(a) Firma.</b> En MATLAB, <tt>gsua_eval</tt> llama siempre al modelo con tres argumentos. La gu&iacute;a de usuario muestra modelos <tt>modelo(pars, domain)</tt> y <tt>gsua_dataprep</tt> los acepta, pero al evaluar fallan. Declara el tercero aunque no lo uses (<tt>~</tt>). (En Python el error equivalente es pasar <tt>opt</tt> a una funci&oacute;n que no tiene argumento para recibirlo.)</p>
+<pre class="language-matlab">
+<span class="keyword">function</span> sol = logistica_dos_entradas(pars, domain)
+<span class="comment">% LOGISTICA_DOS_ENTRADAS La log&iacute;stica discreta declarada con DOS argumentos.</span>
+<span class="comment">%</span>
+<span class="comment">%   Solo existe para el m&oacute;dulo 0: gsua_dataprep la acepta, pero gsua_eval</span>
+<span class="comment">%   llama al modelo como modelo(pars, domain, opt) y falla con</span>
+<span class="comment">%   "Too many input arguments". La versi&oacute;n correcta es LOGISTICA_DISCRETA.</span>
+
+r = pars(1); K = pars(2);
+t = domain(1):domain(2);
+N = zeros(1, numel(t));
+N(1) = pars(3);
+<span class="keyword">for</span> k = 1:numel(t)-1
+    N(k+1) = N(k) + r*N(k)*(1 - N(k)/K);
+<span class="keyword">end</span>
+sol.x = t;
+sol.y = N;
+<span class="keyword">end</span>
 
 </pre>
-<h2 id="12">8. Errores t&iacute;picos</h2>
-<p>
-<b>(a) Firma con dos entradas.</b> La gu&iacute;a de usuario muestra modelos <tt>modelo(pars, domain)</tt> y <tt>gsua_dataprep</tt> los acepta, pero <tt>gsua_eval</tt> llama siempre con tres argumentos. Declara el tercero aunque no lo uses (<tt>~</tt>).</p>
 <pre class="codeinput">[T_mal, ~] = gsua_dataprep(<span class="string">'logistica_dos_entradas'</span>, rangos_log, <span class="string">'domain'</span>, [0 50]);
 <span class="keyword">try</span>
     gsua_eval(T_mal.Nominal, T_mal, xdata, [], false, false, false);
 <span class="keyword">catch</span> err
-    fprintf(<span class="string">'logistica_dos_entradas -&gt; error: %s\n\n'</span>, err.message);
+    fprintf(<span class="string">'logistica_dos_entradas -&gt; error: %s\n'</span>, err.message);
 <span class="keyword">end</span>
 </pre>
 <pre class="codeoutput">Setting environment to work with user-defined function
 logistica_dos_entradas -&gt; error: Too many input arguments.
-
 </pre>
 <p>
-<b>(b) out_names no coincide con las filas.</b> <tt>out_names</tt> no reordena nada: solo pone nombre a las filas de <tt>sol.y</tt>, en orden. Si declaras una sola salida llamada 'I' para un modelo cuya fila 1 es S, la toolbox analiza S con la etiqueta 'I' y no da ning&uacute;n error.</p>
+<b>(b) Los nombres de salida no coinciden con las filas.</b> Los nombres de salida no reordenan nada: solo nombran las filas, en orden. Si declaras una sola salida llamada 'I' para un modelo cuya fila 1 es S, la toolbox analiza S con la etiqueta 'I' y no da ning&uacute;n error.</p>
 <pre class="codeinput">[T_etiq, ~] = gsua_dataprep(<span class="string">'sir_continuo'</span>, rangos_sir, <span class="string">'domain'</span>, [0 80], <span class="keyword">...</span>
     <span class="string">'out_names'</span>, {<span class="string">'I'</span>});
 y_etiq = gsua_eval(T_etiq.Nominal, T_etiq, xs, [], false, false, false);
-fprintf(<span class="string">'Salida etiquetada ''I'': valor inicial %.1f (es S0, no I0)\n'</span>, y_etiq(1));
-fprintf(<span class="string">'Arreglo: out_names = {''S'',''I'',''R''} y output = 2.\n\n'</span>);
+fprintf(<span class="string">'salida etiquetada ''I'': valor inicial %.1f (es S0, no I0)\n'</span>, y_etiq(1));
 </pre>
 <pre class="codeoutput">Setting environment to work with user-defined function
-Salida etiquetada 'I': valor inicial 949.5 (es S0, no I0)
-Arreglo: out_names = {'S','I','R'} y output = 2.
+salida etiquetada 'I': valor inicial 949.5 (es S0, no I0)
+</pre>
+<p>
+<b>(c) Orientaci&oacute;n.</b> La convenci&oacute;n es <b>salidas x tiempo</b>. En MATLAB, desde la versi&oacute;n 1.13, si devuelves <tt>tiempo x salidas</tt> la toolbox lo transpone, porque reconoce el eje del tiempo por <tt>numel(sol.x)</tt>; si hay tantas salidas como tiempos no puede saberlo y la deja como est&aacute;. En Python nadie la corrige. No dependas de la correcci&oacute;n: devuelve la salida bien orientada.</p>
+<pre class="language-matlab">
+<span class="keyword">function</span> sol = sir_transpuesto(pars, domain, opt)
+<span class="comment">% SIR_TRANSPUESTO El SIR continuo devolviendo sol.y transpuesta (tiempo x salidas).</span>
+<span class="comment">%</span>
+<span class="comment">%   Solo existe para el m&oacute;dulo 0: desde la versi&oacute;n 1.13 gsua_eval la</span>
+<span class="comment">%   transpone sola (reconoce el eje del tiempo por numel(sol.x)), salvo</span>
+<span class="comment">%   que haya tantas salidas como tiempos. No dependas de esa correcci&oacute;n.</span>
+
+sol = sir_continuo(pars, domain, opt);
+sol.y = sol.y.';                 <span class="comment">% Nt x 3: MAL</span>
+<span class="keyword">end</span>
 
 </pre>
-<p>
-<b>(c) Orientaci&oacute;n.</b> La convenci&oacute;n es <tt>sol.y</tt> = <b>salidas x tiempo</b>. Desde la versi&oacute;n 1.13, si devuelves <tt>tiempo x salidas</tt> la toolbox lo transpone, porque reconoce el eje del tiempo por <tt>numel(sol.x)</tt>. Si las dos dimensiones coinciden (tantas salidas como tiempos) no puede saberlo y la deja como est&aacute;: no dependas de la correcci&oacute;n, devuelve <tt>sol.y</tt> bien orientada.</p>
-<p>
-<b>(d) Rejilla: fuera del dominio no hay datos.</b> <tt>gsua_eval</tt> interpola en <tt>sol.x</tt>; un <tt>xdata</tt> que se sale de <tt>[t0, tf]</tt> devuelve <tt>NaN</tt>.</p>
-<pre class="codeinput">y_fuera = gsua_eval(T_I.Nominal, T_I, 0:100, [], false, false, false);
-fprintf(<span class="string">'xdata = 0:100 con domain = [0 80]: %d valores NaN\n'</span>, sum(isnan(y_fuera)));
+<pre class="codeinput">[T_T, ~] = gsua_dataprep(<span class="string">'sir_transpuesto'</span>, rangos_sir, <span class="string">'domain'</span>, [0 80], <span class="keyword">...</span>
+    <span class="string">'out_names'</span>, {<span class="string">'S'</span>, <span class="string">'I'</span>, <span class="string">'R'</span>}, <span class="string">'output'</span>, 2);
+y_T = gsua_eval(T_T.Nominal, T_T, xs, [], false, false, false);
+fprintf(<span class="string">'sir_transpuesto con output = 2: size(y) = %s, I(0) = %.1f  &lt;- MATLAB la corrigi&oacute;\n'</span>, <span class="keyword">...</span>
+    mat2str(size(y_T)), y_T(1));
 </pre>
-<pre class="codeoutput">xdata = 0:100 con domain = [0 80]: 20 valores NaN
+<pre class="codeoutput">Setting environment to work with user-defined function
+sir_transpuesto con output = 2: size(y) = [1 161], I(0) = 25.5  &lt;- MATLAB la corrigi&oacute;
 </pre>
 <p>
-<b>(e) Rejilla: devolver ode45 tal cual.</b> La estructura de <tt>ode45</tt> tiene campos <tt>x</tt> e <tt>y</tt> con la orientaci&oacute;n correcta, as&iacute; que "funciona"; pero <tt>sol.x</tt> son los pasos adaptativos del integrador (pocos y desiguales), y <tt>gsua_eval</tt> interpola <b>linealmente</b> entre ellos. El modelo <tt>errores/sir_continuo_crudo.m</tt> hace exactamente eso:</p>
+<b>(d) La rejilla de evaluaci&oacute;n y t0.</b> La condici&oacute;n inicial pertenece a un <tt>t0</tt> fijo, no al primer punto que pidas. En MATLAB <tt>t0 = domain(1)</tt> queda fijado en <tt>T</tt>: puedes pedir <tt>xdata</tt> desde el d&iacute;a 20 sin problema, pero los puntos fuera de <tt>[t0, tf]</tt> salen <tt>NaN</tt> porque no hay simulaci&oacute;n ah&iacute;. En Python no hay <tt>NaN</tt> (el modelo integra hasta donde le pidas), y el riesgo es el contrario: integrar desde <tt>domain[0]</tt>, que hace "arrancar" la epidemia en el primer punto pedido.</p>
+<pre class="codeinput">x20 = 20:100;
+y20 = gsua_eval(T_I.Nominal, T_I, x20, [], false, false, false);
+fprintf(<span class="string">'xdata = 20:100 con domain = [0 80]: I(20) = %.1f; %d valores NaN (d&iacute;as 81 a 100)\n'</span>, <span class="keyword">...</span>
+    y20(1), sum(isnan(y20)));
+
+figure(<span class="string">'Name'</span>, <span class="string">'Rejilla de evaluaci&oacute;n'</span>);
+plot(xs, y_I, <span class="string">'b-'</span>, <span class="string">'LineWidth'</span>, 2); hold <span class="string">on</span>;
+plot(x20, y20, <span class="string">'ro'</span>, <span class="string">'MarkerSize'</span>, 3);
+xline(80, <span class="string">'k--'</span>, <span class="string">'tf = 80'</span>);
+xlim([0 100]); grid <span class="string">on</span>;
+xlabel(<span class="string">'Tiempo (d&iacute;as)'</span>); ylabel(<span class="string">'Infectados I(t)'</span>);
+legend(<span class="string">'xdata = 0:80'</span>, <span class="string">'xdata = 20:100 (NaN despu&eacute;s de tf)'</span>, <span class="string">'Location'</span>, <span class="string">'northeast'</span>);
+title(<span class="string">'t0 queda fijo en la tabla; fuera del dominio no hay datos'</span>);
+</pre>
+<pre class="codeoutput">xdata = 20:100 con domain = [0 80]: I(20) = 287.0; 20 valores NaN (d&iacute;as 81 a 100)
+</pre>
+<img vspace="5" hspace="5" src="demo_00_escribir_modelos_03.png" alt=""> <p>
+<b>(e) Devolver los pasos del integrador.</b> La estructura de <tt>ode45</tt> tiene campos <tt>x</tt> e <tt>y</tt> con la orientaci&oacute;n correcta, as&iacute; que "funciona"; pero <tt>sol.x</tt> son los pasos adaptativos del integrador (pocos y desiguales), y <tt>gsua_eval</tt> interpola <b>linealmente</b> entre ellos. (En Python, <tt>solve_ivp</tt> sin <tt>t_eval</tt> hace lo mismo.) Este modelo devuelve <tt>ode45</tt> tal cual:</p>
 <pre class="language-matlab">
 <span class="keyword">function</span> sol = sir_continuo_crudo(pars, domain, ~)
 <span class="comment">% SIR_CONTINUO_CRUDO El mismo SIR que SIR_CONTINUO, pero devuelve ode45 tal cual.</span>
@@ -488,39 +533,39 @@ xf = 0:0.05:80;
 I_bien  = squeeze(gsua_eval(T_I.Nominal,     T_I,     xf, [], false, false, false));
 I_crudo = squeeze(gsua_eval(T_crudo.Nominal, T_crudo, xf, [], false, false, false));
 ode = sir_continuo_crudo(T_crudo.Nominal, [0 80]);
-fprintf(<span class="string">'ode45 crudo: %d pasos en 80 d&iacute;as. Error m&aacute;ximo en I: %.2f personas (pico %.1f)\n\n'</span>, <span class="keyword">...</span>
+fprintf(<span class="string">'ode45 crudo: %d pasos en 80 d&iacute;as. Error m&aacute;ximo en I: %.2f personas (pico %.1f)\n'</span>, <span class="keyword">...</span>
     numel(ode.x), max(abs(I_bien - I_crudo)), max(I_bien));
 
-figure(<span class="string">'Name'</span>, <span class="string">'ode45 crudo frente a deval en rejilla'</span>);
+figure(<span class="string">'Name'</span>, <span class="string">'Pasos del integrador'</span>);
 plot(xf, I_bien, <span class="string">'b-'</span>, <span class="string">'LineWidth'</span>, 2); hold <span class="string">on</span>;
 plot(xf, I_crudo, <span class="string">'r--'</span>, <span class="string">'LineWidth'</span>, 1.2);
 plot(ode.x, ode.y(2, :), <span class="string">'ro'</span>, <span class="string">'MarkerSize'</span>, 4);
 xlim([0 40]); grid <span class="string">on</span>;
 xlabel(<span class="string">'Tiempo (d&iacute;as)'</span>); ylabel(<span class="string">'Infectados I(t)'</span>);
-legend(<span class="string">'deval en rejilla de 0.1 d&iacute;as'</span>, <span class="string">'ode45 crudo + interpolaci&oacute;n lineal'</span>, <span class="keyword">...</span>
-    <span class="string">'pasos de ode45'</span>, <span class="string">'Location'</span>, <span class="string">'northwest'</span>);
+legend(<span class="string">'evaluado en una rejilla fina'</span>, <span class="string">'pasos del integrador + interpolaci&oacute;n lineal'</span>, <span class="keyword">...</span>
+    <span class="string">'pasos del integrador'</span>, <span class="string">'Location'</span>, <span class="string">'northwest'</span>);
 title(<span class="string">'Devuelve la soluci&oacute;n evaluada en una rejilla, no los pasos del integrador'</span>);
 </pre>
 <pre class="codeoutput">Setting environment to work with user-defined function
 ode45 crudo: 21 pasos en 80 d&iacute;as. Error m&aacute;ximo en I: 40.05 personas (pico 355.8)
-
 </pre>
-<img vspace="5" hspace="5" src="demo_00_escribir_modelos_03.png" alt=""> <p>
+<img vspace="5" hspace="5" src="demo_00_escribir_modelos_04.png" alt=""> <p>
 <b>(f) Unidades.</b> Rangos, condiciones iniciales y dominio deben estar en las mismas unidades. En <tt>sir_continuo</tt>, <tt>beta</tt> va en 1/(persona*d&iacute;a) porque el t&eacute;rmino es <tt>beta*S*I</tt> con S e I en personas. Si escribes S0 e I0 como fracciones de la poblaci&oacute;n (0.95, 0.025) sin cambiar <tt>beta</tt>, el n&uacute;mero reproductivo <tt>R0 = beta*S0/gamma</tt> se hunde y la epidemia desaparece; si el dominio est&aacute; en semanas y <tt>gamma</tt> en 1/d&iacute;a, el tiempo de recuperaci&oacute;n queda multiplicado por 7.</p>
 <pre class="codeinput">b = 4.5e-4; g = 0.125;
-fprintf(<span class="string">'R0 con S0 en personas  (950)  : %.2f\n'</span>, b*950/g);
-fprintf(<span class="string">'R0 con S0 en fracci&oacute;n  (0.95) : %.4f   &lt;- mismas ecuaciones, otra escala\n\n'</span>, b*0.95/g);
+fprintf(<span class="string">'R0 con S0 en personas (950) : %.2f\n'</span>, b*950/g);
+fprintf(<span class="string">'R0 con S0 en fracci&oacute;n (0.95): %.4f   &lt;- mismas ecuaciones, otra escala\n'</span>, b*0.95/g);
 </pre>
-<pre class="codeoutput">R0 con S0 en personas  (950)  : 3.42
-R0 con S0 en fracci&oacute;n  (0.95) : 0.0034   &lt;- mismas ecuaciones, otra escala
-
+<pre class="codeoutput">R0 con S0 en personas (950) : 3.42
+R0 con S0 en fracci&oacute;n (0.95): 0.0034   &lt;- mismas ecuaciones, otra escala
 </pre>
-<h2 id="18">9. Comprobar tu modelo antes de usarlo</h2>
+<h2 id="17">9. Comprobar tu modelo antes de usarlo</h2>
 <p>
-<tt>verificar_modelo.m</tt> (ayuda del curso, no de la toolbox) llama a tu modelo una vez y revisa la firma, los campos, la orientaci&oacute;n de <tt>sol.y</tt>, que <tt>sol.x</tt> cubra el dominio y que no haya <tt>NaN</tt>. &Uacute;salo cada vez que escribas un modelo nuevo.</p>
+<tt>verificar_modelo</tt> (ayuda del curso, no de la toolbox) llama a tu modelo una vez y revisa la firma, la forma y orientaci&oacute;n de la salida, que cubra el dominio y que no haya <tt>NaN</tt> ni <tt>Inf</tt>. Lo que no puede ver es la precisi&oacute;n: el modelo crudo de (e) cumple el contrato. &Uacute;salo cada vez que escribas un modelo nuevo. (La versi&oacute;n Python revisa adem&aacute;s que el valor en un tiempo no dependa de la rejilla pedida: el error (d) de Python.)</p>
 <pre class="codeinput">verificar_modelo(<span class="string">'logistica_discreta'</span>, [0.3; 500; 10], [0 50], {<span class="string">'Poblacion'</span>});
 verificar_modelo(<span class="string">'sir_continuo'</span>, T_sir.Nominal, [0 80], {<span class="string">'S'</span>, <span class="string">'I'</span>, <span class="string">'R'</span>});
 verificar_modelo(<span class="string">'logistica_dos_entradas'</span>, [0.3; 500; 10], [0 50], {<span class="string">'Poblacion'</span>});
+verificar_modelo(<span class="string">'sir_transpuesto'</span>, T_sir.Nominal, [0 80], {<span class="string">'S'</span>, <span class="string">'I'</span>, <span class="string">'R'</span>});
+verificar_modelo(<span class="string">'sir_continuo_crudo'</span>, T_sir.Nominal, [0 80], {<span class="string">'S'</span>, <span class="string">'I'</span>, <span class="string">'R'</span>});
 </pre>
 <pre class="codeoutput">Revisando logistica_discreta ...
   ok     firma sol = logistica_discreta(pars, domain, opt)
@@ -540,8 +585,24 @@ Revisando sir_continuo ...
 
 Revisando logistica_dos_entradas ...
   FALLA  declara 2 entradas; gsua_eval lo llama con 3: (pars, domain, opt).
+Revisando sir_transpuesto ...
+  ok     firma sol = sir_transpuesto(pars, domain, opt)
+  info   sol.x: 801 puntos;  sol.y: 801 x 3;  out_names: 3
+  aviso  sol.y viene (tiempo x salidas); la toolbox la transpone, pero mejor devu&eacute;lvela (salidas x tiempo)
+  ok     sol.x cubre el dominio [0, 80]
+  ok     sin NaN ni Inf
+  =&gt; cumple el contrato
+
+Revisando sir_continuo_crudo ...
+  ok     firma sol = sir_continuo_crudo(pars, domain, opt)
+  info   sol.x: 21 puntos;  sol.y: 3 x 21;  out_names: 3
+  ok     sol.y es (salidas x tiempo)
+  ok     sol.x cubre el dominio [0, 80]
+  ok     sin NaN ni Inf
+  =&gt; cumple el contrato
+
 </pre>
-<h2 id="19">10. Ejercicio: programa un SIR discreto desde cero</h2>
+<h2 id="18">10. Ejercicio: programa un SIR discreto desde cero</h2>
 <p>Con un paso de un d&iacute;a, el SIR discreto es</p>
 <p>
 <img src="demo_00_escribir_modelos_eq06440902229716971433.png" alt="$$S_{t+1} = S_t - \beta S_t I_t,\quad I_{t+1} = I_t + \beta S_t I_t - \gamma I_t,\quad R_{t+1} = R_t + \gamma I_t.$$"></p>
@@ -549,9 +610,9 @@ Revisando logistica_dos_entradas ...
 <ol>
 <li>Copia <tt>sir_discreto_plantilla.m</tt> como <tt>mi_sir_discreto.m</tt> y cambia el nombre de la funci&oacute;n en su primera l&iacute;nea.</li>
 <li>Completa el <tt>TODO</tt> del bucle con las tres ecuaciones.</li>
-<li>P&aacute;salo por <tt>verificar_modelo</tt> con <tt>out_names = {'S','I','R'}</tt>.</li>
-<li>Decl&aacute;ralo con <tt>gsua_dataprep</tt> usando los mismos rangos, <tt>names</tt> y <tt>out_names</tt> que <tt>sir_continuo</tt>, y <tt>'domain', [0 80]</tt>.</li>
-<li>Eval&uacute;a el nominal con <tt>gsua_eval</tt> y grafica I(t) junto a la de <tt>sir_continuo</tt>.</li>
+<li>P&aacute;salo por <tt>verificar_modelo</tt> con salidas S, I y R.</li>
+<li>Decl&aacute;ralo con los mismos rangos, nombres de factores y de salidas que <tt>sir_continuo</tt>, y el dominio <tt>[0 80]</tt>.</li>
+<li>Eval&uacute;a el nominal y grafica I(t) junto a la de <tt>sir_continuo</tt>.</li>
 </ol>
 </div>
 <p>
@@ -606,7 +667,8 @@ I_ej = gsua_eval(T_ej.Nominal, T_ej, 0:80, [], false, false, false);
 <span class="keyword">if</span> all(abs(I_ej - I_ej(1)) &lt; 1e-12)
     fprintf(<span class="string">'La plantilla cumple el contrato, pero I(t) sigue constante: completa el TODO.\n'</span>);
 <span class="keyword">else</span>
-    fprintf(<span class="string">'I(t) ya cambia: pico de %.1f personas en el d&iacute;a %d.\n'</span>, max(I_ej), find(I_ej == max(I_ej), 1) - 1);
+    [Imax, k] = max(I_ej);
+    fprintf(<span class="string">'I(t) ya cambia: pico de %.1f personas en el d&iacute;a %d.\n'</span>, Imax, k - 1);
 <span class="keyword">end</span>
 </pre>
 <pre class="codeoutput">Revisando sir_discreto_plantilla ...
@@ -620,7 +682,7 @@ I_ej = gsua_eval(T_ej.Nominal, T_ej, 0:80, [], false, false, false);
 Setting environment to work with user-defined function
 La plantilla cumple el contrato, pero I(t) sigue constante: completa el TODO.
 </pre>
-<h2 id="20">11. Resumen: lista de chequeo</h2>
+<h2 id="19">11. Resumen: lista de chequeo</h2>
 <div>
 <ul>
 <li>Archivo <tt>.m</tt> propio, en el path, con <b>tres</b> entradas: <tt>sol = f(pars, domain, opt)</tt>.</li>
@@ -645,19 +707,20 @@ La plantilla cumple el contrato, pero I(t) sigue constante: completa el TODO.
 </div>
 <!--
 ##### SOURCE BEGIN #####
-%% Módulo 00: Cómo se escribe un modelo para GSUA-CSB
+%% Módulo 00: Cómo se escribe un modelo para GSUA-CSB (MATLAB)
 % Curso guiado de GSUA-CSB
 %
 % Todo el curso (muestreo, incertidumbre, sensibilidad, estimación) trabaja
-% sobre un *modelo de usuario*: una función de MATLAB que tú escribes. La
-% toolbox no ve tus ecuaciones; solo llama a esa función con un vector de
-% factores y lee lo que devuelve. Este módulo enseña ese contrato paso a paso:
+% sobre un *modelo de usuario*: una función que tú escribes. La toolbox no ve
+% tus ecuaciones; solo llama a esa función con un vector de factores y lee lo
+% que devuelve. Este módulo enseña ese contrato paso a paso, en espejo con la
+% versión Python (mismas secciones, mismos modelos, mismos resultados):
 %
-% # la firma |sol = modelo(pars, domain, opt)| y la forma de |sol.x| y |sol.y|;
+% # la firma del modelo y la forma de su salida;
 % # el orden de los factores: primero los parámetros, después las condiciones iniciales;
-% # un modelo discreto (un bucle) y uno continuo (|ode45| + |deval| en una rejilla);
-% # cómo declararlo con |gsua_dataprep| (rangos, |names|, |out_names|), qué es la tabla |T| y cómo se evalúa con |gsua_eval|;
-% # los errores típicos (firma, orientación, rejilla, unidades);
+% # un modelo discreto (un bucle) y uno continuo (un integrador de EDO evaluado en una rejilla);
+% # cómo se declaran los rangos, los nombres de los factores y de las salidas, qué guarda la toolbox del modelo y cómo se evalúa;
+% # los errores típicos (firma, nombres de salidas, orientación, rejilla, pasos del integrador, unidades);
 % # un ejercicio: programar un SIR discreto desde cero.
 %
 % El código completo de cada modelo aparece en la página tal como está en su archivo.
@@ -683,36 +746,42 @@ if isempty(which('gsua_dataprep'))
     end
 end
 
-% Los modelos de este módulo viven junto a este script (y en errores/).
+% Los modelos de este módulo viven junto a este script (y los que tienen
+% errores a propósito, en errores/).
 aqui = fileparts(mfilename('fullpath'));
 addpath(aqui, fullfile(aqui, 'errores'));
 
 %% 2. El contrato de un modelo de usuario
-% Un modelo de usuario es un archivo |.m| propio (por ejemplo |mi_modelo.m|)
-% que contiene una función con esta firma:
+% En MATLAB un modelo de usuario es un archivo |.m| propio (por ejemplo
+% |mi_modelo.m|), en el path, con una función de esta firma:
 %
 %   sol = mi_modelo(pars, domain, opt)
 %
 % *Entradas*
 %
-% * |pars|: vector columna con los factores. La posición manda: |pars(1)| es
-%   el factor de la fila 1 de los rangos, |pars(2)| el de la fila 2, etc.
+% * |pars|: vector con los factores. La posición manda: |pars(1)| es el
+%   factor de la fila 1 de los rangos, |pars(2)| el de la fila 2, etc.
 %   Convención del curso: *primero los parámetros, después las condiciones
 %   iniciales*.
-% * |domain|: |[t0, tf]|, el intervalo de simulación. Es el mismo que
-%   declaras con |'domain'| en |gsua_dataprep|; la toolbox no lo cambia.
-% * |opt|: cualquier cosa que pases con |'opt'| en |gsua_dataprep|
-%   (por defecto, una estructura que puedes ignorar con |~|).
+% * |domain|: |[t0, tf]|, el intervalo de simulación. Es el que declaras con
+%   |'domain'| en |gsua_dataprep|; la toolbox no lo cambia, así que la
+%   condición inicial vale siempre en |t0 = domain(1)|.
+% * |opt|: opciones del modelo que no son factores; llega lo que pases con
+%   |'opt'| en |gsua_dataprep|. Aunque no lo uses, declara el argumento (|~|).
 %
 % *Salida*: una estructura con dos campos
 %
 % * |sol.x|: vector de tiempos, 1 x Nt, de |t0| a |tf|;
 % * |sol.y|: matriz *salidas x tiempo* (nSalidas x Nt): una fila por salida,
-%   en el mismo orden de |out_names|.
+%   en el mismo orden de los nombres de salida.
 %
 % Después, |gsua_eval| interpola linealmente |sol.y| en los tiempos que le
 % pidas (|xdata|). Por eso |sol.x| debe cubrir todo el dominio y ser lo
 % bastante fino.
+%
+% *En Python* el contrato es |func(pars, domain, **opt)|, pero |domain| es la
+% rejilla misma de puntos pedidos, la función devuelve un arreglo
+% (salidas, tiempo) evaluado en esos puntos y nadie interpola por ti.
 
 %% 3. Paso 1 — un modelo discreto: la logística
 % $N(t+1) = N(t) + r\,N(t)\,(1 - N(t)/K)$, con tres factores: |r|, |K| (parámetros)
@@ -726,13 +795,13 @@ addpath(aqui, fullfile(aqui, 'errores'));
 sol = logistica_discreta([0.3; 500; 10], [0 50], []);
 fprintf('sol.x: %d x %d   (tiempos t0:tf)\n', size(sol.x));
 fprintf('sol.y: %d x %d   (1 salida x %d tiempos)\n', size(sol.y), numel(sol.x));
-fprintf('N(0) = %.1f,  N(50) = %.1f\n\n', sol.y(1), sol.y(end));
+fprintf('N(0) = %.1f,  N(50) = %.1f\n', sol.y(1), sol.y(end));
 
-%% 4. Paso 2 — declararlo con gsua_dataprep: rangos, names y out_names
+%% 4. Paso 2 — declararlo ante la toolbox: rangos, nombres de factores y de salidas
 % |gsua_dataprep| recibe el *nombre* del archivo (texto, no un handle) y una
 % matriz de rangos |Np x 2| con |[mínimo, máximo]| por fila. La fila i
-% corresponde a |pars(i)| y a |names{i}|: las tres listas deben ir en el
-% mismo orden. |out_names| nombra las filas de |sol.y|, también en orden.
+% corresponde a |pars(i)| y a |names{i}|: las tres listas van en el mismo
+% orden. |out_names| nombra las filas de |sol.y|, también en orden.
 
 rangos_log = [
     0.05,  0.50;   % r   (parámetro)
@@ -747,41 +816,42 @@ rangos_log = [
 
 %%
 % El resultado |T| es una *tabla*: una fila por factor libre, con su rango
-% y su valor nominal (por defecto, el punto medio del rango).
+% y su valor nominal (por defecto, el punto medio del rango). Lo demás que
+% necesita la toolbox va en las propiedades de la tabla. Todas las funciones
+% del curso (|gsua_dmatrix|, |gsua_ua|, |gsua_sa|, |gsua_pe|...) leen el
+% modelo desde aquí.
 disp(T_log)
-
-%%
-% Lo demás que necesita la toolbox va guardado en las propiedades de la tabla.
-% Todas las funciones del curso (|gsua_dmatrix|, |gsua_ua|, |gsua_sa|,
-% |gsua_pe|...) leen el modelo desde aquí:
 P = T_log.Properties.CustomProperties;
 fprintf('Solver : %s\n', func2str(P.Solver));
 fprintf('Kind   : %d   (5 = función de usuario con dominio)\n', P.Kind);
 fprintf('Domain : [%g %g]\n', P.Domain);
-fprintf('Vars   : %s   (out_names)\n', strjoin(P.Vars, ', '));
-fprintf('output : %s   (salidas activas)\n\n', mat2str(P.output));
+fprintf('Vars   : %s   (nombres de salida)\n', strjoin(P.Vars, ', '));
+fprintf('output : %s   (salidas activas)\n', mat2str(P.output));
 
-%% 5. Paso 3 — evaluar con gsua_eval
+%% 5. Paso 3 — evaluarlo
 % |y = gsua_eval(par, T, xdata, ydata, parallel, show, verbose)|.
 % |par| es *Np x N*: una columna por simulación. Los cuatro últimos argumentos
 % son opcionales; aquí los ponemos para no graficar ni imprimir progreso.
 % La salida tiene forma *N x numel(xdata) x nSalidasActivas*.
+%
+% *En Python* es al revés: |M| es N x Np (una fila por simulación) y la
+% salida de |evaluate_batch| es N x salidas x tiempo.
 
 xdata = 0:50;
 y_nom = gsua_eval(T_log.Nominal, T_log, xdata, [], false, false, false);
-fprintf('Una simulación:  size(y) = %s\n', mat2str(size(y_nom)));
+fprintf('una simulación   : size(y) = %s\n', mat2str(size(y_nom)));
 
 par3 = [T_log.Nominal, [0.45; 800; 10], [0.10; 300; 40]];   % 3 columnas = 3 simulaciones
 y3 = gsua_eval(par3, T_log, xdata, [], false, false, false);
-fprintf('Tres simulaciones: size(y) = %s\n\n', mat2str(size(y3)));
+fprintf('tres simulaciones: size(y) = %s\n', mat2str(size(y3)));
 
-figure('Name', 'Logística discreta evaluada con gsua_eval');
+figure('Name', 'Logística discreta');
 plot(xdata, y3', 'LineWidth', 1.5);
 xlabel('Paso de tiempo t'); ylabel('Población N(t)'); grid on;
 legend('nominal', 'r=0.45, K=800, N0=10', 'r=0.10, K=300, N0=40', 'Location', 'southeast');
-title('Cada columna de par es una simulación');
+title('Cada simulación es un vector de factores');
 
-%% 6. Paso 4 — un modelo continuo: el SIR con ode45
+%% 6. Paso 4 — un modelo continuo: el SIR
 % Un modelo continuo resuelve sus EDO *dentro* de la función. El patrón es:
 %
 % # integrar con |ode45| sobre |domain|;
@@ -794,11 +864,12 @@ title('Cada columna de par es una simulación');
 % <include>sir_continuo.m</include>
 
 sol = sir_continuo([4.5e-4; 0.125; 950; 25], [0 80], struct('dt', 0.5));
-fprintf('sol.x: %d x %d,  sol.y: %d x %d  (S, I, R x tiempo)\n\n', size(sol.x), size(sol.y));
+fprintf('sol.x: %d x %d,  sol.y: %d x %d  (S, I, R x tiempo)\n', size(sol.x), size(sol.y));
 
 %%
-% Al declararlo, |out_names| tiene tres nombres porque |sol.y| tiene tres filas.
-% El argumento |'opt'| llega tal cual como tercer argumento del modelo.
+% Al declararlo, |out_names| tiene tres nombres porque |sol.y| tiene tres
+% filas. Lo que pases con |'opt'| llega tal cual como tercer argumento del
+% modelo: aquí, la separación de la rejilla de salida.
 
 rangos_sir = [
     1e-4,  8e-4;   % beta  (1/(persona*día))
@@ -812,11 +883,14 @@ rangos_sir = [
     'names',     {'beta', 'gamma', 'S0', 'I0'}, ...
     'out_names', {'S', 'I', 'R'}, ...
     'opt',       struct('dt', 0.1));
-disp(T_sir)
 
 xs = linspace(0, 80, 161);
 y_sir = gsua_eval(T_sir.Nominal, T_sir, xs, [], false, false, false);
-fprintf('Tres salidas activas: size(y) = %s  (1 simulación x tiempos x 3 salidas)\n', mat2str(size(y_sir)));
+fprintf('tres salidas activas: size(y) = %s\n', mat2str(size(y_sir)));
+
+M = gsua_dmatrix(T_sir, 5);                       % 5 x Np: una fila por muestra
+Y5 = gsua_eval(M', T_sir, xs, [], false, false, false);   % gsua_eval quiere Np x N
+fprintf('gsua_dmatrix: %s  ->  gsua_eval: %s\n', mat2str(size(M)), mat2str(size(Y5)));
 
 %%
 % Para quedarte con una sola salida (por ejemplo, la que tienes medida),
@@ -824,70 +898,103 @@ fprintf('Tres salidas activas: size(y) = %s  (1 simulación x tiempos x 3 salida
 T_I = T_sir;
 T_I.Properties.CustomProperties.output = 2;     % fila 2 de sol.y = I
 y_I = gsua_eval(T_I.Nominal, T_I, xs, [], false, false, false);
-fprintf('Solo I: size(y) = %s,  pico de I = %.1f personas\n\n', mat2str(size(y_I)), max(y_I));
+fprintf('solo I: size(y) = %s,  pico de I = %.1f personas\n', mat2str(size(y_I)), max(y_I));
 
-figure('Name', 'SIR continuo evaluado con gsua_eval');
+figure('Name', 'SIR continuo');
 plot(xs, squeeze(y_sir), 'LineWidth', 1.8);
 xlabel('Tiempo (días)'); ylabel('Personas'); grid on;
 legend('S', 'I', 'R', 'Location', 'east');
-title('Las tres salidas: y(1,:,j) es la salida j');
+title('Las tres salidas del SIR continuo');
 
 %% 7. Fijar un factor: rango degenerado
-% Si un factor no te interesa, dale un rango con mínimo = máximo. Desaparece
-% de |T| (ya no se muestrea ni se estima), pero el modelo lo sigue recibiendo
-% en su posición: |pars| siempre llega completo. Lo que cambia es |par| en
-% |gsua_eval|, que solo lleva los factores *libres*.
+% Si un factor no te interesa, dale un rango con mínimo = máximo. Queda
+% fuera del muestreo y de la estimación, pero el modelo lo sigue recibiendo
+% en su posición: |pars| siempre llega completo. En MATLAB el factor fijo
+% desaparece de |T|, y |par| en |gsua_eval| lleva solo los factores *libres*.
+%
+% *En Python* el factor sigue en el modelo y |pars| lleva siempre los Np
+% factores; |design_matrix| mantiene constante la columna del fijo.
 
 rangos_fijo = rangos_sir;
 rangos_fijo(4, :) = [10 10];                    % I0 fijo en 10
 [T_fijo, ~] = gsua_dataprep('sir_continuo', rangos_fijo, 'domain', [0 80], ...
     'names', {'beta', 'gamma', 'S0', 'I0'}, 'out_names', {'S', 'I', 'R'});
 disp(T_fijo)
-y_fijo = gsua_eval(T_fijo.Nominal, T_fijo, xs, [], false, false, false);   % par: 3 x 1
-fprintf('par con %d factores libres; el modelo recibió I0 = 10 en pars(4). I(0) = %.1f\n\n', ...
-    height(T_fijo), y_fijo(1, 1, 2));
+M_fijo = gsua_dmatrix(T_fijo, 4);
+fprintf('gsua_dmatrix: %s (solo factores libres)\n', mat2str(size(M_fijo)));
+y_fijo = gsua_eval(T_fijo.Nominal, T_fijo, xs, [], false, false, false);
+fprintf('el modelo recibió I0 = 10 en pars(4): I(0) = %.1f\n', y_fijo(1, 1, 2));
 
 %% 8. Errores típicos
-% *(a) Firma con dos entradas.* La guía de usuario muestra modelos
-% |modelo(pars, domain)| y |gsua_dataprep| los acepta, pero |gsua_eval| llama
-% siempre con tres argumentos. Declara el tercero aunque no lo uses (|~|).
+% *(a) Firma.* En MATLAB, |gsua_eval| llama siempre al modelo con tres
+% argumentos. La guía de usuario muestra modelos |modelo(pars, domain)| y
+% |gsua_dataprep| los acepta, pero al evaluar fallan. Declara el tercero
+% aunque no lo uses (|~|). (En Python el error equivalente es pasar |opt|
+% a una función que no tiene argumento para recibirlo.)
+%
+% <include>errores/logistica_dos_entradas.m</include>
+
 [T_mal, ~] = gsua_dataprep('logistica_dos_entradas', rangos_log, 'domain', [0 50]);
 try
     gsua_eval(T_mal.Nominal, T_mal, xdata, [], false, false, false);
 catch err
-    fprintf('logistica_dos_entradas -> error: %s\n\n', err.message);
+    fprintf('logistica_dos_entradas -> error: %s\n', err.message);
 end
 
 %%
-% *(b) out_names no coincide con las filas.* |out_names| no reordena nada:
-% solo pone nombre a las filas de |sol.y|, en orden. Si declaras una sola
-% salida llamada 'I' para un modelo cuya fila 1 es S, la toolbox analiza S
-% con la etiqueta 'I' y no da ningún error.
+% *(b) Los nombres de salida no coinciden con las filas.* Los nombres de
+% salida no reordenan nada: solo nombran las filas, en orden. Si declaras una
+% sola salida llamada 'I' para un modelo cuya fila 1 es S, la toolbox analiza
+% S con la etiqueta 'I' y no da ningún error.
 [T_etiq, ~] = gsua_dataprep('sir_continuo', rangos_sir, 'domain', [0 80], ...
     'out_names', {'I'});
 y_etiq = gsua_eval(T_etiq.Nominal, T_etiq, xs, [], false, false, false);
-fprintf('Salida etiquetada ''I'': valor inicial %.1f (es S0, no I0)\n', y_etiq(1));
-fprintf('Arreglo: out_names = {''S'',''I'',''R''} y output = 2.\n\n');
+fprintf('salida etiquetada ''I'': valor inicial %.1f (es S0, no I0)\n', y_etiq(1));
 
 %%
-% *(c) Orientación.* La convención es |sol.y| = *salidas x tiempo*. Desde la
+% *(c) Orientación.* La convención es *salidas x tiempo*. En MATLAB, desde la
 % versión 1.13, si devuelves |tiempo x salidas| la toolbox lo transpone,
-% porque reconoce el eje del tiempo por |numel(sol.x)|. Si las dos
-% dimensiones coinciden (tantas salidas como tiempos) no puede saberlo y la
-% deja como está: no dependas de la corrección, devuelve |sol.y| bien orientada.
+% porque reconoce el eje del tiempo por |numel(sol.x)|; si hay tantas salidas
+% como tiempos no puede saberlo y la deja como está. En Python nadie la
+% corrige. No dependas de la corrección: devuelve la salida bien orientada.
+%
+% <include>errores/sir_transpuesto.m</include>
+
+[T_T, ~] = gsua_dataprep('sir_transpuesto', rangos_sir, 'domain', [0 80], ...
+    'out_names', {'S', 'I', 'R'}, 'output', 2);
+y_T = gsua_eval(T_T.Nominal, T_T, xs, [], false, false, false);
+fprintf('sir_transpuesto con output = 2: size(y) = %s, I(0) = %.1f  <- MATLAB la corrigió\n', ...
+    mat2str(size(y_T)), y_T(1));
 
 %%
-% *(d) Rejilla: fuera del dominio no hay datos.* |gsua_eval| interpola en
-% |sol.x|; un |xdata| que se sale de |[t0, tf]| devuelve |NaN|.
-y_fuera = gsua_eval(T_I.Nominal, T_I, 0:100, [], false, false, false);
-fprintf('xdata = 0:100 con domain = [0 80]: %d valores NaN\n', sum(isnan(y_fuera)));
+% *(d) La rejilla de evaluación y t0.* La condición inicial pertenece a un
+% |t0| fijo, no al primer punto que pidas. En MATLAB |t0 = domain(1)| queda
+% fijado en |T|: puedes pedir |xdata| desde el día 20 sin problema, pero los
+% puntos fuera de |[t0, tf]| salen |NaN| porque no hay simulación ahí. En
+% Python no hay |NaN| (el modelo integra hasta donde le pidas), y el riesgo
+% es el contrario: integrar desde |domain[0]|, que hace "arrancar" la
+% epidemia en el primer punto pedido.
+
+x20 = 20:100;
+y20 = gsua_eval(T_I.Nominal, T_I, x20, [], false, false, false);
+fprintf('xdata = 20:100 con domain = [0 80]: I(20) = %.1f; %d valores NaN (días 81 a 100)\n', ...
+    y20(1), sum(isnan(y20)));
+
+figure('Name', 'Rejilla de evaluación');
+plot(xs, y_I, 'b-', 'LineWidth', 2); hold on;
+plot(x20, y20, 'ro', 'MarkerSize', 3);
+xline(80, 'kREPLACE_WITH_DASH_DASH', 'tf = 80');
+xlim([0 100]); grid on;
+xlabel('Tiempo (días)'); ylabel('Infectados I(t)');
+legend('xdata = 0:80', 'xdata = 20:100 (NaN después de tf)', 'Location', 'northeast');
+title('t0 queda fijo en la tabla; fuera del dominio no hay datos');
 
 %%
-% *(e) Rejilla: devolver ode45 tal cual.* La estructura de |ode45| tiene
+% *(e) Devolver los pasos del integrador.* La estructura de |ode45| tiene
 % campos |x| e |y| con la orientación correcta, así que "funciona"; pero
 % |sol.x| son los pasos adaptativos del integrador (pocos y desiguales), y
-% |gsua_eval| interpola *linealmente* entre ellos. El modelo
-% |errores/sir_continuo_crudo.m| hace exactamente eso:
+% |gsua_eval| interpola *linealmente* entre ellos. (En Python, |solve_ivp|
+% sin |t_eval| hace lo mismo.) Este modelo devuelve |ode45| tal cual:
 %
 % <include>errores/sir_continuo_crudo.m</include>
 
@@ -897,17 +1004,17 @@ xf = 0:0.05:80;
 I_bien  = squeeze(gsua_eval(T_I.Nominal,     T_I,     xf, [], false, false, false));
 I_crudo = squeeze(gsua_eval(T_crudo.Nominal, T_crudo, xf, [], false, false, false));
 ode = sir_continuo_crudo(T_crudo.Nominal, [0 80]);
-fprintf('ode45 crudo: %d pasos en 80 días. Error máximo en I: %.2f personas (pico %.1f)\n\n', ...
+fprintf('ode45 crudo: %d pasos en 80 días. Error máximo en I: %.2f personas (pico %.1f)\n', ...
     numel(ode.x), max(abs(I_bien - I_crudo)), max(I_bien));
 
-figure('Name', 'ode45 crudo frente a deval en rejilla');
+figure('Name', 'Pasos del integrador');
 plot(xf, I_bien, 'b-', 'LineWidth', 2); hold on;
 plot(xf, I_crudo, 'rREPLACE_WITH_DASH_DASH', 'LineWidth', 1.2);
 plot(ode.x, ode.y(2, :), 'ro', 'MarkerSize', 4);
 xlim([0 40]); grid on;
 xlabel('Tiempo (días)'); ylabel('Infectados I(t)');
-legend('deval en rejilla de 0.1 días', 'ode45 crudo + interpolación lineal', ...
-    'pasos de ode45', 'Location', 'northwest');
+legend('evaluado en una rejilla fina', 'pasos del integrador + interpolación lineal', ...
+    'pasos del integrador', 'Location', 'northwest');
 title('Devuelve la solución evaluada en una rejilla, no los pasos del integrador');
 
 %%
@@ -919,17 +1026,21 @@ title('Devuelve la solución evaluada en una rejilla, no los pasos del integrado
 % si el dominio está en semanas y |gamma| en 1/día, el tiempo de
 % recuperación queda multiplicado por 7.
 b = 4.5e-4; g = 0.125;
-fprintf('R0 con S0 en personas  (950)  : %.2f\n', b*950/g);
-fprintf('R0 con S0 en fracción  (0.95) : %.4f   <- mismas ecuaciones, otra escala\n\n', b*0.95/g);
+fprintf('R0 con S0 en personas (950) : %.2f\n', b*950/g);
+fprintf('R0 con S0 en fracción (0.95): %.4f   <- mismas ecuaciones, otra escala\n', b*0.95/g);
 
 %% 9. Comprobar tu modelo antes de usarlo
-% |verificar_modelo.m| (ayuda del curso, no de la toolbox) llama a tu modelo
-% una vez y revisa la firma, los campos, la orientación de |sol.y|, que
-% |sol.x| cubra el dominio y que no haya |NaN|. Úsalo cada vez que escribas
-% un modelo nuevo.
+% |verificar_modelo| (ayuda del curso, no de la toolbox) llama a tu modelo
+% una vez y revisa la firma, la forma y orientación de la salida, que cubra
+% el dominio y que no haya |NaN| ni |Inf|. Lo que no puede ver es la
+% precisión: el modelo crudo de (e) cumple el contrato. Úsalo cada vez que
+% escribas un modelo nuevo. (La versión Python revisa además que el valor en
+% un tiempo no dependa de la rejilla pedida: el error (d) de Python.)
 verificar_modelo('logistica_discreta', [0.3; 500; 10], [0 50], {'Poblacion'});
 verificar_modelo('sir_continuo', T_sir.Nominal, [0 80], {'S', 'I', 'R'});
 verificar_modelo('logistica_dos_entradas', [0.3; 500; 10], [0 50], {'Poblacion'});
+verificar_modelo('sir_transpuesto', T_sir.Nominal, [0 80], {'S', 'I', 'R'});
+verificar_modelo('sir_continuo_crudo', T_sir.Nominal, [0 80], {'S', 'I', 'R'});
 
 %% 10. Ejercicio: programa un SIR discreto desde cero
 % Con un paso de un día, el SIR discreto es
@@ -939,10 +1050,10 @@ verificar_modelo('logistica_dos_entradas', [0.3; 500; 10], [0 50], {'Poblacion'}
 % # Copia |sir_discreto_plantilla.m| como |mi_sir_discreto.m| y cambia el
 %   nombre de la función en su primera línea.
 % # Completa el |TODO| del bucle con las tres ecuaciones.
-% # Pásalo por |verificar_modelo| con |out_names = {'S','I','R'}|.
-% # Decláralo con |gsua_dataprep| usando los mismos rangos, |names| y
-%   |out_names| que |sir_continuo|, y |'domain', [0 80]|.
-% # Evalúa el nominal con |gsua_eval| y grafica I(t) junto a la de |sir_continuo|.
+% # Pásalo por |verificar_modelo| con salidas S, I y R.
+% # Decláralo con los mismos rangos, nombres de factores y de salidas que
+%   |sir_continuo|, y el dominio |[0 80]|.
+% # Evalúa el nominal y grafica I(t) junto a la de |sir_continuo|.
 %
 % *Preguntas.* ¿Por qué no coinciden las dos curvas de I aunque las
 % ecuaciones "son las mismas"? ¿Qué pasa con S si |beta*S0 > 1|? ¿Se conserva
@@ -962,7 +1073,8 @@ I_ej = gsua_eval(T_ej.Nominal, T_ej, 0:80, [], false, false, false);
 if all(abs(I_ej - I_ej(1)) < 1e-12)
     fprintf('La plantilla cumple el contrato, pero I(t) sigue constante: completa el TODO.\n');
 else
-    fprintf('I(t) ya cambia: pico de %.1f personas en el día %d.\n', max(I_ej), find(I_ej == max(I_ej), 1) - 1);
+    [Imax, k] = max(I_ej);
+    fprintf('I(t) ya cambia: pico de %.1f personas en el día %d.\n', Imax, k - 1);
 end
 
 %% 11. Resumen: lista de chequeo

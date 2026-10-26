@@ -16,10 +16,9 @@ la salida y cómo se declara ante la toolbox. Va antes del módulo 1 porque todo
 * **Declarar y evaluar:** `gsua_dataprep` (rangos, `names`, `out_names`, `opt`), la tabla `T` y
   sus propiedades, `gsua_eval`; en Python `UserFunctionModel`, `evaluate`, `evaluate_batch`,
   `set_output`. Factores fijos con rango degenerado.
-* **Errores típicos:** firma con dos entradas (MATLAB), `opt` sin argumento que lo reciba
-  (Python), `out_names` que no coincide con las filas, orientación de la salida, rejilla (fuera
-  del dominio, `ode45` sin `deval`, `t0` atado al primer punto pedido, `solve_ivp` sin `t_eval`)
-  y unidades.
+* **Errores típicos:** (a) firma, (b) nombres de salida que no coinciden con las filas,
+  (c) orientación, (d) la rejilla de evaluación y `t0`, (e) devolver los pasos del integrador,
+  (f) unidades.
 * **Ejercicio:** programar un SIR discreto desde una plantilla y comprobarlo con `verificar_modelo`.
 
 ## Diferencias MATLAB ↔ Python que conviene tener presentes
@@ -33,11 +32,32 @@ la salida y cómo se declara ante la toolbox. Va antes del módulo 1 porque todo
 | Factor fijo | desaparece de `T`; `par` lleva solo los libres | `pars` siempre lleva los Np factores |
 | Salida transpuesta | se corrige sola (salvo caso cuadrado) | no se corrige |
 
+## Paridad MATLAB / Python
+
+Las dos versiones tienen las mismas 11 secciones, en el mismo orden, con los mismos modelos,
+ejercicio y cuatro figuras (logística, SIR, rejilla de evaluación, pasos del integrador). Donde
+la toolbox se comporta distinto en cada lenguaje (firma, orientación, rejilla), las dos páginas
+explican los dos comportamientos. Los modelos dan el mismo resultado numérico:
+
+```bash
+matlab -batch "cd course/00_Escribir_Modelos/pruebas; generar_paridad"   # escribe los CSV de MATLAB
+python course/00_Escribir_Modelos/pruebas/paridad.py                      # compara con Python
+```
+
+Tolerancia relativa: 1e-8 en los modelos discretos y 1e-4 en el continuo (`ode45` frente a
+`solve_ivp` con las mismas tolerancias). Resultado actual: 0 en los discretos, 2.6e-6 en el SIR.
+
 ## Archivos
-* `matlab/demo_00_escribir_modelos.m` — script guía (se publica como página).
-* `matlab/logistica_discreta.m`, `matlab/sir_continuo.m` — los dos modelos del módulo.
-* `matlab/errores/` — modelos escritos mal a propósito para la sección de errores.
-* `matlab/verificar_modelo.m` — revisa que un modelo cumpla el contrato (ayuda del curso).
-* `matlab/sir_discreto_plantilla.m` — plantilla del ejercicio; `matlab/solucion/` tiene la solución.
-* `python/demo_00_escribir_modelos.py` — script guía (los modelos están definidos dentro).
-* `python/verificar_modelo.py`, `python/sir_discreto_plantilla.py`, `python/solucion/`.
+
+Cada archivo existe en los dos lenguajes, con el mismo nombre (`.m` / `.py`):
+
+* `demo_00_escribir_modelos` — guion del módulo (se publica como página).
+* `logistica_discreta`, `sir_continuo` — los dos modelos del módulo.
+* `verificar_modelo` — revisa que un modelo cumpla el contrato (ayuda del curso).
+* `sir_discreto_plantilla` — plantilla del ejercicio; `solucion/sir_discreto_solucion` es la solución.
+* `errores/` — modelos escritos mal a propósito: `sir_transpuesto` y `sir_continuo_crudo` en los
+  dos lenguajes; el error de firma de cada lenguaje (`logistica_dos_entradas.m`,
+  `logistica_sin_opt.py`) y el de `t0` de Python (`sir_arranca_en_domain0.py`), que no tiene
+  equivalente en MATLAB.
+* `python/mostrar_codigo.py` — muestra un archivo en la página (lo que hace `<include>` en MATLAB).
+* `pruebas/` — prueba de paridad numérica (`generar_paridad.m`, `paridad.py` y sus CSV).
