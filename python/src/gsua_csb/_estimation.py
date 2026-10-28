@@ -120,9 +120,9 @@ def parameter_estimation(
         solver_kwargs: Extra keyword arguments passed through to the underlying `scipy.optimize`
             call.
         save_path: If given, write the results to this path as an ``.npz`` archive (``x``, ``cost``,
-            ``names``, ``solver``, ``margin``, ``alpha``). MATLAB ``gsua_pe`` writes
-            ``Estimations.mat`` to the working directory by default; this port makes it opt-in, so
-            nothing is written unless ``save_path`` is set.
+            ``names``, ``solver``, ``margin``, ``alpha``). Opt-in, like MATLAB ``gsua_pe``'s
+            ``'save'`` flag (default false since v1.15, which writes ``Estimations.mat``): nothing
+            is written unless ``save_path`` is set.
 
     Returns:
         A :class:`PEResult`.
@@ -243,10 +243,9 @@ def parameter_estimation(
     )
 
     if save_path is not None:
-        # MATLAB gsua_pe writes Estimations.mat to the working directory by DEFAULT (its 'save'
-        # flag defaults true), for crash-resume. Writing files silently by default is a poor
-        # default in a library, so here it is opt-in: pass save_path to get an .npz with the
-        # same information.
+        # Crash-resume checkpoint, opt-in on both sides: MATLAB gsua_pe's 'save' flag (default
+        # false since v1.15; it was true before and silently overwrote Estimations.mat in the
+        # working directory) and save_path here, which writes an .npz with the same information.
         np.savez(
             save_path, x=result.x, cost=result.cost, names=np.asarray(result.names),
             solver=solver, margin=margin, alpha=alpha,

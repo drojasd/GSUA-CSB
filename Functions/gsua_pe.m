@@ -22,9 +22,9 @@ function [Table,res,IP] = gsua_pe(Table,xdata,ydata,varargin)
 % estimate and the same number of rows as N.
 % 'Show',{'off','on'}. If activated, the function plot optimizer results
 % Default: off.
-% 'save',{true,false} <-- if true (default), writes Estimations.mat to the CURRENT
-% folder after each estimation, OVERWRITING any existing Estimations.mat there. Set
-% 'save',false to disable. Default: true.
+% 'save',{false,true} <-- if true, writes Estimations.mat to the CURRENT folder after
+% each estimation (a crash-resume checkpoint), OVERWRITING any existing
+% Estimations.mat there. Default: false (it was true before v1.15).
 % [T,res] = gsua_pe(T,xdata,ydata,'Show','on','solver','particle','N',3)
 %
 % See also GSUA_DMATRIX, GSUA_DEVAL, GSUA_COSTF, GSUA_IA, GSUA_DIA.
@@ -45,7 +45,8 @@ validShow={'off' 'on' 'on2'};
 checkShow = @(x) any(validatestring(x,validShow));
 dfmarg=0;
 dfalpha=2;
-dfSave=true;
+dfSave=false;   % opt-in since v1.15: writing Estimations.mat silently overwrote user files
+dfTimer=true;
 
 addRequired(p,'Table',@istable);
 addRequired(p,'xdata',@isnumeric);
@@ -64,7 +65,7 @@ addParameter(p,'nonlcon',dfOpt);
 addParameter(p,'margin',dfmarg,@isnumeric);
 addParameter(p,'alpha',dfalpha,@isnumeric);
 addParameter(p,'save',dfSave,@islogical);
-addParameter(p,'timer',dfSave,@islogical);
+addParameter(p,'timer',dfTimer,@islogical);
 
 parse(p,Table,xdata,ydata,varargin{:})
 T=p.Results.Table;
