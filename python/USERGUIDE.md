@@ -480,16 +480,17 @@ thing here, read the first table.
 - **Results.** MATLAB writes back into the table (`T.Range`, `T.Est`, `T.Si`, ...), so calls chain
   naturally. Python returns a dataclass per routine, so to feed one result into the next you
   assign it back yourself (`model.range = ia.range`).
-- **Plotting.** MATLAB's analysis functions open figures as a side effect — `gsua_ua` always opens
-  at least two, `gsua_ia` four, and `gsua_eval` plots by default unless you pass its sixth
-  argument as `false`. Python never plots implicitly; the `plot_*` functions take a result object.
+- **Plotting.** MATLAB's analysis functions open figures as a side effect — `gsua_ua` opens at
+  least two unless you pass `'plot', false` (since v1.15), `gsua_ia` four, and `gsua_eval` plots
+  by default unless you pass its sixth argument as `false`. Python never plots implicitly; the
+  `plot_*` functions take a result object.
 - **Log-scale search** (`model.log_scale`) is Python-only. **Simulink models** are MATLAB-only.
 
 ### Defaults that differ
 
 | Concept | MATLAB | Python |
 |---|---|---|
-| Save results to disk | `gsua_pe` writes `Estimations.mat` to the working directory (`'save'` defaults true) | opt-in: `parameter_estimation(..., save_path=...)` writes an `.npz`; nothing is written otherwise |
+| Save results to disk | opt-in since v1.15: `gsua_pe(..., 'save', true)` writes `Estimations.mat` to the working directory (it was the default before) | opt-in: `parameter_estimation(..., save_path=...)` writes an `.npz`; nothing is written otherwise |
 | Progress printing | `gsua_pe`/`gsua_ia` print unconditionally; `gsua_eval` prints a progress line | silent, except `warnings.warn` |
 | Parallelism | `gsua_sa`/`gsua_ua` default `'parallel', true` | `sensitivity_analysis`/`uncertainty_analysis`/`Model.evaluate_batch` take `n_jobs` (default `1`, serial; `-1` all cores) |
 | Default evaluation grid | `gsua_eval` expands `domain` to a unit-step grid | `model.domain` is used verbatim — give it the points you want, not just the endpoints |
