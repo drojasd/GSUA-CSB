@@ -43,6 +43,7 @@ end
 
 M=M(:,~fixed);
 names=T.Properties.RowNames(~fixed);
+[names, nameInterp] = gsua_labels(names);   % TeX or LaTeX names, see gsua_labels
 
 [N,Np]=size(M);
 
@@ -99,7 +100,7 @@ for k = 1:Np
              cdfplot(Jsup{k})
              xlabel('Value')
              ylabel('CDF')
-             title(names{k})
+             title(names{k},'Interpreter',nameInterp)
              hold off
 end
          legend({'Prior','Low Values','High Values'})

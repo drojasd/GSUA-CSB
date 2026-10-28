@@ -210,7 +210,9 @@ end
 
         figure(1)
             clf
-            boxplot(Normalized(:,~fixed),'Labels',names(~fixed)')
+            [bxLbl, bxInterp] = gsua_labels(names(~fixed)');
+            boxplot(Normalized(:,~fixed),'Labels',bxLbl)
+            set(findobj(gca,'type','text'),'Interpreter',bxInterp)
 
             title('Iteration #0')
             drawnow

@@ -244,29 +244,32 @@ ind=(2*boxin'+corrin+extrin)/4;
 [~,idx]=sort(ind,'descend');
 
 % --- Plots ---
+% Parameter names may be TeX or LaTeX; gsua_labels converts them and picks the
+% interpreter every label below uses.
+[iaNames, iaInterp] = gsua_labels(T.Properties.RowNames);
 figure('Name','CDF Range')
 for i=1:size(T,1)
 subplot(D1,D2,i)
 ecdf(statT_est(i,:),'Bounds','on')
-title(T.Properties.RowNames{i})
+title(iaNames{i},'Interpreter',iaInterp)
 end
 
 figure('Name','Normalized Practical identifiability')
 clf
-boxplot(Normalized','Labels',T.Properties.RowNames,'LabelOrientation','inline')
+boxplot(Normalized','Labels',iaNames,'LabelOrientation','inline')
 h = findobj(gca, 'type', 'text');
-set(h, 'Interpreter', 'tex','FontWeight','bold');
+set(h, 'Interpreter', iaInterp,'FontWeight','bold');
 
 B = filloutliers(Normalized','center','median');
 indicator=max(B,[],1)-min(B,[],1);
 [~,index]=sort(indicator,'descend');
 nn=B(:,index);
-names=T.Properties.RowNames(index);
+names=iaNames(index);
 figure('Name','Sorted parameter range')
 clf
 boxplot(nn,'Labels',names,'LabelOrientation','inline')
 h = findobj(gca, 'type', 'text');
-set(h, 'Interpreter', 'tex','FontWeight','bold');
+set(h, 'Interpreter', iaInterp,'FontWeight','bold');
 hold on
 nnominal_sorted=nnominal(index);
 plot(nnominal_sorted,'.','MarkerSize',20,'Color','black')
@@ -274,9 +277,10 @@ plot(nnominal_sorted,'.','MarkerSize',20,'Color','black')
 figure('Name','Correlation')
 imagesc(RHO)
 xticks(1:size(T,1))
-xticklabels(T.Properties.RowNames)
+xticklabels(iaNames)
 yticks(1:size(T,1))
-yticklabels(T.Properties.RowNames)
+yticklabels(iaNames)
+set(gca,'TickLabelInterpreter',iaInterp)
 clim([-1 1])
 colormap jet
 colorbar
@@ -284,23 +288,23 @@ colorbar
 if show
 
     figure('Name','Identifiability Index')
-    scatter3(boxin(idx(1)),corrin(idx(1)),extrin(idx(1)),60,ind(idx(1)),'filled','DisplayName',T.Properties.RowNames{idx(1)})
+    scatter3(boxin(idx(1)),corrin(idx(1)),extrin(idx(1)),60,ind(idx(1)),'filled','DisplayName',iaNames{idx(1)})
     hold on
     for i=idx(2:end)
-        scatter3(boxin(i),corrin(i),extrin(i),60,ind(i),'filled','DisplayName',T.Properties.RowNames{i})
+        scatter3(boxin(i),corrin(i),extrin(i),60,ind(i),'filled','DisplayName',iaNames{i})
     end
     colormap jet
-    legend('NumColumns',2','Orientation','vertical')
+    legend('NumColumns',2','Orientation','vertical','Interpreter',iaInterp)
     xlabel('Interval Index')
     ylabel('Correlation Index')
     zlabel('Strong correlation Index')
 
 
     figure('Name','Identifiability graph')
-    G=graph((abs(RHO)>0.5)-eye(len),T.Properties.RowNames);
+    G=graph((abs(RHO)>0.5)-eye(len),iaNames);
     G.Nodes.Weights=ind';
     G.Nodes.NodeColors = ind';
-    p2=plot(G);
+    p2=plot(G,'Interpreter',iaInterp);
     p2.NodeCData = G.Nodes.NodeColors;
     p2.NodeFontSize=12;
     p2.MarkerSize=7;
@@ -323,7 +327,8 @@ if show
 
         figure('Name','Candidate global minima')
         clf
-        boxplot(NormalizedAll','Labels',T.Properties.RowNames,'LabelOrientation','inline')
+        boxplot(NormalizedAll','Labels',iaNames,'LabelOrientation','inline')
+        set(findobj(gca,'type','text'),'Interpreter',iaInterp)
         hold on
         markers={'o','s','^','d','v','p','h'};
         for k=1:clusterInfo.NumClusters
