@@ -15,8 +15,13 @@ function y = gsua_ua(M,T,varargin)
 % the paired feature 'ynom' (ynom length must coindice with xdata length).
 % To avoid parallel computing (no speed up), use the paired feature
 % 'parallel',false. To silence the "Progress: N %" print during evaluation,
-% use the paired feature 'verbose',false (default true).
+% use the paired feature 'verbose',false (default true). To skip the
+% figures altogether -- e.g. in batch runs that call gsua_ua many times,
+% where one figure(1) plus one Monte-Carlo-filtering figure per output
+% would otherwise pile up -- use the paired feature 'plot',false
+% (default true). The returned Y is the same either way.
 % Y=gsua_ua(M,T,'xdata',xdata,'ynom',ynom,'parallel',false)
+% Y=gsua_ua(M,T,'plot',false,'verbose',false)   % quiet, no figures
 %
 % See also GSUA_SA, GSUA_DMATRIX, GSUA_MCF, GSUA_PARDEVAL.
 p=inputParser;
@@ -28,6 +33,7 @@ addParameter(p,'xdata',defNum,@isnumeric);
 addParameter(p,'ynom',defNum,@isnumeric);
 addParameter(p,'parallel',true,@islogical);
 addParameter(p,'verbose',true,@islogical);
+addParameter(p,'plot',true,@islogical);
 
 parse(p,M,T,varargin{:})
 M=p.Results.M;
@@ -36,6 +42,7 @@ xdata=p.Results.xdata;
 ynom=p.Results.ynom;
 parallel=p.Results.parallel;
 verbose=p.Results.verbose;
+doPlot=p.Results.plot;
 
 try
     TP=T.Properties.CustomProperties;
@@ -63,6 +70,10 @@ end
 
 y=gsua_pardeval(M,T,xdata,parallel,[0,size(M,1)],verbose);
 
+if ~doPlot
+    return
+end
+
 figure(1)
 clf
 gsua_plot('UncertaintyAnalysis',T,y,xdata,ynom) 
@@ -74,9 +85,9 @@ for i=1:nout
     end
     clf
     if ismember(kind,[2,6])
-        [~]=gsua_MCF(T,M,y(:,i)',ynom(i,:))
+        [~]=gsua_MCF(T,M,y(:,i)',ynom(i,:));
     else
-        [~]=gsua_MCF(T,M,y(:,:,i),ynom(i,:))
+        [~]=gsua_MCF(T,M,y(:,:,i),ynom(i,:));
     end
 end
 end
