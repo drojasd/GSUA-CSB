@@ -26,6 +26,12 @@ if nargin <4
     extra=1;
 end
 
+% DEVAL-style argument order gsua_intrp(xint,sol): accept it by swapping, so the
+% solution struct is always in sol before normalization below.
+if ~isa(sol,'struct') && isa(xint,'struct')
+    [sol, xint] = deal(xint, sol);
+end
+
 % Normalize a user-supplied ODE solution to the toolbox's canonical
 % orientation, so that user-defined models are robust to how ode45 was
 % called. ode45 has two output forms with opposite orientations:
@@ -62,13 +68,7 @@ if isa(sol,'struct') && isfield(sol,'x') && isfield(sol,'y') && ismatrix(sol.y)
 end
 
 if extra==1
-    if ~isa(sol,'struct')  
-      % Try  DEVAL(XINT,SOL)
-      temp = struct();
-      sol  = xint;
-      xint = temp;
-    else
-        try
+    try
           t = sol.x;    
           y = sol.y; 
           if isfield(sol,'solver')
@@ -76,17 +76,14 @@ if extra==1
           else
               solver='';
           end
-          reps=length(idx);
           if any(strcmp(solver,{'dde23',''}))
               a=zeros(1,size(y,1),size(y,2));
               a(1,:,:)=y;
               y=a;
           end
 
-        catch
-          error(message('MATLAB:deval:SolNotFromDiffEqSolver', inputname( 1 )));
-        end
-
+    catch
+        error(message('MATLAB:deval:SolNotFromDiffEqSolver', inputname( 1 )));
     end
 
 
@@ -99,7 +96,8 @@ if extra==1
       end  
     end  
 
-    if reps==1 
+    reps=length(idx);   % after idx has its default, so the 2-argument call works
+    if reps==1
         if sz(1)>1
             Sxint=interp1(t,squeeze(y(:,idx,:))',xint)';
         else

@@ -85,6 +85,23 @@ classdef gsuaIntrpOrientationTest < matlab.unittest.TestCase
             testCase.verifyError(@() gsua_intrp(bad, bad.x, 1:2), 'GSUA:gsua_intrp:BadShape');
         end
 
+        function twoArgumentCallReturnsAllComponents(testCase)
+            % gsua_intrp(sol,xint) with no idx: reps used to be computed before idx got
+            % its default, so this fell into the catch with a misleading error.
+            s.x = linspace(0,1,15); s.y = [1:15; 2*(1:15)]; s.solver = '';
+            out = gsua_intrp(s, s.x);
+            testCase.verifyEqual(squeeze(out(1,:,1)), 1:15, 'AbsTol', 1e-12);
+            testCase.verifyEqual(squeeze(out(1,:,2)), 2*(1:15), 'AbsTol', 1e-12);
+        end
+
+        function devalStyleArgumentOrderAccepted(testCase)
+            % gsua_intrp(xint,sol), MATLAB deval's order: the legacy branch replaced xint
+            % with an empty struct and never worked. It must equal the normal order.
+            s.x = linspace(0,1,15); s.y = [1:15; 2*(1:15)]; s.solver = '';
+            xq = [0.1 0.5 0.9];
+            testCase.verifyEqual(gsua_intrp(xq, s, 1:2), gsua_intrp(s, xq, 1:2));
+        end
+
         function singleOutputVectorAccepted(testCase)
             % A one-state model returning a plain row/column vector is oriented to 1xN.
             s.x = linspace(0,1,15);
