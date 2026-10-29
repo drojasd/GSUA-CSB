@@ -1,5 +1,5 @@
 function ParT=gsua_oatr(ParT,varargin)
-% Function for once-at-time ranges expantion
+% Function for one-at-a-time range expansion
 %
 % T=gsua_oatr(T)
 % Parameters:
@@ -7,10 +7,12 @@ function ParT=gsua_oatr(ParT,varargin)
 % given by T.Nominal.
 % Outputs:
 % T <-- summary table with new factor intervals in T.Range
-% Additional features:
-% To define limit for range expantion use the paired feature 'lim'.
-% Default:0.3.
-% To speed up range calculus, use the paired feature 'parallel',true.
+% Paired features:
+% 'lim',l        <-- distance limit for range expansion. Default: 0.3.
+% 'parallel',tf  <-- parallelize the range calculus. Default: false.
+% 'correct',tf   <-- clip expansions back to the original range. Default: false.
+% 'show',tf      <-- plot the iterations. Default: false.
+% 'titerlimit',n <-- cap on the total number of iterations. Default: inf.
 % T=gsua_oatr(T,'lim',0.2,'parallel',true)
 %
 % See also GSUA_OATR2, GSUA_CSB, GSUA_DEVAL.
