@@ -74,6 +74,8 @@ end
 parfor (i=1:Np,parforArg)
 %for i=1:Np
     if ~fixed(i)
+    ceiling = 1e6*max([abs(noms(i)), ParT.Range(i,2)-ParT.Range(i,1), 1]);
+    ceilingHit = false;
     tnom=noms;
     intern_counter=0;
     aumenter=0.7;
@@ -160,6 +162,20 @@ parfor (i=1:Np,parforArg)
     
         end
     
+        % Overflow / insensitivity guard: the multiplicative step can explode when the
+        % output never responds, running the bound (noms*aumenter) out to Inf. Cap it at
+        % a finite ceiling and stop expanding this direction.
+        if ~isfinite(aumenter) || abs(noms(i))*aumenter > ceiling
+            aumenter = ceiling/max(abs(noms(i)),eps);
+            ceilingHit = true;
+            Tf{i}(flag)=noms(i)*aumenter;
+            aumenter=1.5;
+            counter=zeros(1,2);
+            flag=flag+1;
+            saver_down=1;
+            saver_up=1;
+        end
+
         intern_counter=intern_counter+1;
         if intern_counter>200
             if flag == 3
@@ -173,6 +189,11 @@ parfor (i=1:Np,parforArg)
             saver_down=1;
             saver_up=1;
         end
+    end
+    if ceilingHit
+        warning('GSUA:gsua_oatr2:ExpansionCeiling', ...
+            ['Factor %s appears insensitive while expanding; its range hit the finite ' ...
+             'expansion ceiling and was capped. Treat it as unidentified in that direction.'], names{i});
     end
     disp(['Range for ' names{i} ' Done!'])
     disp(['Initial range of ' names{i} '(' num2str(i) ')--> ' num2str(Range(i,:))])

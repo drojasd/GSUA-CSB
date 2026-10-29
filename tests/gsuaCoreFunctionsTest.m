@@ -90,5 +90,14 @@ classdef gsuaCoreFunctionsTest < matlab.unittest.TestCase
             testCase.verifyTrue(all(Toat.Range(:,1) <= Toat.Range(:,2)), ...
                 'Every expanded range must have lower <= upper.');
         end
+
+        function oatr2CapsUnboundedExpansion(testCase)
+            % Same overflow guard for the second-generation routine (it ran to Inf before).
+            T = testCase.pkTable();
+            Toat = testCase.verifyWarning(@() gsua_oatr2(T, 'lim', 0.2), ...
+                'GSUA:gsua_oatr2:ExpansionCeiling');
+            testCase.verifyTrue(all(isfinite(Toat.Range(:))), 'Ranges must be finite.');
+            testCase.verifyLessThan(max(abs(Toat.Range(:))), realmax/2);
+        end
     end
 end
