@@ -115,7 +115,8 @@
       {"name": "xdata", "kind": "namevalue", "type": ["numeric"]},
       {"name": "ynom", "kind": "namevalue", "type": ["numeric"]},
       {"name": "parallel", "kind": "namevalue", "type": ["logical"]},
-      {"name": "verbose", "kind": "namevalue", "type": ["logical"]}
+      {"name": "verbose", "kind": "namevalue", "type": ["logical"]},
+      {"name": "plot", "kind": "namevalue", "type": ["logical"]}
     ],
     "outputs": [
       {"name": "y", "type": ["double"]}
@@ -488,6 +489,40 @@
     "outputs": [
       {"name": "Y", "type": ["double"]},
       {"name": "t", "type": ["double"]}
+    ]
+  },
+
+  "gsua_noisefloor": {
+    "inputs": [
+      {"name": "T", "kind": "required", "type": ["table"]},
+      {"name": "xdata", "kind": "required", "type": ["numeric"]},
+      {"name": "ydata", "kind": "required", "type": ["numeric"]},
+      {"name": "Est", "kind": "required", "type": ["double"]},
+      {"name": "res", "kind": "required", "type": ["numeric"]},
+      {"name": "B", "kind": "namevalue", "type": ["numeric", "scalar"]},
+      {"name": "noise", "kind": "namevalue", "type": ["char", "choices={'quasipoisson','poisson','nbglobal'}"]},
+      {"name": "quantile", "kind": "namevalue", "type": ["numeric", "scalar"]},
+      {"name": "cumulative", "kind": "namevalue", "type": ["logical"]},
+      {"name": "seed", "kind": "namevalue", "type": ["numeric"]},
+      {"name": "margin", "kind": "namevalue", "type": ["numeric", "scalar"]},
+      {"name": "alpha", "kind": "namevalue", "type": ["numeric", "scalar"]}
+    ],
+    "outputs": [
+      {"name": "out", "type": ["struct"]}
+    ]
+  },
+
+  "gsua_costcutoff": {
+    "inputs": [
+      {"name": "cost", "kind": "required", "type": ["numeric"]},
+      {"name": "method", "kind": "required", "type": ["char", "choices={'rtol','gap'}"]},
+      {"name": "rtol", "kind": "required", "type": ["numeric", "scalar"]},
+      {"name": "atol", "kind": "required", "type": ["numeric", "scalar"]},
+      {"name": "gapRatio", "kind": "required", "type": ["numeric", "scalar"]},
+      {"name": "minKeep", "kind": "required", "type": ["numeric", "scalar"]}
+    ],
+    "outputs": [
+      {"name": "keep", "type": ["logical"]}
     ]
   }
 }
