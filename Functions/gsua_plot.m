@@ -151,7 +151,7 @@ switch plot_type
         while sum(isnan(ST(:,t0)))>0
             t0 = t0+1;
         end
-        [~,index]=sort(nansum(ST,2),'descend');
+        [~,index]=sort(sum(ST,2,'omitnan'),'descend');
         ST=ST(index,:);
         names=names(index);
         for i = t0:Nd

@@ -6,7 +6,7 @@ function t1 = gsua_timer(rem_compute,init,verbose)
 %
 %   Internal progress-reporting helper used by GSUA_PE and
 %   GSUA_LIKELIHOOD. Call once with rem_compute=0 to start the shared
-%   timer (stored in the global t0), then repeatedly with rem_compute=1
+%   timer (kept in a persistent variable), then repeatedly with rem_compute=1
 %   to print progress percentage, elapsed time, and estimated remaining
 %   time to the command window.
 %
@@ -17,21 +17,21 @@ function t1 = gsua_timer(rem_compute,init,verbose)
 %                     iterations
 %
 %   Outputs:
-%     t1 <-- current clock reading in seconds-of-day (only set when
+%     t1 <-- current time reading in seconds (only set when
 %            rem_compute is 1)
 %
 %   See also GSUA_PE, GSUA_LIKELIHOOD.
 
-global t0
+persistent t0
 if nargin<3 || isempty(verbose)
     verbose=true;   % default on, preserving prior behavior; pass false for a quiet run
 end
 if init(1)==0
-    t01=clock; t0=t01(4)*3600+t01(5)*60+t01(6);
+    t0 = posixtime(datetime('now'));
 end
 if rem_compute==1
     rem_percent=max(0,(1-init(1)/init(2))*100);
-    t11=clock; t1=t11(4)*3600+t11(5)*60+t11(6);
+    t1 = posixtime(datetime('now'));
     if verbose
         dt=t1-t0;
         dt_h=floor(dt/3600); dt_m=floor((dt-dt_h*3600)/60);dt_s=dt-dt_h*3600-dt_m*60;

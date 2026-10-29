@@ -236,7 +236,7 @@ end
             %res=res(res ~= inf);
             res=res';
             x=x(index(1:size(res,2)),:);
-            eval(strcat('Table.Est',OS,"=x';"));
+            Table.(['Est' char(OS)]) = x';
             if all(~isfinite(res))
                 error('GSUA:gsua_pe:AllEstimationsFailed', ...
                     ['Every estimation failed before any converged (error limit hit on #%d).\n' ...
@@ -273,7 +273,7 @@ end
 %res=res(res ~= 0);
 res=res';
 x=x(index(1:size(res,2)),:);
-eval(strcat('Table.Est',OS,"=x';"));
+Table.(['Est' char(OS)]) = x';
 if all(~isfinite(res))
     % Every estimation returned a non-finite cost. Fail loudly with the likely cause
     % instead of handing back an all-Inf res the caller has to decode.

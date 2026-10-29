@@ -40,7 +40,7 @@ if kind==1
     return
 end
 
-global t0
+persistent t0
 if nargin<6 || isempty(verbose)
     verbose=true;   % default on, preserving prior behavior; pass false for a quiet run
 end
@@ -49,7 +49,7 @@ if nargin<5
 else
     rem_compute=1;
     if init(1)==0
-        t01=clock; t0=t01(4)*3600+t01(5)*60+t01(6);
+        t0 = posixtime(datetime('now'));
     end
 end
 
@@ -64,6 +64,7 @@ else
     parforArg=0;
 end
 
+nFailed = 0;   % simulations whose evaluation errored (left as their preallocated zeros)
 switch kind
     case 3
         if nout==1 
@@ -73,6 +74,7 @@ switch kind
                 try
                     y(i,:)=deval(fun(M(i,1:ni),M(i,ni+1:end)),xdata,out);
                 catch
+                    nFailed = nFailed + 1;
                 end
             end
         else
@@ -84,6 +86,7 @@ switch kind
                         y(i,:,j)=y_temp2(j,:);
                     end
                 catch
+                    nFailed = nFailed + 1;
                 end
             end
         end
@@ -116,6 +119,7 @@ switch kind
                 try
                     y(i,:)=gsua_intrp(fun(M(i,:),domain,opt),xdata,out);
                 catch
+                    nFailed = nFailed + 1;
                 end
             end
         else
@@ -124,6 +128,7 @@ switch kind
                 try
                     y(i,:,:)=gsua_intrp(fun(M(i,:),domain,opt),xdata,out);
                 catch
+                    nFailed = nFailed + 1;
                 end
             end
         end
@@ -133,10 +138,15 @@ switch kind
             y(i)=fun(M(i,:));
         end
             
-end   
+end
+if nFailed > 0
+    warning('GSUA:gsua_pardeval:FailedSimulations', ...
+        ['%d of %d model evaluations failed and were left as zeros; results may be ' ...
+         'incomplete. Check the model with gsua_deval(T.Nominal'',T,xdata).'], nFailed, N);
+end
 if rem_compute==1 && verbose
         rem_percent=max(0,(1-(N+init(1))/init(2))*100);
-        t11=clock; t1=t11(4)*3600+t11(5)*60+t11(6);
+        t1 = posixtime(datetime('now'));
         dt=t1-t0;
         dt_h=floor(dt/3600); dt_m=floor((dt-dt_h*3600)/60);dt_s=dt-dt_h*3600-dt_m*60;
         dte=dt/(1-rem_percent/100);

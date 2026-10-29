@@ -41,13 +41,13 @@ else
     parforArg=0;
 end
 
-global t0
+persistent t0
 if nargin<5
     rem_compute=0;
 else
     rem_compute=1;
     if init(1)==0
-        t01=clock; t0=t01(4)*3600+t01(5)*60+t01(6);
+        t0 = posixtime(datetime('now'));
     end
 end
 
@@ -122,7 +122,7 @@ end
 
 if rem_compute==1 && N>1
         rem_percent=max(0,(1-(N+init(1))/init(2))*100);
-        t11=clock; t1=t11(4)*3600+t11(5)*60+t11(6);
+        t1 = posixtime(datetime('now'));
         dt=t1-t0;
         dt_h=floor(dt/3600); dt_m=floor((dt-dt_h*3600)/60);dt_s=dt-dt_h*3600-dt_m*60;
         dte=dt/(1-rem_percent/100);
