@@ -7,7 +7,7 @@
     <param.summary>Toolbox for Parameter estimation, Uncertainty and Sensitivity analysis and Confidence Subcontour box estimation</param.summary>
     <param.description>Global Sensitivity and Uncertainty Analysis - Confidence Subcontour Box (GSUA-CSB) Toolbox is a product developed by Universidad EAFIT for command-line mathematical model validation in both of Simulink or Symbolic Math Toolbox environment . At present time, the toolbox allows to perform the following functions: To apply and visualize several variance-based sensitivity (SA) and uncertainty (UA) analysis, to estimate model parameters (PE) and to estimate a Confidence Subcontour Box (CSB) for previously estimated parameters.</param.description>
     <param.screenshot>${PROJECT_ROOT}/screenshot.png</param.screenshot>
-    <param.version>1.15.1</param.version>
+    <param.version>1.15.2</param.version>
     <param.output>${PROJECT_ROOT}/GSUA-CSB.mltbx</param.output>
     <param.products.name>
       <item>MATLAB</item>
@@ -46,7 +46,7 @@
       <item>25.2</item>
     </param.products.version>
     <param.platforms />
-    <param.guid>b23183a1-baa9-490f-94c1-a31dda53b0c3</param.guid>
+    <param.guid>b8573c24-796f-4abe-9102-d9db2e75d3a9</param.guid>
     <param.exclude.filters>% List files contained in your toolbox folder that you would like to exclude
 % from packaging.  Excludes should be listed relative to the toolbox folder.
 % Some examples of how to specify excludes are provided below:

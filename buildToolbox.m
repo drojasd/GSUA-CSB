@@ -37,8 +37,41 @@ if nargin < 1 || isempty(version)
 end
 version = string(version);
 
-opts = matlab.addons.toolbox.ToolboxOptions(prj);
-root = string(opts.ToolboxFolder);
+% File Exchange (submission 72637) keys every update to the ORIGINAL package GUID,
+% b8573c24-796f-4abe-9102-d9db2e75d3a9. The v1.7 repackage regenerated it, and
+% ToolboxOptions(prj) now synthesizes b23183a1-... (ignoring <param.guid>) with Identifier
+% read-only -- FEX tolerated the mismatch through v1.12 but rejected v1.13+ ("Package ID
+% does not match the existing package"). The only way to pin the id is to build the options
+% from the toolbox FOLDER with the identifier, then copy every writable setting over from
+% the .prj-derived options. MinimumMatlabRelease/MaximumMatlabRelease are not public-set, so
+% they are passed at construction instead.
+FEX_IDENTIFIER = 'b8573c24-796f-4abe-9102-d9db2e75d3a9';
+optsPrj = matlab.addons.toolbox.ToolboxOptions(prj);
+root = string(optsPrj.ToolboxFolder);
+
+ctorArgs = {char(root), FEX_IDENTIFIER};
+if ~isempty(optsPrj.MinimumMatlabRelease)
+    ctorArgs = [ctorArgs {'MinimumMatlabRelease', optsPrj.MinimumMatlabRelease}];
+end
+if ~isempty(optsPrj.MaximumMatlabRelease)
+    ctorArgs = [ctorArgs {'MaximumMatlabRelease', optsPrj.MaximumMatlabRelease}];
+end
+opts = matlab.addons.toolbox.ToolboxOptions(ctorArgs{:});
+
+% Copy every writable, non-dependent property from the .prj options (name, authors,
+% description, screenshot, getting-started guide, file set, path, ...). Identifier,
+% ToolboxFolder and the release bounds are intentionally left as constructed above.
+leaveAlone = {'Identifier','ToolboxFolder','MinimumMatlabRelease','MaximumMatlabRelease'};
+for p = metaclass(optsPrj).PropertyList'
+    if p.Dependent || p.Constant || ~strcmp(p.SetAccess,'public') || any(strcmp(p.Name,leaveAlone))
+        continue
+    end
+    opts.(p.Name) = optsPrj.(p.Name);
+end
+if ~strcmpi(char(opts.Identifier), FEX_IDENTIFIER)
+    error('buildToolbox:Identifier', ...
+        'Could not pin the File-Exchange identifier (got %s).', char(opts.Identifier));
+end
 
 [keepRoots, fileRoots] = local_rootfiles(txt);
 excludes = local_excludeRegexps(txt);
@@ -72,7 +105,7 @@ matlab.addons.toolbox.packageToolbox(opts);
 info = dir(outFile);
 fprintf('Packaged  : %s (%.1f KB)\n', outFile, info.bytes/1024);
 fprintf('Version   : %s\n', opts.ToolboxVersion);
-fprintf('Identifier: %s   (stable across versions -- never change)\n', opts.Identifier);
+fprintf('Identifier: %s   (File Exchange package id -- never change)\n', opts.Identifier);
 fprintf('Files     : %u of %u offered by the .prj parse\n', numel(opts.ToolboxFiles), numel(files));
 fprintf('Path      : %u folder(s)\n', numel(opts.ToolboxMatlabPath));
 end
