@@ -219,12 +219,10 @@ function save_for_parfor(fname,numvars,varargin)
 %     numvars <-- number of trailing variables to save
 %     varargin <-- the variables to save, passed through so INPUTNAME
 %                  can recover their caller-side names
+    s = struct();
     for i = 1:numvars
-       eval([inputname(i+2),' = varargin{i};']);  
+        s.(inputname(i+2)) = varargin{i};
     end
-    save('-mat',fname,inputname(3));
-    for i = 2:numvars    
-        save('-mat',fname,inputname(i+2),'-append');
-    end
+    save(fname, '-mat', '-struct', 's');
 end
    
