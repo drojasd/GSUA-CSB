@@ -78,10 +78,15 @@ classdef gsuaCoreFunctionsTest < matlab.unittest.TestCase
         end
 
         % ---- gsua_oatr ----
-        function oatrReturnsValidRanges(testCase)
+        function oatrCapsUnboundedExpansion(testCase)
+            % ka is insensitive on its upper side for this model; oatr used to run its
+            % bound out to ~realmax (1e308). It now caps at a finite ceiling and warns.
             T = testCase.pkTable();
-            Toat = gsua_oatr(T, 'lim', 0.2);
+            Toat = testCase.verifyWarning(@() gsua_oatr(T, 'lim', 0.2), ...
+                'GSUA:gsua_oatr:ExpansionCeiling');
             testCase.verifyEqual(height(Toat), 3);
+            testCase.verifyTrue(all(isfinite(Toat.Range(:))), 'Ranges must be finite.');
+            testCase.verifyLessThan(max(abs(Toat.Range(:))), realmax/2);
             testCase.verifyTrue(all(Toat.Range(:,1) <= Toat.Range(:,2)), ...
                 'Every expanded range must have lower <= upper.');
         end

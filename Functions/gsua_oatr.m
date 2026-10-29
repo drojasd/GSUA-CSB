@@ -77,6 +77,8 @@ end
 parfor (i=1:Np,parforArg)
 %for i=1:Np
     if ~fixed(i)
+    ceiling = 1e6*max([abs(noms(i)), ParT.Range(i,2)-ParT.Range(i,1), 1]);
+    ceilingHit = false;
     tnom=noms;
     intern_counter=0;
     aumenter=abs(ParT.Nominal(i)-ParT.Range(i,2))*0.1;
@@ -178,6 +180,27 @@ parfor (i=1:Np,parforArg)
     
         end
     
+        % Overflow / insensitivity guard: if the step has grown past a finite ceiling
+        % the output never responded to, stop expanding this direction at the ceiling
+        % instead of running the bound out to realmax (~1e308).
+        if ~isfinite(aumenter) || aumenter > ceiling
+            aumenter = ceiling;
+            ceilingHit = true;
+            if flag==1
+                Tf{i}(flag+1)=noms(i)+aumenter;
+            else
+                Tf{i}(flag-1)=noms(i)-aumenter;
+            end
+            aumenter=abs(ParT.Nominal(i)-ParT.Range(i,1))*0.1;
+            if aumenter==0
+                aumenter=abs(ParT.Nominal(i)*0.1);
+            end
+            counter=zeros(1,2);
+            flag=flag+1;
+            saver_down=tnom(i);
+            saver_up=tnom(i);
+        end
+
         intern_counter=intern_counter+1;
         ctimer = toc;
         if intern_counter>200 || ctimer>titerlimit
@@ -201,6 +224,11 @@ parfor (i=1:Np,parforArg)
         end
         
             
+    end
+    if ceilingHit
+        warning('GSUA:gsua_oatr:ExpansionCeiling', ...
+            ['Factor %s appears insensitive while expanding; its range hit the finite ' ...
+             'expansion ceiling and was capped. Treat it as unidentified in that direction.'], names{i});
     end
     disp(['Range for ' names{i} ' Done!'])
     disp(['Initial range of ' names{i} '(' num2str(i) ')--> ' num2str(Range(i,:))])
