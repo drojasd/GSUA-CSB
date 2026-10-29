@@ -8,9 +8,9 @@ function [ParT,Y,J] = gsua_sa(M,ParT,varargin)
 % Output:
 % T <-- summary table with sensitivity indices.
 % Additional features:
-% It is possible to request 2 extra positional outputs:
-% J <-- vector of model outputs in scalar representation (MSE)
-% Y <-- model output matrix (same as gsua_ua output)
+% It is possible to request 2 extra positional outputs, in this order:
+% Y <-- model output matrix (same as gsua_ua output), 2nd output
+% J <-- vector of model outputs in scalar representation (MSE), 3rd output
 % It is possible to choose between 6 SA methods using the paired feature
 % 'SensMethod',method. Where method is one of the following:
 % 'Saltelli'    <-- requires N*(Np/2+1) simulations
@@ -27,7 +27,7 @@ function [ParT,Y,J] = gsua_sa(M,ParT,varargin)
 % provide the paired feature 'xdata', [init:step:final].
 % Finally, you can avoid parallel speed up 
 % for simulation process using the paired feature 'parallel', false.
-% [ParT,J,Y] = gsua_sa(M,T,'SensMethod','Xiao','ynom',ynom)
+% [ParT,Y,J] = gsua_sa(M,T,'SensMethod','Xiao','ynom',ynom)
 % Note: ynom size must coincide with xdata size, where xdata is the next
 % xdata=linspace(Domain(1),Domain(2),Domain(2)-Domain(1)+1) and Domain is
 % the array of the model domain. If you are using the paired feature

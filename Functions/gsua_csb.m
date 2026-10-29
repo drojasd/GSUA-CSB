@@ -16,7 +16,7 @@ function [ParU,New_range,J_test,Y_test,sup,condition]= gsua_csb(Par,N,varargin)
 % Also, it is possible to apply the next paired features
 % 'ynom',ynom <-- to especify a new output objective
 % 'reps',k <--to perform k cycles. Default: 100.
-% 'recort',r <-- to set another recort criteria (r). Default: 0.5.
+% 'switch',s <-- to set another cut criteria (s). Default: 0.75.
 % 'select',s <-- to set another select criteria (s). Default: 0.5.
 % 'lim',l <-- to set another distance criteria (l). Default: 0.3.
 % 'stop',p <-- to set the confidence of the interval in (p). Default: 0.95.
