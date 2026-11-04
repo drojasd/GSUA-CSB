@@ -245,6 +245,10 @@ class IdentifiabilityResult:
     n_outliers_removed: int
     cluster: ClusterInfo
     estimates_used: NDArray[np.float64]
+    index_method: str = "spread"
+    """Which interval-width term the ``index`` used: ``"spread"`` (estimate 2.5-97.5 percentile range
+    over the original prior range, the default) or ``"ci"`` (legacy: median-CI width over the original
+    range)."""
 
 
 def _summary_stats(
@@ -253,6 +257,7 @@ def _summary_stats(
     correction: bool,
     ci_alpha: float,
     min_corr_n: int,
+    index_method: str,
 ) -> tuple[NDArray[np.float64], NDArray[np.float64], NDArray[np.float64], NDArray[np.float64], bool]:
     """Compute (range, nominal, index, correlation, correlation_reliable) from a single
     (presumed-unimodal) point set."""
@@ -283,8 +288,19 @@ def _summary_stats(
         lb = np.where(lb < lb0, lb0, lb)
         ub = np.where(ub > ub0, ub0, ub)
 
+    # Interval-width term of the index. "spread" (default) measures the estimate dispersion (the
+    # 2.5-97.5 percentile range) against the ORIGINAL prior range -- a parameter scattered across its
+    # whole prior is not identified, even when its MEDIAN is pinned down. "ci" is the legacy
+    # behaviour (width of the median confidence interval over the original range), which shrinks as
+    # the sample grows and so can make a flat-but-well-centred parameter look well identified.
     boxin = np.zeros(Np)
-    boxin[free_mask] = (ub[free_mask] - lb[free_mask]) / width0[free_mask]
+    if index_method == "spread":
+        spread = np.percentile(X, 97.5, axis=0) - np.percentile(X, 2.5, axis=0)
+        boxin[free_mask] = np.minimum(spread[free_mask] / width0[free_mask], 1.0)
+    elif index_method == "ci":
+        boxin[free_mask] = (ub[free_mask] - lb[free_mask]) / width0[free_mask]
+    else:
+        raise ValueError(f"Unknown index_method: {index_method!r}, expected 'spread' or 'ci'")
     if correlation_reliable:
         corrin = np.zeros(Np)
         extrin = np.zeros(Np)
@@ -318,6 +334,7 @@ def identifiability_analysis(
     sil_threshold: float = 0.5,
     ci_alpha: float = 0.05,
     min_corr_n: int = 5,
+    index_method: Literal["spread", "ci"] = "spread",
     seed: int | None = None,
 ) -> IdentifiabilityResult:
     """Analyze practical parameter identifiability from a set of repeated estimations.
@@ -366,6 +383,13 @@ def identifiability_analysis(
             Below this, correlation is trivially degenerate rather than just noisy (e.g. exactly 2
             points always correlate at +-1, regardless of any real relationship) -- see
             :attr:`IdentifiabilityResult.correlation_reliable`. Default 5.
+        index_method: Interval-width term of the identifiability index. ``"spread"`` (default)
+            measures the estimate dispersion (2.5-97.5 percentile range) against the ORIGINAL prior
+            range -- a parameter scattered across its whole prior is not identified, even when its
+            median is pinned down (e.g. an initial-condition parameter the data barely constrains).
+            ``"ci"`` is the legacy behaviour: the width of the median confidence interval over the
+            original range, which shrinks as the sample grows and so can rate a flat-but-well-centred
+            parameter as identified. The correlation terms are unchanged either way.
         seed: Seed for ``SpectralClustering``'s stochastic eigensolver, for reproducibility.
 
     Returns:
@@ -376,6 +400,9 @@ def identifiability_analysis(
             ``cost_method`` is not one of the two supported values.
     """
     X = np.atleast_2d(np.asarray(estimates, dtype=np.float64))
+
+    if index_method not in ("spread", "ci"):
+        raise ValueError(f"Unknown index_method: {index_method!r}, expected 'spread' or 'ci'")
 
     n_bad_fit_removed = 0
     if cost is not None:
@@ -460,7 +487,7 @@ def identifiability_analysis(
         n_outliers_removed = int((~keep).sum())
 
     rng, nominal, index, correlation, correlation_reliable = _summary_stats(
-        stats_source, model, correction, ci_alpha, min_corr_n
+        stats_source, model, correction, ci_alpha, min_corr_n, index_method
     )
     if not correlation_reliable:
         warnings.warn(
@@ -481,4 +508,5 @@ def identifiability_analysis(
         n_outliers_removed=n_outliers_removed,
         cluster=cluster_info,
         estimates_used=stats_source,
+        index_method=index_method,
     )

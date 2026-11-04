@@ -91,6 +91,16 @@ function [T,clusterInfo] = gsua_ia(T,T_est,varargin)
 %     'CostAtol'     <-- (optional, paired) Default: 1e-8
 %     'CostGapRatio' <-- (optional, paired) Default: 3
 %     'MinKeep'      <-- (optional, paired) Default: 3
+%     'IndexMethod'  <-- (optional, paired) 'spread' (default) or 'ci'. How the
+%                        identifiability index measures interval width. 'spread'
+%                        uses the 2.5-97.5 percentile dispersion of the estimates
+%                        relative to the ORIGINAL range, so a parameter scattered
+%                        across its whole prior is not reported as identified even
+%                        when its median is well pinned (e.g. an initial-condition
+%                        factor the data barely constrains). 'ci' is the legacy
+%                        behaviour: median-CI width over the original range, which
+%                        shrinks as the sample grows and can rate a flat parameter
+%                        as identified. The correlation terms are unchanged.
 %
 %   Outputs:
 %     T           <-- same table with T.Range replaced by the new
@@ -137,6 +147,7 @@ addParameter(p,'CostRtol',0.1);
 addParameter(p,'CostAtol',1e-8);
 addParameter(p,'CostGapRatio',3);
 addParameter(p,'MinKeep',3);
+addParameter(p,'IndexMethod','spread');
 parse(p,T,T_est,varargin{:});
 
 correction=p.Results.correction;
@@ -146,6 +157,7 @@ cluster=p.Results.cluster;
 maxK=p.Results.maxK;
 silThreshold=p.Results.silThreshold;
 cost=p.Results.cost;
+indexMethod=validatestring(p.Results.IndexMethod,{'spread','ci'});
 
 % --- Fit-quality filtering (BEFORE anything else, including clustering/outliers) ---
 if ~isempty(cost)
@@ -236,7 +248,18 @@ if (any(lb(lb<T.Range(:,1))))||(any(up(up>T.Range(:,2))))
     end
 end
 
-boxin=(up-lb)./(T.Range(:,2)-T.Range(:,1));
+% Interval-width term of the index. 'spread' (default) measures the estimate dispersion (2.5-97.5
+% percentile range) against the ORIGINAL prior range -- a parameter scattered across its whole prior
+% is not identified even if its median is pinned down. 'ci' is the legacy behaviour (median-CI width
+% over the original range), which shrinks as the sample grows. See the IndexMethod help above.
+rangeW = T.Range(:,2)-T.Range(:,1);
+switch indexMethod
+    case 'spread'
+        spreadW = prctile(statT_est,97.5,2) - prctile(statT_est,2.5,2);
+        boxin = min(spreadW ./ rangeW, 1);
+    otherwise   % 'ci' (legacy)
+        boxin = (up-lb) ./ rangeW;
+end
 len=length(boxin);
 corrin=sum(abs(RHO))/len;
 extrin=sum(abs(RHO)>0.5)/len;

@@ -73,6 +73,11 @@ function [T,clusterInfo] = gsua_dia(T,T_est,varargin)
 %     'CostAtol'     <-- (optional, paired) Default: 1e-8
 %     'CostGapRatio' <-- (optional, paired) Default: 3
 %     'MinKeep'      <-- (optional, paired) Default: 3
+%     'IndexMethod'  <-- (optional, paired) 'spread' (default) or 'ci'. See
+%                        GSUA_IA: 'spread' scores interval width by the 2.5-97.5
+%                        percentile dispersion of the estimates over the ORIGINAL
+%                        range (a flat parameter is not called identified); 'ci' is
+%                        the legacy median-CI width over the original range.
 %
 %   Outputs:
 %     T           <-- same table with T.Range replaced by the new
@@ -107,6 +112,7 @@ addParameter(p,'CostRtol',0.1);
 addParameter(p,'CostAtol',1e-8);
 addParameter(p,'CostGapRatio',3);
 addParameter(p,'MinKeep',3);
+addParameter(p,'IndexMethod','spread');
 parse(p,T,T_est,varargin{:});
 
 outlier=p.Results.outlier;
@@ -114,6 +120,7 @@ cluster=p.Results.cluster;
 maxK=p.Results.maxK;
 silThreshold=p.Results.silThreshold;
 cost=p.Results.cost;
+indexMethod=validatestring(p.Results.IndexMethod,{'spread','ci'});
 
 if ~isempty(cost)
     keepCost=gsua_costcutoff(cost,p.Results.CostMethod,p.Results.CostRtol, ...
@@ -194,7 +201,17 @@ if (any(lb(lb<T.Range(:,1))))||(any(up(up>T.Range(:,2))))
 end
 
 
-boxin=(up-lb)./(T.Range(:,2)-T.Range(:,1));
+% Interval-width term of the index -- see GSUA_IA's IndexMethod help. 'spread' (default) uses the
+% estimate 2.5-97.5 percentile dispersion over the ORIGINAL range; 'ci' is the legacy median-CI
+% width over the original range.
+rangeW = T.Range(:,2)-T.Range(:,1);
+switch indexMethod
+    case 'spread'
+        spreadW = prctile(statT_est,97.5,2) - prctile(statT_est,2.5,2);
+        boxin = min(spreadW ./ rangeW, 1);
+    otherwise   % 'ci' (legacy)
+        boxin = (up-lb) ./ rangeW;
+end
 len=length(boxin);
 corrin=sum(abs(RHO))/len;
 extrin=sum(abs(RHO)>0.5)/len;

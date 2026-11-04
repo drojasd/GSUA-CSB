@@ -364,3 +364,30 @@ class TestEstimatesUsed:
 
         M = design_matrix(model, 500, "joint", 0, pool=result.estimates_used)
         assert np.abs(M[:, 0] * M[:, 1] - 8.0).max() < 1e-10
+
+
+def test_flat_parameter_flagged_by_spread_index_not_by_legacy_ci():
+    # A parameter scattered across its whole prior but UNCORRELATED and with a well-pinned median:
+    # the legacy "ci" index rates it as identified (its median CI shrinks with n), while the default
+    # "spread" index correctly flags it. This is the #4 fix (flat initial-condition parameters like
+    # the SIR R0 that vary widely without changing the cost).
+    rng = np.random.default_rng(42)
+    a = 5.0 + rng.normal(0, 0.01, size=300)   # tightly identified
+    b = rng.uniform(0, 10, size=300)          # flat across the whole prior, uncorrelated
+    estimates = np.column_stack([a, b])
+    model = _model()
+
+    spread = identifiability_analysis(model, estimates, index_method="spread")
+    legacy = identifiability_analysis(model, estimates, index_method="ci")
+
+    assert spread.index_method == "spread"
+    assert spread.index[1] > legacy.index[1]   # spread exposes the flat parameter the CI index hides
+    assert spread.index[1] > 0.5               # correctly flagged as poorly identified
+    assert spread.index[0] < 0.4               # the genuinely identified parameter stays low
+
+
+def test_unknown_index_method_raises():
+    model = _model()
+    estimates = np.zeros((5, 2))
+    with pytest.raises(ValueError, match="Unknown index_method"):
+        identifiability_analysis(model, estimates, index_method="bogus")
