@@ -95,7 +95,7 @@ gsua_plot('Bar', T, T.STi)
 %[text] - **`'opt'`** (default `[]`) — an `optimoptions` object for the chosen optimizer (the optimizer name must match). \
 %[text] - **`'Multistart'`** (default `1`) — number of estimations per cycle using MATLAB's MultiStart (lsqcurvefit only). \
 %[text] - **`'ipoint'`** (default `[]`) — explicit initial points, with `N` rows and one column per free factor, instead of random starts. \
-%[text] - **`'margin'`** (default `0`) and **`'alpha'`** (default `2`) — switch the objective from plain least squares to the correlation-penalized multi-objective cost (`gsua_costf`), which is what you want when one model must match several signals at once. `gsua_pe` records both on the table so `gsua_noisefloor` (section 7) recovers them automatically. \
+%[text] - **`'margin'`** (default `0`) and **`'alpha'`** (default `2`) — switch the objective from plain least squares to the correlation-penalized multi-objective cost (`gsua_costf`), which is what you want when one model must match several signals at once. `gsua_pe` records both on the table so `gsua_noisefloor` (section 7) recovers them automatically. The value you pass is a **relative residual band**: with a good-shape fit, `cost < 1` means the residual RMS is within that fraction of the data RMS (`0.3` ≈ 30%). It is used internally as `m+1` and, because the regulator does not depend on the parameters, it only rescales the cost — it does not move the optimum, only what `cost < 1` and the noise-floor threshold mean. \
 %[text] - **`'A'`, `'B'`, `'Aeq'`, `'Beq'`, `'nonlcon'`** (default `[]`) — linear (`A*x<=B`, `Aeq*x=Beq`) and nonlinear constraints passed through to the optimizer. \
 %[text] - **`'Show'`** (default `'off'`) — `'on'` plots the optimizer results; `'on2'` also calls `gsua_ia`. \
 %[text] - **`'save'`** (default `false`) — if `true`, writes `Estimations.mat` to the current folder after each run as a crash-resume checkpoint, overwriting any existing file of that name. (It defaulted to `true` before v1.15.) \
@@ -117,13 +117,30 @@ T
 %[text] - **`'cost'`** (default `[]`) — the `res` output of `gsua_pe`, one entry per column of `T_est`; screens out runs that converged badly before any statistic is computed. \
 %[text] - **`'CostMethod'`** (default `'rtol'`) — `'rtol'` (keep `cost <= min*(1+CostRtol)+CostAtol`) or `'gap'` (cut at the largest jump in the sorted costs). \
 %[text] - **`'CostRtol'`** (default `0.1`), **`'CostAtol'`** (default `1e-8`), **`'CostGapRatio'`** (default `3`), **`'MinKeep'`** (default `3`) — tolerances for the two methods and a floor on how many runs survive. \
+%[text] - **`'IndexMethod'`** (default `'spread'`) — how the index measures interval width. `'spread'` uses the estimates' 2.5–97.5 percentile dispersion over the **original** range, so a factor scattered across its whole prior is not called identified even when its median is well pinned; `'ci'` is the legacy median-CI width, which shrinks with sample size. \
+%[text] - **`'truth'`** (default `[]`), **`'xdata'`**/**`'ydata'`** (default `[]`) — with `show`, `'truth'` (an `Np x 1` reference vector) is marked on the CDFs, boxplots and per-cluster scatter, and `'xdata'`+`'ydata'` draw each cluster's curve against the observed data. \
 T_newRange = gsua_ia(T, T.Estlsqc)
-%[text] When `cluster` is true and a genuine split is found, every statistic reflects the dominant (largest) cluster only — pooling separated basins into one interval is not meaningful — and `clusterInfo` reports each basin's candidate global minimum:
+%[text] When `cluster` is true and a genuine split is found, every statistic in `T` reflects the dominant (largest) cluster only — pooling separated basins into one interval is not meaningful — while `clusterInfo` describes **every** basin. Besides `NumClusters`, `Centers` (one candidate global minimum per basin), `ClusterSize`, `Silhouette` and `Dominant`, it carries per-cluster cells `Range{c}`/`Index{c}`/`Est{c}`/`Median{c}` (each computed like the dominant), the cluster-count diagnostic `SilhouetteByK`/`SilhouetteK`, and — over the **original** `T_est` columns — the fit-quality survivor mask `Kept` and the labels `Idx` (`NaN` for cost-dropped runs). `gsua_clustersummary(T, clusterInfo)` turns it into a per-cluster, per-factor table with an identifiability verdict:
 %%
 %[text]
 %   [Tia,clusterInfo] = gsua_ia(T, T.Estlsqc, false, false, true, true, 'cost', res);
 %   clusterInfo.NumClusters   % > 1 means distinct basins were found
 %   clusterInfo.Centers       % one candidate global minimum per basin
+%   clusterInfo.Range{2}      % cluster 2's own confidence interval
+%   S = gsua_clustersummary(Tia, clusterInfo)   % per-cluster, per-factor verdict table
+%
+%%
+%[text] ## 5.2 Parametric bootstrap of parameter uncertainty — `gsua_bootstrap`
+%[text] Re-fitting the **same** data from many starting points (multistart) explores the cost function but collapses to one optimum — it does not measure how much the data noise moves each estimate. `gsua_bootstrap` does: from the best fit it generates `B` synthetic datasets under the data's own observation-noise model (the same `'poisson'`/`'quasipoisson'`/`'nbglobal'` models as `gsua_noisefloor`, with cumulative-series support), re-fits each with `gsua_pe`, and returns the ensemble ready to pass to `gsua_ia`. Feed `gsua_ia` this bootstrap ensemble, not the raw multistart pool, for honest uncertainty intervals and correlations.
+%[text] Call syntax: `[Est,costs] = gsua_bootstrap(T, xdata, ydata, Est0, res, ...)`, where `Est0`/`res` are a pool (e.g. `T.Estfmincon`, `res`) whose best member seeds the noise model.
+%[text] - **`'B'`** (default `200`) — number of synthetic datasets / refits. \
+%[text] - **`'solver'`** (default `'fmincon'`), **`'N'`** (default `20`), **`'margin'`**/**`'alpha'`** (default recovered from `T`) — the `gsua_pe` options used per replica. \
+%[text] - **`'noise'`** (default `'quasipoisson'`), **`'cumulative'`**, **`'seed'`**, **`'parallel'`** (default `false`) — the noise model, per-row cumulative flags, RNG seed, and whether to parallelize the refits. \
+%%
+%[text]
+%   [T,res] = gsua_pe(T, xdata, ydata, 'solver','fmincon', 'margin',0.3, 'N',200);
+%   Eb = gsua_bootstrap(T, xdata, ydata, T.Estfmincon, res, 'B',200, 'seed',1);
+%   [T,ci] = gsua_ia(T, Eb, false, false, true, true);   % honest uncertainty from the bootstrap
 %
 %%
 %[text] ## 6. Uncertainty-interval calculus — `gsua_oatr` and `gsua_csb`
@@ -183,6 +200,7 @@ T_oat = gsua_oatr(T);
 %[text] - **`'cumulative'`** (default all `false`) — one logical flag per output row; a cumulative series has its noise estimated on the first-differenced (incident) series and re-accumulated. \
 %[text] - **`'seed'`** (default none) — seed for reproducible draws; the caller's global RNG state is always restored on return. \
 %[text] - **`'margin'`**, **`'alpha'`** (default recovered from the table) — override the values `gsua_pe` scored with, in `gsua_pe`'s own convention. \
+%[text] - **`'Show'`** (default `false`) — plot the sorted pool costs (log scale) with the threshold and accepted/rejected runs marked, and the bootstrap cost distribution with the chosen quantile. \
 %[text] Key outputs: `out.threshold` (the cutoff on the `res` scale), `out.accepted` (logical `res < threshold`), and `out.byModel` (all three noise models). If the best fit itself exceeds the floor, a warning fires — the model is rejected as a description of the data at that quantile.
 %%
 %[text]

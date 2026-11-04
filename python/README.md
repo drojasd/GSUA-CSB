@@ -56,7 +56,9 @@ Each capability is exposed two ways:
 | Sensitivity analysis (Sobol, Jansen, Saltelli, Xiao, OAT) | Done | `gsua_sa` |
 | Uncertainty analysis + Monte Carlo filtering | Done | `gsua_ua`, `gsua_MCF` |
 | Parameter estimation (`scipy.optimize`) | Done | `gsua_pe` |
-| Identifiability + multi-minima clustering (`sklearn`) | Done | `gsua_ia`, `gsua_dia` |
+| Identifiability + multi-minima clustering (`sklearn`), per-cluster stats, spread-based index | Done | `gsua_ia`, `gsua_dia` |
+| Parametric bootstrap of parameter uncertainty | Done | `gsua_bootstrap` (new to both ports) |
+| Per-cluster identifiability summary + verdict | Done | `gsua_clustersummary` (new to both ports) |
 | Range refinement, confidence sub-contour box | Done | `gsua_oatr`, `gsua_oatr2`, `gsua_csb` |
 | Profile likelihood | Done | `gsua_likelihood` |
 | Noise-calibrated fit-acceptance threshold (`noise_floor`) | Done | `gsua_noisefloor` (new to both ports this pass) |
