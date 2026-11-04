@@ -42,7 +42,7 @@ from ._sensitivity import SensitivityResult, sensitivity_analysis
 from ._stats import band_depth, median_ci
 from ._uncertainty import MCFResult, UncertaintyResult, monte_carlo_filter, uncertainty_analysis
 
-__version__ = "0.3.0"
+__version__ = "0.3.1"
 
 try:
     from ._symbolic import SymbolicODEModel

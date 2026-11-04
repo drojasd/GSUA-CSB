@@ -46,6 +46,29 @@ def test_plot_uncertainty_draws_ensemble_and_nominal():
     assert ax.get_legend() is not None
 
 
+def test_plot_uncertainty_square_ensemble_each_line_is_a_simulation():
+    # When N == len(xdata) the ensemble matrix is square -- the case that comes out transposed in
+    # MATLAB's plot(t, M). plot_uncertainty iterates rows explicitly, so it must still draw one line
+    # per simulation. Row i is the constant i, so each ensemble line must be flat; a transposed draw
+    # would give increasing lines instead. This guards the Python side against that regression.
+    from gsua_csb._uncertainty import UncertaintyResult
+
+    n = 15
+    xdata = np.arange(1.0, n + 1)  # len == n -> square ensemble
+    Y = np.repeat(np.arange(n, dtype=float)[:, None], n, axis=1)  # row i is the constant i
+    ua = UncertaintyResult(Y=Y, y_nom=np.full(n, 100.0), xdata=xdata)
+    ax = plot_uncertainty(ua)
+
+    assert len(ax.lines) == n + 1  # n simulations + the nominal curve
+    vals = []
+    for ln in ax.lines[:n]:
+        yd = np.asarray(ln.get_ydata())
+        assert yd.shape[0] == n  # spans the time axis
+        assert np.ptp(yd) == 0  # constant -> one simulation, not a transposed time column
+        vals.append(yd[0])
+    assert sorted(vals) == list(range(n))  # every simulation present once
+
+
 def test_plot_uncertainty_accepts_existing_axes():
     import matplotlib.pyplot as plt
 

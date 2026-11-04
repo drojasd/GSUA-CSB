@@ -1,5 +1,33 @@
 # Changelog
 
+## 1.17.1 (MATLAB) / 0.3.1 (Python) — 2026-11-04
+
+Patch release: three fixes, with MATLAB/Python parity and tests in both languages.
+
+### Fixed
+
+- **Transposed uncertainty plots when N == numel(xdata).** `gsua_plot('UncertaintyAnalysis', ...)`
+  called `plot(t, Y(:,:,j))` with a simulations×time matrix. When that matrix is square, MATLAB
+  plots its columns (time instants), so the ensemble came out transposed — each drawn curve was one
+  time instant sweeping the simulations. Each `Y(:,:,j)` is now transposed explicitly so every line
+  is one simulation regardless of shape, and the curves-vs-boxplot choice uses `numel(t)` (not
+  `size(t,2)`), so a column `xdata` still draws curves. Affects `gsua_eval`/`gsua_ua`/`gsua_csb`,
+  which share this branch. (Python's `plot_uncertainty` iterates rows explicitly and was already
+  immune; a square-ensemble regression test was added on both sides.)
+- **`.mltbx` pinned a maximum MATLAB release.** The package declared `releaseCompatibility
+  end="R2025b"` (from `param.release.end="latest"`, resolved to the packaging release), so installing
+  on a newer release or on MATLAB Online reported "not supported for this MATLAB release" even though
+  the toolbox runs. `buildToolbox` now leaves `MaximumMatlabRelease` empty — the documented "no
+  maximum restriction" — which serializes to `end="latest"` (MATLAB's unbounded sentinel, not a
+  concrete release). The R2017a minimum and MATLAB Online compatibility are kept; a test inspects the
+  built artifact's `systemRequirements.xml`.
+- **`gsua_bootstrap` was slow by default.** With no `'opt'`, the B internal refits ran the solver
+  with Display on, so `fmincon`/`ga`/… printed a result block per start; on an interactive desktop
+  that console rendering dominated the runtime (a 40×8 fmincon bootstrap measured ~234 s versus
+  ~54 s with Display off). `gsua_bootstrap` now builds Display-off options for the chosen solver by
+  default; Display is cosmetic, so the ensemble for a given seed is unchanged. (Python's refits use
+  SciPy, which is silent by default — already at parity.)
+
 ## 1.17.0 (MATLAB) / 0.3.0 (Python) — 2026-11-04
 
 Overhaul of the `gsua_pe` → `gsua_noisefloor` → `gsua_ia` workflow (course-driven), with MATLAB and

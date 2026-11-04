@@ -1,8 +1,9 @@
-function outFile = buildToolbox(version)
+function outFile = buildToolbox(version, outFile)
 %BUILDTOOLBOX Package GSUA-CSB into release/<version>/GSUA-CSB.mltbx.
 %
-%   outFile = buildToolbox()          % version from GSUA-UCI.prj
-%   outFile = buildToolbox("1.12")    % explicit version
+%   outFile = buildToolbox()           % version from GSUA-UCI.prj
+%   outFile = buildToolbox("1.12")     % explicit version
+%   outFile = buildToolbox("1.12",f)   % write the .mltbx to f instead of release/<version>/
 %
 %   WHY THIS EXISTS. matlab.addons.toolbox.ToolboxOptions('GSUA-UCI.prj') does not apply the
 %   <fileset.rootfiles> whitelist or the <param.exclude.filters> blacklist that the .prj
@@ -53,14 +54,18 @@ ctorArgs = {char(root), FEX_IDENTIFIER};
 if ~isempty(optsPrj.MinimumMatlabRelease)
     ctorArgs = [ctorArgs {'MinimumMatlabRelease', optsPrj.MinimumMatlabRelease}];
 end
-if ~isempty(optsPrj.MaximumMatlabRelease)
-    ctorArgs = [ctorArgs {'MaximumMatlabRelease', optsPrj.MaximumMatlabRelease}];
-end
+% Deliberately DO NOT set MaximumMatlabRelease. The .prj declares param.release.end = "latest",
+% which ToolboxOptions resolves to the release used to package (e.g. R2025b). That stamps
+% releaseCompatibility end="R2025b" into the .mltbx, so installing on a newer release -- or on
+% MATLAB Online, which tracks the latest -- reports "not supported for this MATLAB release" even
+% though the toolbox runs fine (reported v1.17.0). Leaving the maximum empty ships with no upper
+% bound (no end attribute); MinimumMatlabRelease and the MATLAB Online platform flag still apply.
 opts = matlab.addons.toolbox.ToolboxOptions(ctorArgs{:});
 
 % Copy every writable, non-dependent property from the .prj options (name, authors,
-% description, screenshot, getting-started guide, file set, path, ...). Identifier,
-% ToolboxFolder and the release bounds are intentionally left as constructed above.
+% description, screenshot, getting-started guide, file set, platform compatibility, ...).
+% Identifier, ToolboxFolder and MinimumMatlabRelease are left as constructed above, and
+% MaximumMatlabRelease is left empty on purpose (see the note above) rather than copied.
 leaveAlone = {'Identifier','ToolboxFolder','MinimumMatlabRelease','MaximumMatlabRelease'};
 for p = metaclass(optsPrj).PropertyList'
     if p.Dependent || p.Constant || ~strcmp(p.SetAccess,'public') || any(strcmp(p.Name,leaveAlone))
@@ -94,9 +99,15 @@ opts.ToolboxVersion = version;   % set explicitly: the .prj parse reports a stal
 % artifact intact rather than deleting it on the way to failing.
 local_assertClean(erase(string(opts.ToolboxFiles), root));
 
-releaseDir = fullfile('release', char(version));
-if ~isfolder(releaseDir), mkdir(releaseDir); end
-outFile = fullfile(releaseDir, 'GSUA-CSB.mltbx');
+if nargin < 2 || isempty(outFile)
+    releaseDir = fullfile('release', char(version));
+    if ~isfolder(releaseDir), mkdir(releaseDir); end
+    outFile = fullfile(releaseDir, 'GSUA-CSB.mltbx');
+else
+    outFile = char(outFile);
+    outDir = fileparts(outFile);
+    if ~isempty(outDir) && ~isfolder(outDir), mkdir(outDir); end
+end
 if isfile(outFile), delete(outFile); end
 opts.OutputFile = outFile;
 

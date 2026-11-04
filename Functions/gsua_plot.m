@@ -44,6 +44,12 @@ end
 switch plot_type
     case 'UncertaintyAnalysis'
         Y = p2; t = p3; nout=size(Y,3);
+        % plot(t,M) is orientation-ambiguous when M is square: MATLAB then plots M's COLUMNS,
+        % which here are time instants, not simulations, so a square ensemble (N == numel(t)) came
+        % out transposed. Force t to a row and transpose each Y(:,:,j) so every plotted line is one
+        % simulation regardless of shape. Use numel(t) (not size(t,2)) for the curves-vs-boxplot
+        % choice so a column xdata still selects curves instead of the single-instant boxplot.
+        t = reshape(t,1,[]);
         D1 = floor(sqrt(nout)); % Number of rows of subplot
         D2 = D1+ceil((nout-D1^2)/D1); % Number of columns of subplot
         n=size(Y,1);
@@ -52,17 +58,17 @@ switch plot_type
             subplot(D1,D2,j)
         switch nargin
             case 4
-                if size(t,2)>1
-                plot(t,Y(:,:,j),'b');
+                if numel(t)>1
+                plot(t,Y(:,:,j).','b');
                 else
                     boxplot(Y(:,:,j));
                 end
             case 5
                 y_nom = p4(j,:);
-                if size(t,2)>1
-                
-                h = plot(t,Y(:,:,j),'b',t,y_nom,'r');
-                set(h(size(Y,1)+1),'linewidth',width);
+                if numel(t)>1
+
+                h = plot(t,Y(:,:,j).','b',t,y_nom,'r');
+                set(h(size(Y,1)+1),'linewidth',width);   % handle n+1 = the nominal (red) curve
                 else
                     boxplot(Y(:,:,j));
                     hold on
@@ -72,9 +78,9 @@ switch plot_type
             case 6
                 y_nom = p4;
                 sup=p5;
-                h1=plot(t,Y(sup+1:end,:,j),'Color',[ 0 0.75 1]);
+                h1=plot(t,Y(sup+1:end,:,j).','Color',[ 0 0.75 1]);
                 hold on
-                h2=plot(t,Y(1:sup,:,j),'Color',[0 0.2 0.8]);
+                h2=plot(t,Y(1:sup,:,j).','Color',[0 0.2 0.8]);
                 h3=plot(t,y_nom(j,:),'Color',[1,0,0]);
                 legend([h1(1),h2(end-1),h3(end)],{'Distant outputs','Right outputs','Nominal output'})
                 set(h3,'linewidth',2);

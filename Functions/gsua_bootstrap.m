@@ -50,7 +50,9 @@ function [Est,costs,out] = gsua_bootstrap(T,xdata,ydata,Est0,res,varargin)
 %     'seed'       <-- seed for the synthetic-data draws (and, for parity, the GSUA_PE starts via
 %                      the global stream). The caller's global RNG state is restored on return.
 %     'parallel'   <-- if true, run the B refits with parfor. Default false.
-%     'opt'        <-- optimoptions passed through to GSUA_PE. Default: [].
+%     'opt'        <-- optimoptions passed through to GSUA_PE. Default: a Display-off options set
+%                      for the chosen solver, so the refits stay quiet (passing Display-on options
+%                      slows a desktop run dramatically without changing the estimates).
 %     'timer'      <-- if true (default), print progress.
 %
 %   Outputs:
@@ -96,6 +98,15 @@ noiseChoice = validatestring(p.Results.noise,{'poisson','quasipoisson','nbglobal
 parallelRefit = p.Results.parallel;
 Opt = p.Results.opt;
 timer = p.Results.timer;
+
+% The B internal refits must stay quiet. With no options, fmincon/ga/patternsearch/... print a
+% result block per start, and on an interactive desktop that console rendering dominates the runtime
+% -- a 40x8 fmincon bootstrap measured ~234 s this way versus ~54 s for the identical refits with
+% Display off. Build a Display-off default for the chosen solver; a caller-supplied 'opt' is passed
+% through untouched. Display is cosmetic, so this does not change the estimates for a given seed.
+if isempty(Opt)
+    Opt = local_quietOptions(solver);
+end
 
 % Orient ydata to outputs x samples (accept a single output passed as a column vector).
 if size(ydata,2) ~= length(xdata) && size(ydata,1) == length(xdata)
@@ -220,4 +231,22 @@ end
 estimates = Tb.(estCol);     % Np x N, columns sorted best-first by gsua_pe
 [cb,jx] = min(resb);
 Eb = estimates(:,jx);
+end
+
+
+function opt = local_quietOptions(solver)
+%LOCAL_QUIETOPTIONS Display-off options for the GSUA_PE solver, so the refits never flood the
+%   console. Only the Display setting is touched; every other option stays at the solver default,
+%   so the estimates are identical to the previous (option-less) path for a given seed.
+switch solver
+    case 'fmincon',   opt = optimoptions('fmincon','Display','off');
+    case 'lsqc',      opt = optimoptions('lsqcurvefit','Display','off');
+    case 'lsqn',      opt = optimoptions('lsqnonlin','Display','off');
+    case 'ga',        opt = optimoptions('ga','Display','off');
+    case 'particle',  opt = optimoptions('particleswarm','Display','off');
+    case 'psearch',   opt = optimoptions('patternsearch','Display','off');
+    case 'surrogate', opt = optimoptions('surrogateopt','Display','off');
+    case 'annealing', opt = optimoptions('simulannealbnd','Display','off');
+    otherwise,        opt = [];   % unknown solver: leave gsua_pe to use its own default
+end
 end
