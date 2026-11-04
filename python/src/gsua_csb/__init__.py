@@ -14,6 +14,7 @@ from the MATLAB originals documented in each module.
 
 from __future__ import annotations
 
+from ._bootstrap import BootstrapResult, parametric_bootstrap
 from ._costs import costf, costf_multi, coverage_metric, likecost, rcostf
 from ._csb import CSBResult, RangeRefinementResult, confidence_subcontour_box, range_refinement
 from ._estimation import PEResult, parameter_estimation
@@ -70,6 +71,7 @@ gsua_ua = uncertainty_analysis
 gsua_MCF = monte_carlo_filter
 gsua_mcf = monte_carlo_filter  # deprecated spelling; MATLAB's is gsua_MCF
 gsua_pe = parameter_estimation
+gsua_bootstrap = parametric_bootstrap
 gsua_ia = identifiability_analysis
 gsua_dia = identifiability_analysis
 gsua_oatr = range_refinement
@@ -101,6 +103,8 @@ __all__ = [
     "monte_carlo_filter",
     "PEResult",
     "parameter_estimation",
+    "BootstrapResult",
+    "parametric_bootstrap",
     "ClusterInfo",
     "IdentifiabilityResult",
     "identifiability_analysis",
@@ -135,6 +139,7 @@ __all__ = [
     "gsua_MCF",
     "gsua_mcf",
     "gsua_pe",
+    "gsua_bootstrap",
     "gsua_ia",
     "gsua_dia",
     "gsua_oatr",

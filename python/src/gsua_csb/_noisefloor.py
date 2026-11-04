@@ -216,55 +216,26 @@ def noise_floor(
     ibest = int(np.argmin(cost))
     best_cost = float(cost[ibest])
     theta_star = x[ibest]
-    f = np.atleast_2d(np.asarray(model.evaluate(theta_star, xdata), dtype=np.float64))
 
-    p_free = int((~model.fixed).sum())
-
-    # Per-output incident/cumulative transform, built once and reused for both dispersion
-    # estimation and synthetic generation. For a cumulative row, diffing lets NaN
-    # propagate/smear naturally across any real gap in ydata -- mathematically correct (a
-    # cumulative gap genuinely does not tell you the incident breakdown across it), and only ever
-    # feeds a pooled scalar (phi/k), not a positional array, so no gap-bridging logic is needed.
-    mu_grid = np.zeros((n_outputs, length))
-    r_grid = np.full((n_outputs, length), np.nan)
-    for i in range(n_outputs):
-        if cumulative_mask[i]:
-            f_inc = np.diff(np.concatenate([[0.0], f[i]]))
-            y_inc = np.diff(np.concatenate([[0.0], ydata[i]]))
-            mu_grid[i] = f_inc
-            r_grid[i] = y_inc - f_inc
-        else:
-            mu_grid[i] = f[i]
-            r_grid[i] = ydata[i] - f[i]
-    mu_clamped = np.maximum(mu_grid, 0.0)
-
-    # Pooled dispersion across every fitted output (not per-row): a single phi/k, matching how
-    # this calibration is reported and used downstream.
-    valid = np.isfinite(r_grid) & np.isfinite(mu_grid) & (mu_grid > 0)
-    r_valid = r_grid[valid]
-    mu_valid = mu_grid[valid]
-    n_valid = r_valid.size
+    # Simulate theta* and estimate the pooled count-noise model (phi, k) from its residuals. Shared
+    # with parametric_bootstrap via _estimate_noise_model so both calibrations use one
+    # implementation. The helper emits no warnings; the degeneracy diagnostics it returns are
+    # surfaced here with this function's own messages, exactly as before the extraction.
+    f, mu_clamped, phi, k_global, quasi_fallback, n_valid, p_free = _estimate_noise_model(
+        model, xdata, ydata, theta_star, cumulative_mask
+    )
     if n_valid - p_free <= 0:
         warnings.warn(
             f"Only {n_valid} valid (non-NaN, mu>0) pooled residuals for {p_free} free "
             "parameters; dispersion estimates may be unreliable.",
             stacklevel=2,
         )
-    denom = max(n_valid - p_free, 1)
-    phi = float(np.sum(r_valid**2 / mu_valid) / denom)
-
-    k_denom = float(np.sum(r_valid**2) - np.sum(mu_valid))
-    if k_denom <= 0:
-        k_global = float("inf")
+    if np.isinf(k_global):
         warnings.warn(
             "Method-of-moments global-NB k is degenerate (data at or below Poisson dispersion); "
             "nbglobal falls back to Poisson.",
             stacklevel=2,
         )
-    else:
-        k_global = float(np.sum(mu_valid**2) / k_denom)
-
-    quasi_fallback = phi <= 1
     if quasi_fallback:
         warnings.warn(
             f"Pooled Pearson dispersion phi={phi:.6g} <= 1; quasipoisson falls back to Poisson draws.",
@@ -356,3 +327,65 @@ def _generate_bootstrap(
             yb[i] = s[i]
         yb[i, np.isnan(ydata[i]), :] = np.nan
     return yb
+
+
+def _estimate_noise_model(
+    model: Model,
+    xdata: ArrayLike,
+    ydata: ArrayLike,
+    theta_star: NDArray[np.float64],
+    cumulative_mask: NDArray[np.bool_],
+) -> tuple[NDArray[np.float64], NDArray[np.float64], float, float, bool, int, int]:
+    """Simulate theta* and estimate a pooled count-noise model from its residuals.
+
+    Shared dispersion-estimation step behind :func:`noise_floor` and
+    :func:`gsua_csb.parametric_bootstrap` (MATLAB equivalent: ``gsua_noisemodel``). Emits NO
+    warnings -- it returns the raw diagnostics so each caller can surface them with its own message.
+
+    Returns ``(f, mu_clamped, phi, k_global, quasi_fallback, n_valid, p_free)``:
+        f: (n_outputs, len(xdata)) simulated curves at ``theta_star``.
+        mu_clamped: (n_outputs, len(xdata)) mean grid (incident for cumulative rows), clamped at 0.
+        phi: pooled Pearson dispersion ``sum(r**2/mu)/(n_valid-p_free)``.
+        k_global: method-of-moments global NB dispersion (``inf`` if degenerate/underdispersed).
+        quasi_fallback: ``True`` if ``phi <= 1`` (quasi-Poisson must fall back to Poisson).
+        n_valid: number of valid (finite, mu>0) pooled residuals.
+        p_free: number of free parameters (dispersion degrees of freedom).
+    """
+    xdata = np.asarray(xdata, dtype=np.float64)
+    ydata = np.atleast_2d(np.asarray(ydata, dtype=np.float64))
+    n_outputs, length = ydata.shape
+    cumulative_mask = np.asarray(cumulative_mask, dtype=bool)
+
+    f = np.atleast_2d(np.asarray(model.evaluate(theta_star, xdata), dtype=np.float64))
+    p_free = int((~model.fixed).sum())
+
+    # Per-output incident/cumulative transform, built once and reused for both dispersion estimation
+    # and synthetic generation. For a cumulative row, diffing lets NaN propagate/smear naturally
+    # across any real gap in ydata, and only ever feeds a pooled scalar (phi/k), not a positional
+    # array, so no gap-bridging logic is needed.
+    mu_grid = np.zeros((n_outputs, length))
+    r_grid = np.full((n_outputs, length), np.nan)
+    for i in range(n_outputs):
+        if cumulative_mask[i]:
+            f_inc = np.diff(np.concatenate([[0.0], f[i]]))
+            y_inc = np.diff(np.concatenate([[0.0], ydata[i]]))
+            mu_grid[i] = f_inc
+            r_grid[i] = y_inc - f_inc
+        else:
+            mu_grid[i] = f[i]
+            r_grid[i] = ydata[i] - f[i]
+    mu_clamped = np.maximum(mu_grid, 0.0)
+
+    # Pooled dispersion across every fitted output (not per-row): a single phi/k.
+    valid = np.isfinite(r_grid) & np.isfinite(mu_grid) & (mu_grid > 0)
+    r_valid = r_grid[valid]
+    mu_valid = mu_grid[valid]
+    n_valid = int(r_valid.size)
+    denom = max(n_valid - p_free, 1)
+    phi = float(np.sum(r_valid**2 / mu_valid) / denom)
+
+    k_denom = float(np.sum(r_valid**2) - np.sum(mu_valid))
+    k_global = float("inf") if k_denom <= 0 else float(np.sum(mu_valid**2) / k_denom)
+
+    quasi_fallback = phi <= 1
+    return f, mu_clamped, phi, k_global, quasi_fallback, n_valid, p_free

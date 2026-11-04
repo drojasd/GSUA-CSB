@@ -182,54 +182,22 @@ end
 % theta*: best pool member by res, not assumed to be column 1 -- robust to caller sort order.
 [bestRes,ibest] = min(res);
 thetaStar = Est(:,ibest).';
-f = gsua_deval(thetaStar,T,xdata);   % inputs x len, assumed NaN-free (a clean simulation)
 
-pFree = sum(T.Range(:,1) ~= T.Range(:,2));
+% Simulate theta* and estimate the pooled count-noise model (phi, kGlobal) from its residuals.
+% Shared with GSUA_BOOTSTRAP via GSUA_NOISEMODEL so both calibrations use one implementation. The
+% helper emits no warnings; the degeneracy diagnostics it returns are surfaced here with this
+% function's own message identifiers, exactly as before the extraction.
+[f,muClampedGrid,phi,kGlobal,quasiFallback,n,pFree] = gsua_noisemodel(T,xdata,ydata,thetaStar,cumulative);
 
-% Per-output incident/cumulative transform, built once and reused for both dispersion estimation
-% and synthetic generation. For a cumulative row, diff([0,row]) lets NaN propagate/smear naturally
-% across any real gap in ydata -- mathematically correct (a cumulative gap genuinely does not tell
-% you the incident breakdown across it), and only ever feeds a pooled scalar (phi/k), not a
-% positional array, so no gap-bridging logic is needed.
-muGrid = zeros(inputs,len);
-rGrid = nan(inputs,len);
-for i = 1:inputs
-    if cumulative(i)
-        fInc = diff([0, f(i,:)]);
-        yInc = diff([0, ydata(i,:)]);
-        muGrid(i,:) = fInc;
-        rGrid(i,:) = yInc - fInc;
-    else
-        muGrid(i,:) = f(i,:);
-        rGrid(i,:) = ydata(i,:) - f(i,:);
-    end
-end
-muClampedGrid = max(muGrid,0);
-
-% Pooled dispersion across every fitted output (not per-row): a single phi/k, matching how this
-% calibration is reported and used downstream.
-valid = isfinite(rGrid) & isfinite(muGrid) & muGrid > 0;
-R = rGrid(valid);
-MU = muGrid(valid);
-n = numel(R);
 if n - pFree <= 0
     warning('gsua_noisefloor:LowDF', ...
         'Only %d valid (non-NaN, mu>0) pooled residuals for %d free parameters; dispersion estimates may be unreliable.', ...
         n, pFree);
 end
-denom = max(n - pFree,1);
-phi = sum(R.^2 ./ MU) / denom;
-
-kDenom = sum(R.^2) - sum(MU);
-if kDenom <= 0
-    kGlobal = Inf;
+if isinf(kGlobal)
     warning('gsua_noisefloor:UnderdispersedNB', ...
         'Method-of-moments global-NB k is degenerate (data at or below Poisson dispersion); nbglobal falls back to Poisson.');
-else
-    kGlobal = sum(MU.^2) / kDenom;
 end
-
-quasiFallback = phi <= 1;
 if quasiFallback
     warning('gsua_noisefloor:QuasiPoissonDegenerate', ...
         'Pooled Pearson dispersion phi=%.6g <= 1; quasipoisson falls back to Poisson draws.', phi);
@@ -240,7 +208,7 @@ byModel = struct();
 exampleSynthetic = struct();
 for m = 1:numel(models)
     model = models{m};
-    yb = generate_bootstrap(model,muClampedGrid,cumulative,ydata,phi,kGlobal,quasiFallback,B,inputs,len);
+    yb = gsua_noisedraw(model,muClampedGrid,cumulative,ydata,phi,kGlobal,quasiFallback,B);
     exampleSynthetic.(model) = yb(:,:,1);
     cost = zeros(B,1);
     for b = 1:B
@@ -272,42 +240,4 @@ if bestRes > out.threshold
         bestRes, out.threshold, quantileLevel*100);
 end
 
-end
-
-
-function yb = generate_bootstrap(model,muClampedGrid,cumulative,ydata,phi,kGlobal,quasiFallback,B,inputs,len)
-%GENERATE_BOOTSTRAP Draw B synthetic datasets (inputs x len x B) under the given noise model.
-muRep = repmat(muClampedGrid,[1 1 B]);
-switch model
-    case 'poisson'
-        S = poissrnd(muRep);
-    case 'quasipoisson'
-        if quasiFallback
-            S = poissrnd(muRep);
-        else
-            kPoint = max(muClampedGrid ./ (phi-1), realmin);
-            Rn = repmat(kPoint,[1 1 B]);
-            Pn = Rn ./ (Rn + muRep);
-            S = nbinrnd(Rn,Pn);
-        end
-    case 'nbglobal'
-        if isinf(kGlobal)
-            S = poissrnd(muRep);
-        else
-            Rn = max(kGlobal,realmin) * ones(size(muRep));
-            Pn = Rn ./ (Rn + muRep);
-            S = nbinrnd(Rn,Pn);
-        end
-end
-S(isnan(S)) = 0;
-
-yb = zeros(inputs,len,B);
-for i = 1:inputs
-    if cumulative(i)
-        yb(i,:,:) = cumsum(S(i,:,:),2);
-    else
-        yb(i,:,:) = S(i,:,:);
-    end
-    yb(i,isnan(ydata(i,:)),:) = NaN;
-end
 end

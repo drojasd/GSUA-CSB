@@ -114,7 +114,7 @@ if MS>1
     OS='Multistart';
     if timer, disp('only lsqc supports Multistart ... Running lsq optimization'), end
 end
-if (isempty(IP) || size(IP,1)~=N) && any(strcmp(OS,{'lsqc','Multistart','lsqn','fmincon'}))
+if (isempty(IP) || size(IP,1)~=N) && any(strcmp(OS,{'lsqc','Multistart','lsqn','fmincon','psearch','annealing'}))
     if timer, disp('Generating a valid matrix for estimations'), end
     [IP,~]=gsua_dmatrix(T,N);
 end
@@ -213,11 +213,11 @@ end
                 case 'particle'
                     [x(i,:),res(i)] = particleswarm(obj,Np,lb,ub,Opt);    
                 case 'psearch'
-                    [x(i,:),res(i)] = patternsearch(obj,Np,A,B,Aeq,Beq,lb,ub,nonlcon,Opt);
+                    [x(i,:),res(i)] = patternsearch(obj,IP(i,:),A,B,Aeq,Beq,lb,ub,nonlcon,Opt);
                 case 'surrogate'
                     [x(i,:),res(i)] = surrogateopt(obj,lb,ub,Opt);
                 case 'annealing'
-                    [x(i,:),res(i)] = simulannealbnd(obj,lb,ub,Opt);
+                    [x(i,:),res(i)] = simulannealbnd(obj,IP(i,:),lb,ub,Opt);
                 case 'fmincon'
                     [x(i,:),res(i)] = fmincon(obj,IP(i,:),A,B,Aeq,Beq,lb,ub,nonlcon,Opt);
             end
