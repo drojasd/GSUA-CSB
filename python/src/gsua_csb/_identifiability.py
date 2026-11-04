@@ -215,6 +215,9 @@ class ClusterInfo:
     indices: list[NDArray[np.float64]] = field(default_factory=list)
     estimates: list[NDArray[np.float64]] = field(default_factory=list)
     medians: list[NDArray[np.float64]] = field(default_factory=list)
+    orig_range: NDArray[np.float64] = field(default_factory=lambda: np.zeros((0, 2)))
+    """(Np, 2) original parameter bounds (``model.range``) -- the denominator for
+    :func:`gsua_csb.cluster_summary`'s percentile-interval width. MATLAB: ``clusterInfo.OrigRange``."""
 
 
 @dataclass
@@ -560,6 +563,7 @@ def identifiability_analysis(
         indices=cl_indices,
         estimates=cl_estimates,
         medians=cl_medians,
+        orig_range=np.asarray(model.range, dtype=np.float64),
     )
 
     return IdentifiabilityResult(

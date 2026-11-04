@@ -321,6 +321,7 @@ clusterInfo.Range=clRange;
 clusterInfo.Index=clIndex;
 clusterInfo.Est=clEst;
 clusterInfo.Median=clMedian;
+clusterInfo.OrigRange=origRange;   % original bounds (GSUA_CLUSTERSUMMARY's percentile-width denominator)
 
 % --- Finalize T (before plotting, so a plotting error cannot cost the caller the results) ---
 T.Est=statT_est;

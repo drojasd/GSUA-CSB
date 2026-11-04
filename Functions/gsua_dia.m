@@ -222,6 +222,7 @@ clusterInfo.Range=clRange;
 clusterInfo.Index=clIndex;
 clusterInfo.Est=clEst;
 clusterInfo.Median=clMedian;
+clusterInfo.OrigRange=origRange;   % original bounds (GSUA_CLUSTERSUMMARY's percentile-width denominator)
 
 T.Est=statT_est;
 T.Range=[lb,up];

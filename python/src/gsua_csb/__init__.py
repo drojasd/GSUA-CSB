@@ -15,6 +15,7 @@ from the MATLAB originals documented in each module.
 from __future__ import annotations
 
 from ._bootstrap import BootstrapResult, parametric_bootstrap
+from ._clustersummary import ClusterSummaryRow, cluster_summary
 from ._costs import costf, costf_multi, coverage_metric, likecost, rcostf
 from ._csb import CSBResult, RangeRefinementResult, confidence_subcontour_box, range_refinement
 from ._estimation import PEResult, parameter_estimation
@@ -78,6 +79,7 @@ gsua_pe = parameter_estimation
 gsua_bootstrap = parametric_bootstrap
 gsua_ia = identifiability_analysis
 gsua_dia = identifiability_analysis
+gsua_clustersummary = cluster_summary
 gsua_oatr = range_refinement
 gsua_oatr2 = range_refinement
 gsua_csb = confidence_subcontour_box
@@ -112,6 +114,8 @@ __all__ = [
     "ClusterInfo",
     "IdentifiabilityResult",
     "identifiability_analysis",
+    "ClusterSummaryRow",
+    "cluster_summary",
     "RangeRefinementResult",
     "range_refinement",
     "CSBResult",
@@ -150,6 +154,7 @@ __all__ = [
     "gsua_bootstrap",
     "gsua_ia",
     "gsua_dia",
+    "gsua_clustersummary",
     "gsua_oatr",
     "gsua_oatr2",
     "gsua_csb",
