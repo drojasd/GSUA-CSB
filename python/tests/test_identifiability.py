@@ -391,3 +391,67 @@ def test_unknown_index_method_raises():
     estimates = np.zeros((5, 2))
     with pytest.raises(ValueError, match="Unknown index_method"):
         identifiability_analysis(model, estimates, index_method="bogus")
+
+
+def test_per_cluster_fields_populated():
+    # #1: each cluster gets its own range/index/estimates/median, not only the dominant one.
+    rng = np.random.default_rng(5)
+    basin1 = rng.normal([2.0, 2.0], 0.1, size=(60, 2))
+    basin2 = rng.normal([8.0, 8.0], 0.1, size=(60, 2))
+    estimates = np.vstack([basin1, basin2])
+    result = identifiability_analysis(_model(), estimates, cluster=True, seed=0)
+
+    ci = result.cluster
+    assert ci.num_clusters == 2
+    assert len(ci.ranges) == 2 and len(ci.indices) == 2
+    assert len(ci.estimates) == 2 and len(ci.medians) == 2
+    assert ci.ranges[0].shape == (2, 2)
+    assert ci.indices[0].shape == (2,)
+    assert sum(e.shape[0] for e in ci.estimates) == 120
+    # Each cluster's median sits near its own basin centre.
+    centres = np.array([m for m in ci.medians])
+    assert min(np.linalg.norm(centres - [2, 2], axis=1)) < 0.5
+    assert min(np.linalg.norm(centres - [8, 8], axis=1)) < 0.5
+
+
+def test_cost_filter_mask_and_labels_full():
+    # #2: clusterInfo.kept marks surviving columns and labels_full is over the ORIGINAL rows with
+    # NaN for cost-dropped runs.
+    rng = np.random.default_rng(6)
+    good = rng.normal([5.0, 5.0], 0.05, size=(30, 2))
+    bad = rng.uniform(0, 10, size=(5, 2))
+    estimates = np.vstack([good, bad])
+    cost = np.concatenate([np.full(30, 1e-3), np.full(5, 1e3)])
+
+    result = identifiability_analysis(_model(), estimates, cost=cost)
+    ci = result.cluster
+    assert ci.kept.shape == (35,)
+    assert ci.kept.sum() == 30
+    assert np.all(np.isnan(ci.labels_full[~ci.kept]))
+    assert np.all(~np.isnan(ci.labels_full[ci.kept]))
+
+
+def test_silhouette_by_k_recorded():
+    # #6: the mean silhouette for every tested K is reported, not only the chosen one.
+    rng = np.random.default_rng(5)
+    basin1 = rng.normal([2.0, 2.0], 0.1, size=(60, 2))
+    basin2 = rng.normal([8.0, 8.0], 0.1, size=(60, 2))
+    estimates = np.vstack([basin1, basin2])
+    result = identifiability_analysis(_model(), estimates, cluster=True, max_k=5, seed=0)
+
+    ci = result.cluster
+    assert ci.silhouette_by_k is not None
+    assert ci.silhouette_k is not None
+    assert len(ci.silhouette_by_k) == len(ci.silhouette_k)
+    assert list(ci.silhouette_k) == [2, 3, 4, 5]
+
+
+def test_single_basin_has_one_per_cluster_entry():
+    rng = np.random.default_rng(4)
+    estimates = rng.normal([5.0, 5.0], 0.3, size=(50, 2))
+    result = identifiability_analysis(_model(), estimates)
+    ci = result.cluster
+    assert ci.num_clusters == 1
+    assert len(ci.ranges) == 1 and len(ci.estimates) == 1
+    assert ci.estimates[0].shape[0] == 50
+    assert np.all(ci.kept)

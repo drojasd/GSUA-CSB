@@ -78,7 +78,7 @@ than a spurious claim of universal strong correlation.
 from __future__ import annotations
 
 import warnings
-from dataclasses import dataclass
+from dataclasses import dataclass, field
 from typing import Literal
 
 import numpy as np
@@ -144,7 +144,7 @@ def _filter_by_cost(
     atol: float,
     gap_ratio: float,
     min_keep: int,
-) -> tuple[NDArray[np.float64], int]:
+) -> tuple[NDArray[np.float64], int, NDArray[np.bool_]]:
     if method == "rtol":
         threshold = np.min(cost) * (1 + rtol) + atol
         keep = cost <= threshold
@@ -162,7 +162,7 @@ def _filter_by_cost(
         keep = rank < min_keep
 
     n_removed = int((~keep).sum())
-    return X[keep], n_removed
+    return X[keep], n_removed, keep
 
 
 @dataclass
@@ -181,6 +181,24 @@ class ClusterInfo:
         dominant_cluster: Index (into ``centers``/``cluster_sizes``) of the largest cluster -- the
             one :class:`IdentifiabilityResult`'s ``range``/``correlation``/``index``/``nominal``
             are computed from when ``num_clusters > 1``. Always ``0`` when ``num_clusters == 1``.
+        kept: (N0,) bool over the ORIGINAL estimates rows: which survived the fit-quality (cost)
+            filter (all ``True`` if ``cost`` was not given). MATLAB equivalent: ``clusterInfo.Kept``.
+        labels_full: (N0,) cluster label (0-indexed) over the ORIGINAL estimates rows, ``NaN`` for
+            rows the cost filter dropped. ``labels`` indexes the cost-filtered subset instead.
+            MATLAB equivalent: ``clusterInfo.Idx``.
+        silhouette_by_k: (len(silhouette_k),) mean silhouette for each tested cluster count, or
+            ``None`` if clustering was not run. MATLAB equivalent: ``clusterInfo.SilhouetteByK``.
+        silhouette_k: The cluster counts ``silhouette_by_k`` refers to (``2..max_k``), or ``None``.
+        ranges: Per-cluster list; ``ranges[c]`` is the (Np, 2) median CI of cluster ``c`` (the same
+            statistic ``IdentifiabilityResult.range`` holds for the dominant cluster), from that
+            cluster's raw points (before the dominant-only outlier removal). MATLAB:
+            ``clusterInfo.Range``.
+        indices: Per-cluster list; ``indices[c]`` is the (Np,) identifiability index of cluster
+            ``c``. MATLAB: ``clusterInfo.Index``.
+        estimates: Per-cluster list; ``estimates[c]`` is the (n_c, Np) estimates of cluster ``c``.
+            MATLAB: ``clusterInfo.Est``.
+        medians: Per-cluster list; ``medians[c]`` is the (Np,) median of cluster ``c``. MATLAB:
+            ``clusterInfo.Median``.
     """
 
     num_clusters: int
@@ -189,6 +207,14 @@ class ClusterInfo:
     cluster_sizes: NDArray[np.intp]
     silhouette: float | None
     dominant_cluster: int = 0
+    kept: NDArray[np.bool_] = field(default_factory=lambda: np.ones(0, dtype=bool))
+    labels_full: NDArray[np.float64] = field(default_factory=lambda: np.zeros(0))
+    silhouette_by_k: NDArray[np.float64] | None = None
+    silhouette_k: NDArray[np.intp] | None = None
+    ranges: list[NDArray[np.float64]] = field(default_factory=list)
+    indices: list[NDArray[np.float64]] = field(default_factory=list)
+    estimates: list[NDArray[np.float64]] = field(default_factory=list)
+    medians: list[NDArray[np.float64]] = field(default_factory=list)
 
 
 @dataclass
@@ -404,12 +430,13 @@ def identifiability_analysis(
     if index_method not in ("spread", "ci"):
         raise ValueError(f"Unknown index_method: {index_method!r}, expected 'spread' or 'ci'")
 
+    kept = np.ones(X.shape[0], dtype=bool)   # over the ORIGINAL rows (clusterInfo.kept / labels_full)
     n_bad_fit_removed = 0
     if cost is not None:
         cost = np.atleast_1d(np.asarray(cost, dtype=np.float64))
         if cost.shape[0] != X.shape[0]:
             raise ValueError(f"cost must have {X.shape[0]} entries (one per row of estimates), got {cost.shape[0]}")
-        X, n_bad_fit_removed = _filter_by_cost(
+        X, n_bad_fit_removed, kept = _filter_by_cost(
             X, cost, cost_method, cost_rtol, cost_atol, cost_gap_ratio, min_keep
         )
 
@@ -423,63 +450,63 @@ def identifiability_analysis(
         return norm
 
     all_median = np.median(X, axis=0)
-    cluster_info = ClusterInfo(
-        num_clusters=1,
-        labels=np.zeros(X.shape[0], dtype=np.intp),
-        centers=all_median[None, :],
-        cluster_sizes=np.array([X.shape[0]]),
-        silhouette=None,
-        dominant_cluster=0,
-    )
 
     # Clustering runs on the fit-quality-filtered points, BEFORE any outlier removal -- see the
-    # module docstring for why: outlier removal assumes one unimodal population, and running it
-    # first would treat a genuine second basin as outliers relative to the pooled distribution.
+    # module docstring for why. labels_filtered is over the cost-filtered rows; labels_full (built
+    # at the end) maps it back onto the original N rows, NaN for cost-dropped.
+    labels_filtered = np.zeros(X.shape[0], dtype=np.intp)
+    centers = all_median[None, :]
+    sizes = np.array([X.shape[0]])
+    best_sil: float | None = None
+    sil_by_k: NDArray[np.float64] | None = None
+    sil_k: NDArray[np.intp] | None = None
+    dominant = 0
+    num_clusters = 1
     stats_source = X
     if cluster:
         n_runs = X.shape[0]
         kmax = min(max_k, n_runs - 1)
         if kmax >= 2:
             normalized = normalize(X)
+            k_values = list(range(2, kmax + 1))
+            sil_values: list[float] = []
             best_k = 1
-            best_sil = 0.0
-            for k in range(2, kmax + 1):
+            best_sil_search = 0.0
+            for k in k_values:
                 n_neighbors = min(10, n_runs - 1)
-                labels = SpectralClustering(
+                labels_k = SpectralClustering(
                     n_clusters=k,
                     affinity="nearest_neighbors",
                     n_neighbors=n_neighbors,
                     random_state=seed,
                 ).fit_predict(normalized)
-                if len(np.unique(labels)) < 2:
+                if len(np.unique(labels_k)) < 2:
+                    sil_values.append(float("nan"))
                     continue
-                sil = silhouette_score(normalized, labels)
-                if sil > best_sil:
-                    best_sil = sil
+                sil = silhouette_score(normalized, labels_k)
+                sil_values.append(float(sil))
+                if sil > best_sil_search:
+                    best_sil_search = sil
                     best_k = k
+            sil_by_k = np.array(sil_values, dtype=np.float64)
+            sil_k = np.array(k_values, dtype=np.intp)
 
-            if best_k > 1 and best_sil >= sil_threshold:
-                labels = SpectralClustering(
+            if best_k > 1 and best_sil_search >= sil_threshold:
+                labels_filtered = SpectralClustering(
                     n_clusters=best_k,
                     affinity="nearest_neighbors",
                     n_neighbors=min(10, n_runs - 1),
                     random_state=seed,
-                ).fit_predict(normalized)
-                centers = np.array([np.median(X[labels == k], axis=0) for k in range(best_k)])
-                sizes = np.array([int(np.sum(labels == k)) for k in range(best_k)])
+                ).fit_predict(normalized).astype(np.intp)
+                centers = np.array([np.median(X[labels_filtered == k], axis=0) for k in range(best_k)])
+                sizes = np.array([int(np.sum(labels_filtered == k)) for k in range(best_k)])
                 dominant = int(np.argmax(sizes))
-                cluster_info = ClusterInfo(
-                    num_clusters=best_k,
-                    labels=labels,
-                    centers=centers,
-                    cluster_sizes=sizes,
-                    silhouette=best_sil,
-                    dominant_cluster=dominant,
-                )
+                best_sil = float(best_sil_search)
+                num_clusters = best_k
                 # Pooling separated basins into one median/correlation/interval isn't a meaningful
                 # summary -- report the dominant (largest) basin's statistics instead. The other
-                # basins are still fully available via cluster.centers.
-                stats_source = X[labels == dominant]
+                # basins are still available via cluster.centers and the per-cluster fields.
+                stats_source = X[labels_filtered == dominant]
 
     n_outliers_removed = 0
     if outlier:
@@ -496,6 +523,44 @@ def identifiability_analysis(
             "-- index falls back to interval width alone.",
             stacklevel=2,
         )
+
+    # Per-cluster statistics (#1): the same range/index each cluster gets (from its raw points,
+    # before the dominant-only outlier removal), so a multi-basin result exposes each basin, not only
+    # the dominant one. A single-basin result gets a one-element list equal to the whole set.
+    cl_ranges: list[NDArray[np.float64]] = []
+    cl_indices: list[NDArray[np.float64]] = []
+    cl_estimates: list[NDArray[np.float64]] = []
+    cl_medians: list[NDArray[np.float64]] = []
+    for c in range(num_clusters):
+        est_c = X[labels_filtered == c]
+        rng_c, _, idx_c, _, _ = _summary_stats(
+            est_c, model, correction, ci_alpha, min_corr_n, index_method
+        )
+        cl_ranges.append(rng_c)
+        cl_indices.append(idx_c)
+        cl_estimates.append(est_c)
+        cl_medians.append(np.median(est_c, axis=0))
+
+    # Cluster labels over the ORIGINAL N rows, NaN for cost-dropped (#2).
+    labels_full = np.full(kept.shape[0], np.nan)
+    labels_full[kept] = labels_filtered
+
+    cluster_info = ClusterInfo(
+        num_clusters=num_clusters,
+        labels=labels_filtered,
+        centers=centers,
+        cluster_sizes=sizes,
+        silhouette=best_sil,
+        dominant_cluster=dominant,
+        kept=kept,
+        labels_full=labels_full,
+        silhouette_by_k=sil_by_k,
+        silhouette_k=sil_k,
+        ranges=cl_ranges,
+        indices=cl_indices,
+        estimates=cl_estimates,
+        medians=cl_medians,
+    )
 
     return IdentifiabilityResult(
         names=list(model.names),
