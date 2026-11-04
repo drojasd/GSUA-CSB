@@ -25,7 +25,20 @@ function [Table,res,IP] = gsua_pe(Table,xdata,ydata,varargin)
 % 'save',{false,true} <-- if true, writes Estimations.mat to the CURRENT folder after
 % each estimation (a crash-resume checkpoint), OVERWRITING any existing
 % Estimations.mat there. Default: false (it was true before v1.15).
+% 'margin',m <-- relative tolerance band for the correlation-penalized cost (GSUA_COSTF), used by
+% the 'ga','particle','psearch','surrogate','annealing' and 'fmincon' solvers. The value you pass
+% is a RELATIVE band on the residual: with a good-shape fit (correlation ~ 1) the cost drops below
+% 1 exactly when the residual RMS is within a fraction m of the data's own RMS -- so 'margin',0.3
+% means "accept, as cost < 1, fits whose residual is within ~30% of the data scale". Internally the
+% regulator is built with m+1 (so 0.3 is used as 1.3); you ALWAYS pass the raw band m, and
+% GSUA_NOISEFLOOR/GSUA_BOOTSTRAP take the same raw m. The regulator does not depend on the
+% parameters, so margin only RESCALES the cost: it does NOT move the optimum, only the
+% interpretation of cost thresholds (cost < 1, the noise floor, the fit-quality cutoff). m = 0
+% selects plain MSE; m < 0 selects the Gaussian negative-log-likelihood path (GSUA_LIKELIHOOD).
+% Default: 0.
+% 'alpha',a <-- exponent applied to each per-output term in GSUA_COSTF. Default: 2.
 % [T,res] = gsua_pe(T,xdata,ydata,'Show','on','solver','particle','N',3)
+% [T,res] = gsua_pe(T,xdata,ydata,'solver','fmincon','margin',0.3)  % cost<1 ~ residual within 30%
 %
 % See also GSUA_DMATRIX, GSUA_DEVAL, GSUA_COSTF, GSUA_IA, GSUA_DIA.
 

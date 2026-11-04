@@ -38,6 +38,13 @@ function cos=gsua_costf(inputs,regulator,len,ydata,yfunction,alpha)
 %   Outputs:
 %     cos <-- scalar cost (mean of the per-output penalized costs)
 %
+%   Margin convention: the regulator GSUA_PE builds is mean((ydata - ydata*(m+1)).^2), which equals
+%   (m*rms(ydata)).^2 per row, where m is the RAW margin you passed GSUA_PE ('margin',m). So with a
+%   good-shape fit (correlation ~ 1) this cost falls below 1 exactly when the residual RMS is within
+%   a fraction m of the data RMS (e.g. m = 0.3 -> "within ~30%"). Because the regulator does not
+%   depend on the parameters, m only RESCALES the cost -- it does not move the optimum, but it sets
+%   what "cost < 1" and the GSUA_NOISEFLOOR threshold mean. See GSUA_PE's 'margin' help.
+%
 %   See also GSUA_PE, GSUA_RCOSTF, GSUA_COSTFMULTI, GSUA_CORR2OMITNAN.
 nvalid=sum(~isnan(ydata),2);
 cost=(sum((ydata-yfunction).^2,2,'omitnan')./nvalid)./regulator;

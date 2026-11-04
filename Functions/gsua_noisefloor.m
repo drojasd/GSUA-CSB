@@ -44,8 +44,11 @@ function out = gsua_noisefloor(T,xdata,ydata,Est,res,varargin)
 %   Name-value arguments:
 %     'margin'     <-- Override for the margin GSUA_PE was called with, in GSUA_PE's own raw
 %                      user-facing convention (i.e. pass the same value you gave GSUA_PE's
-%                      'margin', NOT the internally-offset one). Default: recovered from
-%                      T.Properties.CustomProperties.Margin (already offset there).
+%                      'margin', NOT the internally-offset one). The raw value is a relative
+%                      residual band (e.g. 0.3 ~ 30% of the data RMS); it is used internally as
+%                      m+1 and only rescales the cost without moving the optimum -- see GSUA_PE/
+%                      GSUA_COSTF. Default: recovered from T.Properties.CustomProperties.Margin
+%                      (already offset there).
 %     'alpha'      <-- Override for the cost exponent GSUA_PE was called with. Default: recovered
 %                      from T.Properties.CustomProperties.Alpha.
 %     'B'          <-- Bootstrap sample size. Default 2000.

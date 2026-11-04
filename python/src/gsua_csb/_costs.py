@@ -102,7 +102,12 @@ def rcostf(ydata: ArrayLike, yfunction: ArrayLike, margin: float = 1.1, alpha: f
         ydata: (n_outputs, n_samples) or (n_samples,) reference data.
         yfunction: Same shape as ``ydata`` -- candidate/model output.
         margin: Relative perturbation used to build the internal regulator. Values ``< 1`` are
-            treated as a fraction and converted to ``1 + margin``. Default 1.1 (= 10%).
+            treated as a fraction and converted to ``1 + margin``. Default 1.1 (= 10%). The raw
+            fraction is a RELATIVE residual band: with a good-shape fit (correlation ~ 1) the cost
+            falls below 1 exactly when the residual RMS is within that fraction of the data RMS
+            (regulator = ``(fraction * rms(ydata))**2`` per row). It rescales the cost but, being
+            parameter-independent, does not move the optimum -- only what ``cost < 1`` / the
+            noise-floor threshold mean. See :func:`gsua_csb.parameter_estimation`'s ``margin``.
         alpha: Exponent applied to each per-output cost term. Default 2.
 
     Returns:

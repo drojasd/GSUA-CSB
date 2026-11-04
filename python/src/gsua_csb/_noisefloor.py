@@ -132,8 +132,10 @@ def noise_floor(
             :func:`gsua_csb.rcostf` produces.
         margin: The **raw** margin the pool was estimated with (e.g. ``PEResult.margin`` -- the
             same convention :func:`gsua_csb.parameter_estimation`'s own ``margin`` argument uses,
-            not pre-offset). Required, not auto-recovered -- pass it through explicitly from
-            whatever produced ``x``/``cost`` (typically a ``PEResult``).
+            not pre-offset). The raw value is a relative residual band (e.g. ``0.3`` ~ 30% of the
+            data RMS), applied internally as ``margin + 1``; it only rescales the cost without moving
+            the optimum (see ``parameter_estimation``). Required, not auto-recovered -- pass it
+            through explicitly from whatever produced ``x``/``cost`` (typically a ``PEResult``).
         alpha: The cost exponent the pool was estimated with (e.g. ``PEResult.alpha``). Required
             for the same reason as ``margin``.
         b: Bootstrap sample size. Default 2000.

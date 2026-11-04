@@ -110,10 +110,17 @@ def parameter_estimation(
         margin: For ``solver`` in ``{"minimize", "differential_evolution", "dual_annealing"}``,
             selects the objective by sign. ``0`` (default): plain MSE (MATLAB's ``immse`` path).
             ``> 0``: :func:`gsua_csb.rcostf` with this margin, the correlation-penalized regulator
-            cost (MATLAB's ``gsua_costf`` path) -- below 1 means within tolerance. ``< 0``: Gaussian
-            negative log-likelihood with standard deviation ``|ydata| * |margin|`` (MATLAB's
-            ``margin < 0`` path, which ``gsua_likelihood`` uses for its inner refit). Ignored for
-            ``solver="least_squares"``, which always minimizes the raw residual.
+            cost (MATLAB's ``gsua_costf`` path). The positive value is a RELATIVE residual band:
+            with a good-shape fit (correlation ~ 1) the cost falls below 1 exactly when the residual
+            RMS is within this fraction of the data's own RMS (``0.3`` ~ "within 30%"). It is applied
+            internally as ``margin + 1`` (the regulator form), so you always pass the raw band and
+            :func:`gsua_csb.noise_floor` / :func:`gsua_csb.parametric_bootstrap` take the same raw
+            value. Because the regulator does not depend on the parameters, margin only RESCALES the
+            cost -- it does not move the optimum, only what ``cost < 1`` and the noise-floor threshold
+            mean. ``< 0``: Gaussian negative log-likelihood with standard deviation
+            ``|ydata| * |margin|`` (MATLAB's ``margin < 0`` path, which ``gsua_likelihood`` uses for
+            its inner refit). Ignored for ``solver="least_squares"``, which always minimizes the raw
+            residual.
         alpha: Exponent passed to :func:`gsua_csb.rcostf` when ``margin != 0``.
         seed: Seed for the default ``initial_points`` and for the stochastic global solvers
             (``differential_evolution``, ``dual_annealing``).
