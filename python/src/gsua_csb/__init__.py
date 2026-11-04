@@ -23,12 +23,16 @@ from ._likelihood import ProfileLikelihoodResult, profile_likelihood
 from ._model import Model, UserFunctionModel, build_range
 from ._noisefloor import NoiseFloorByModel, NoiseFloorResult, noise_floor
 from ._plotting import (
+    plot_cluster_curves,
+    plot_cluster_pairs,
     plot_identifiability_correlation,
     plot_identifiability_graph,
     plot_identifiability_index,
     plot_mcf,
+    plot_parameter_cdfs,
     plot_sensitivity_area,
     plot_sensitivity_bar,
+    plot_silhouette_by_k,
     plot_uncertainty,
 )
 from ._sampling import design_matrix
@@ -123,6 +127,10 @@ __all__ = [
     "plot_identifiability_correlation",
     "plot_identifiability_graph",
     "plot_identifiability_index",
+    "plot_parameter_cdfs",
+    "plot_silhouette_by_k",
+    "plot_cluster_pairs",
+    "plot_cluster_curves",
     "plot_mcf",
     "gsua_costf",
     "gsua_rcostf",

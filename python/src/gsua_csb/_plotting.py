@@ -35,6 +35,7 @@ if TYPE_CHECKING:
     from matplotlib.axes import Axes
 
     from ._identifiability import IdentifiabilityResult
+    from ._model import Model
     from ._sensitivity import SensitivityResult
     from ._uncertainty import MCFResult, UncertaintyResult
 
@@ -312,3 +313,180 @@ def plot_mcf(
         ax.set_ylabel("CDF")
     axes[0].legend()
     return axes
+
+
+def plot_parameter_cdfs(
+    ia: "IdentifiabilityResult", truth: ArrayLike | None = None, axes: "NDArray[Axes] | None" = None
+) -> "NDArray[Axes]":
+    """Empirical CDF of each parameter's estimates (the dominant cluster's), one panel per parameter.
+
+    MATLAB equivalent: ``gsua_ia``'s "CDF Range" figure. With ``truth`` given, the reference value is
+    marked on each panel (#10) -- handy for synthetic/teaching data where the true parameters are
+    known.
+
+    Args:
+        ia: Result from :func:`gsua_csb.identifiability_analysis`.
+        truth: Optional (Np,) reference ("true") parameter values to mark.
+        axes: Flat array of Axes, one per parameter. A new grid is created if not given.
+
+    Returns:
+        The flat array of Axes drawn on.
+    """
+    import matplotlib.pyplot as plt
+
+    est = ia.estimates_used
+    Np = len(ia.names)
+    if axes is None:
+        n_rows = max(1, int(np.floor(np.sqrt(Np))))
+        n_cols = n_rows + int(np.ceil((Np - n_rows**2) / n_rows))
+        _, axes = plt.subplots(n_rows, n_cols, squeeze=False)
+        axes = axes.ravel()
+    else:
+        axes = np.atleast_1d(axes)
+
+    truth = None if truth is None else np.asarray(truth, dtype=np.float64).ravel()
+    for k, name in enumerate(ia.names):
+        ax = axes[k]
+        _ecdf_step(ax, est[:, k])
+        if truth is not None:
+            ax.axvline(truth[k], color="red", linestyle="--", linewidth=1.2)
+        ax.set_title(name)
+        ax.set_xlabel("Value")
+        ax.set_ylabel("CDF")
+    return axes
+
+
+def plot_silhouette_by_k(
+    ia: "IdentifiabilityResult", ax: "Axes | None" = None, sil_threshold: float = 0.5
+) -> "Axes":
+    """Mean silhouette score vs. candidate cluster count K, with the acceptance threshold (#6).
+
+    Shows whether the cluster-count choice was clear-cut or borderline. MATLAB equivalent:
+    ``gsua_ia``'s "Silhouette vs K" figure.
+
+    Args:
+        ia: Result from :func:`gsua_csb.identifiability_analysis` run with ``cluster=True``.
+        ax: Axes to draw on. A new figure/axes is created if not given.
+        sil_threshold: The acceptance threshold to draw as a reference line (match the
+            ``sil_threshold`` passed to the analysis).
+
+    Returns:
+        The Axes drawn on.
+
+    Raises:
+        ValueError: If the result carries no silhouette-by-K data (clustering was not run).
+    """
+    import matplotlib.pyplot as plt
+
+    ci = ia.cluster
+    if ci.silhouette_by_k is None or ci.silhouette_k is None:
+        raise ValueError("No silhouette-by-K data; run identifiability_analysis with cluster=True.")
+
+    if ax is None:
+        _, ax = plt.subplots()
+    ax.plot(ci.silhouette_k, ci.silhouette_by_k, "-o", linewidth=1.5)
+    ax.axhline(sil_threshold, color="red", linestyle="--", label="sil_threshold")
+    ax.set_xticks(list(ci.silhouette_k))
+    ax.set_xlabel("Number of clusters K")
+    ax.set_ylabel("Mean silhouette")
+    ax.set_title("Cluster-count selection")
+    ax.legend()
+    return ax
+
+
+def plot_cluster_pairs(
+    ia: "IdentifiabilityResult", truth: ArrayLike | None = None, axes: "NDArray[Axes] | None" = None
+) -> "NDArray[Axes]":
+    """Pairwise scatter matrix of the (cost-filtered) estimates, colored by cluster (#7a).
+
+    Off-diagonal panels are scatter plots of each parameter pair; diagonal panels are per-cluster
+    histograms. With ``truth`` given, the reference point/line is overlaid (#10). MATLAB equivalent:
+    ``gsua_ia``'s "Per-cluster pairwise scatter" (gplotmatrix) figure.
+
+    Args:
+        ia: Result from :func:`gsua_csb.identifiability_analysis`.
+        truth: Optional (Np,) reference ("true") parameter values to mark.
+        axes: (Np, Np) array of Axes. A new grid is created if not given.
+
+    Returns:
+        The (Np, Np) array of Axes drawn on.
+    """
+    import matplotlib.pyplot as plt
+
+    ci = ia.cluster
+    if ci.estimates:
+        pts = np.vstack(ci.estimates)
+        labels = np.concatenate([np.full(e.shape[0], c) for c, e in enumerate(ci.estimates)])
+    else:
+        pts = ia.estimates_used
+        labels = np.zeros(pts.shape[0], dtype=int)
+    Np = len(ia.names)
+    ncl = int(labels.max()) + 1 if labels.size else 1
+
+    if axes is None:
+        _, axes = plt.subplots(Np, Np, figsize=(2 * Np, 2 * Np), squeeze=False)
+    axes = np.atleast_2d(axes)
+    truth = None if truth is None else np.asarray(truth, dtype=np.float64).ravel()
+    cmap = plt.get_cmap("tab10")
+
+    for i in range(Np):
+        for j in range(Np):
+            ax = axes[i, j]
+            if i == j:
+                for c in range(ncl):
+                    ax.hist(pts[labels == c, i], bins=15, alpha=0.5, color=cmap(c))
+                if truth is not None:
+                    ax.axvline(truth[i], color="black", linestyle="--", linewidth=1.2)
+            else:
+                for c in range(ncl):
+                    ax.scatter(pts[labels == c, j], pts[labels == c, i], s=6, alpha=0.5, color=cmap(c))
+                if truth is not None:
+                    ax.plot(truth[j], truth[i], "kx", markersize=10, markeredgewidth=2)
+            if i == Np - 1:
+                ax.set_xlabel(ia.names[j])
+            if j == 0:
+                ax.set_ylabel(ia.names[i])
+    return axes
+
+
+def plot_cluster_curves(
+    ia: "IdentifiabilityResult", model: "Model", xdata: ArrayLike, ydata: ArrayLike,
+    ax: "Axes | None" = None,
+) -> "Axes":
+    """Each cluster's center curve overlaid on the observed data (#7b).
+
+    MATLAB equivalent: ``gsua_ia``'s "Per-cluster curves vs data" figure. One line per candidate
+    global minimum (cluster center), so distinct basins that fit the data comparably well are visible
+    as distinct curves.
+
+    Args:
+        ia: Result from :func:`gsua_csb.identifiability_analysis`.
+        model: The model to evaluate each cluster center with.
+        xdata: Domain to evaluate/plot over.
+        ydata: Observed data, (n_outputs, len(xdata)) or (len(xdata),).
+        ax: Axes to draw on. A new figure/axes is created if not given.
+
+    Returns:
+        The Axes drawn on.
+    """
+    import matplotlib.pyplot as plt
+
+    ci = ia.cluster
+    xdata = np.asarray(xdata, dtype=np.float64)
+    ydata = np.atleast_2d(np.asarray(ydata, dtype=np.float64))
+    if ax is None:
+        _, ax = plt.subplots()
+    cmap = plt.get_cmap("tab10")
+
+    for o in range(ydata.shape[0]):
+        ax.plot(xdata, ydata[o], "k.", markersize=5, label="data" if o == 0 else None)
+    for c in range(ci.num_clusters):
+        yc = np.atleast_2d(np.asarray(model.evaluate(ci.centers[c], xdata), dtype=np.float64))
+        for o in range(yc.shape[0]):
+            ax.plot(xdata, yc[o], color=cmap(c), linewidth=1.5,
+                    label=f"Cluster {c}" if o == 0 else None)
+    ax.set_xlabel("Domain")
+    ax.set_ylabel("Output")
+    ax.set_title("Per-cluster curves vs data")
+    ax.legend()
+    return ax
