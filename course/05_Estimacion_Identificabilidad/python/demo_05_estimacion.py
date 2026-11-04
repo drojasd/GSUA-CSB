@@ -19,7 +19,9 @@ import numpy as np
 import matplotlib.pyplot as plt
 from gsua_csb import (
     parameter_estimation,
+    parametric_bootstrap,
     identifiability_analysis,
+    cluster_summary,
     plot_identifiability_correlation,
     plot_identifiability_index,
 )
@@ -68,17 +70,19 @@ def run_demo():
     ax.grid(True); ax.legend()
     fig.tight_layout(); fig.savefig("demo_05_mejor_ajuste.png")
 
-    # 4. Identificabilidad por bootstrap: ensamble de estimaciones sobre B realizaciones
-    #    de ruido. La dispersión = incertidumbre; su estructura = entrelazamientos.
+    # 4. Identificabilidad por BOOTSTRAP PARAMÉTRICO (parametric_bootstrap / gsua_bootstrap):
+    #    re-ajustar los mismos datos desde muchos arranques colapsa al mismo óptimo; el bootstrap
+    #    paramétrico re-ajusta B conjuntos sintéticos generados DESDE el mejor ajuste con el modelo
+    #    de ruido de conteo de los datos, y su dispersión sí mide la incertidumbre de cada parámetro.
     B = 20
-    print(f"Generando ensamble bootstrap ({B} re-ajustes)...")
-    est = np.zeros((B, model.range.shape[0]))
-    for b in range(B):
-        yb = y_clean * (1 + 0.05 * rng.standard_normal(y_clean.shape))
-        pe_b = parameter_estimation(model, model.domain, yb, n=3, solver="least_squares", seed=b)
-        est[b] = pe_b.x[0]
+    print(f"Generando ensamble bootstrap paramétrico ({B} re-ajustes)...")
+    bs = parametric_bootstrap(model, model.domain, ydata, pe.x, pe.cost, b=B, n=3,
+                              solver="least_squares", noise="quasipoisson", seed=7, progress=False)
+    est = bs.x
 
-    ia = identifiability_analysis(model, est, correction=False)
+    # Una sola cuenca (el ensamble se dispersa a lo largo de la variedad R0=beta*S0/gamma, no en
+    # mínimos separados): cluster=False. Usa cluster=True cuando sospeches mínimos globales múltiples.
+    ia = identifiability_analysis(model, est, cluster=False, correction=False, seed=0)
     est_free = est[:, free_idx]
     cv = lambda v: np.std(v) / np.mean(v) * 100
     print("\n--- Dispersión del ensamble (coeficiente de variación) ---")
@@ -112,6 +116,13 @@ def run_demo():
     print(f"   R0 estimado = {R0_ens.mean():.2f} ± {R0_ens.std():.2f}   (verdad = {R0_true:.2f})")
     print("=> Moraleja: la COMBINACIÓN identificable (R0) es confiable aunque sus")
     print("   componentes por separado no lo sean.\n")
+
+    # Resumen por cluster (cluster_summary / gsua_clustersummary): por parámetro, el veredicto de
+    # identificabilidad y el ancho del intervalo de percentiles 2.5-97.5 relativo al rango original.
+    print("--- Resumen de identificabilidad por parámetro ---")
+    for r in cluster_summary(ia):
+        print(f"   c{r.cluster} {r.parameter:6s}: {r.verdict:16s} (ancho pct del rango = {r.pct_width_rel:.2f})")
+    print()
     print("Figuras guardadas: demo_05_mejor_ajuste.png, demo_05_identificabilidad.png")
 
     # 6. PREGUNTAS Y EJERCICIOS PARA EL ESTUDIANTE

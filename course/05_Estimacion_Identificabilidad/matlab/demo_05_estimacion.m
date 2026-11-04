@@ -90,19 +90,17 @@ grid on; legend('Location', 'northeast');
 % es la incertidumbre de cada parámetro, y su ESTRUCTURA (correlación) revela los
 % entrelazamientos.
 B = 20;
-Est = zeros(numel(names), B);
-fprintf('Generando ensamble bootstrap (%d re-ajustes)...\n', B);
-for b = 1:B
-    yb = y_clean .* (1 + 0.05 * randn(size(y_clean)));   % nueva realización de ruido
-    [Tb, resb] = gsua_pe(T, xdata, yb, 'N', 3, 'solver', 'lsqc', ...
-        'opt', opt, 'save', false, 'timer', false);
-    [~, jx] = min(resb);
-    Est(:, b) = Tb.Estlsqc(:, jx);
-end
+fprintf('Generando ensamble bootstrap parametrico (%d re-ajustes)...\n', B);
+% gsua_bootstrap re-ajusta B conjuntos sinteticos generados DESDE el mejor ajuste con el modelo
+% de ruido de conteo de los datos: su dispersion sí mide la incertidumbre de cada parametro
+% (re-ajustar los mismos datos desde muchos arranques colapsa al mismo optimo, no la mide).
+Est = gsua_bootstrap(T, xdata, ydata, T.Estlsqc, res, 'B', B, 'solver', 'lsqc', 'N', 3, ...
+    'noise', 'quasipoisson', 'opt', opt, 'seed', 7, 'timer', false);
 
 % gsua_ia analiza el ensamble: actualiza rangos a un IC de la mediana, calcula el
 % índice de identificabilidad por parámetro (0 = bien, 1 = mal) y abre las figuras
-% diagnósticas (incluida la matriz de correlación).
+% diagnósticas (incluida la matriz de correlación). Una sola cuenca aquí (el ensamble se dispersa
+% sobre la variedad R0=beta*S0/gamma): cluster=false. Usa cluster=true si sospechas minimos multiples.
 [T, ci] = gsua_ia(T, Est, false, false, true, false); %#ok<ASGLU>
 
 fprintf('\n--- Dispersión del ensamble (coeficiente de variación) ---\n');
@@ -133,6 +131,12 @@ fprintf('   CV de los parámetros individuales ~ %.1f%%, pero CV de R0 = %.2f%%\
 fprintf('   R0 estimado = %.2f ± %.2f   (verdad = %.2f)\n', mean(R0_ens), std(R0_ens), R0_true);
 fprintf('=> Moraleja: la COMBINACIÓN identificable (R0) es confiable aunque sus\n');
 fprintf('   componentes por separado no lo sean.\n\n');
+
+% Resumen por cluster (gsua_clustersummary): por parametro, el veredicto de identificabilidad y el
+% ancho del intervalo de percentiles 2.5-97.5 relativo al rango original.
+S = gsua_clustersummary(T, ci);
+fprintf('--- Resumen de identificabilidad por parametro ---\n');
+disp(S(:, {'Cluster','Parameter','PctWidthRel','Verdict'}));
 
 %% 7. PREGUNTAS Y EJERCICIOS PARA EL ESTUDIANTE
 fprintf('=========================================================================\n');

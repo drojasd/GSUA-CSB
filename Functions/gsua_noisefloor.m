@@ -135,8 +135,12 @@ quantileLevel = p.Results.quantile;
 seed = p.Results.seed;
 show = p.Results.Show;
 
-inputs = size(ydata,1);
 len = length(xdata);
+% Orient ydata to outputs x samples (accept a single output passed as a column vector).
+if size(ydata,2) ~= len && size(ydata,1) == len
+    ydata = ydata.';
+end
+inputs = size(ydata,1);
 
 cumulative = p.Results.cumulative;
 if isempty(cumulative)

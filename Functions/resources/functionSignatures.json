@@ -160,7 +160,17 @@
       {"name": "show", "kind": "ordered", "type": ["logical"]},
       {"name": "cluster", "kind": "ordered", "type": ["logical"]},
       {"name": "maxK", "kind": "ordered", "type": ["numeric", "scalar"]},
-      {"name": "silThreshold", "kind": "ordered", "type": ["numeric", "scalar"]}
+      {"name": "silThreshold", "kind": "ordered", "type": ["numeric", "scalar"]},
+      {"name": "cost", "kind": "namevalue", "type": ["numeric"]},
+      {"name": "CostMethod", "kind": "namevalue", "type": ["char", "choices={'rtol','gap'}"]},
+      {"name": "CostRtol", "kind": "namevalue", "type": ["numeric", "scalar"]},
+      {"name": "CostAtol", "kind": "namevalue", "type": ["numeric", "scalar"]},
+      {"name": "CostGapRatio", "kind": "namevalue", "type": ["numeric", "scalar"]},
+      {"name": "MinKeep", "kind": "namevalue", "type": ["numeric", "scalar"]},
+      {"name": "IndexMethod", "kind": "namevalue", "type": ["char", "choices={'spread','ci'}"]},
+      {"name": "truth", "kind": "namevalue", "type": ["numeric"]},
+      {"name": "xdata", "kind": "namevalue", "type": ["numeric"]},
+      {"name": "ydata", "kind": "namevalue", "type": ["numeric"]}
     ],
     "outputs": [
       {"name": "T", "type": ["table"]},
@@ -175,7 +185,14 @@
       {"name": "outlier", "kind": "ordered", "type": ["logical"]},
       {"name": "cluster", "kind": "ordered", "type": ["logical"]},
       {"name": "maxK", "kind": "ordered", "type": ["numeric", "scalar"]},
-      {"name": "silThreshold", "kind": "ordered", "type": ["numeric", "scalar"]}
+      {"name": "silThreshold", "kind": "ordered", "type": ["numeric", "scalar"]},
+      {"name": "cost", "kind": "namevalue", "type": ["numeric"]},
+      {"name": "CostMethod", "kind": "namevalue", "type": ["char", "choices={'rtol','gap'}"]},
+      {"name": "CostRtol", "kind": "namevalue", "type": ["numeric", "scalar"]},
+      {"name": "CostAtol", "kind": "namevalue", "type": ["numeric", "scalar"]},
+      {"name": "CostGapRatio", "kind": "namevalue", "type": ["numeric", "scalar"]},
+      {"name": "MinKeep", "kind": "namevalue", "type": ["numeric", "scalar"]},
+      {"name": "IndexMethod", "kind": "namevalue", "type": ["char", "choices={'spread','ci'}"]}
     ],
     "outputs": [
       {"name": "T", "type": ["table"]},
@@ -505,7 +522,8 @@
       {"name": "cumulative", "kind": "namevalue", "type": ["logical"]},
       {"name": "seed", "kind": "namevalue", "type": ["numeric"]},
       {"name": "margin", "kind": "namevalue", "type": ["numeric", "scalar"]},
-      {"name": "alpha", "kind": "namevalue", "type": ["numeric", "scalar"]}
+      {"name": "alpha", "kind": "namevalue", "type": ["numeric", "scalar"]},
+      {"name": "Show", "kind": "namevalue", "type": ["logical"]}
     ],
     "outputs": [
       {"name": "out", "type": ["struct"]}
@@ -523,6 +541,97 @@
     ],
     "outputs": [
       {"name": "keep", "type": ["logical"]}
+    ]
+  },
+
+  "gsua_bootstrap": {
+    "inputs": [
+      {"name": "T", "kind": "required", "type": ["table"]},
+      {"name": "xdata", "kind": "required", "type": ["numeric"]},
+      {"name": "ydata", "kind": "required", "type": ["numeric"]},
+      {"name": "Est0", "kind": "required", "type": ["double"]},
+      {"name": "res", "kind": "required", "type": ["numeric"]},
+      {"name": "B", "kind": "namevalue", "type": ["numeric", "scalar"]},
+      {"name": "solver", "kind": "namevalue", "type": ["char", "choices={'lsqc','lsqn','ga','particle','psearch','surrogate','annealing','fmincon'}"]},
+      {"name": "N", "kind": "namevalue", "type": ["numeric", "scalar"]},
+      {"name": "margin", "kind": "namevalue", "type": ["numeric", "scalar"]},
+      {"name": "alpha", "kind": "namevalue", "type": ["numeric", "scalar"]},
+      {"name": "noise", "kind": "namevalue", "type": ["char", "choices={'quasipoisson','poisson','nbglobal'}"]},
+      {"name": "cumulative", "kind": "namevalue", "type": ["logical"]},
+      {"name": "seed", "kind": "namevalue", "type": ["numeric"]},
+      {"name": "parallel", "kind": "namevalue", "type": ["logical"]},
+      {"name": "opt", "kind": "namevalue"},
+      {"name": "timer", "kind": "namevalue", "type": ["logical"]}
+    ],
+    "outputs": [
+      {"name": "Est", "type": ["double"]},
+      {"name": "costs", "type": ["double"]},
+      {"name": "out", "type": ["struct"]}
+    ]
+  },
+
+  "gsua_clustersummary": {
+    "inputs": [
+      {"name": "T", "kind": "required", "type": ["table"]},
+      {"name": "clusterInfo", "kind": "required", "type": ["struct"]}
+    ],
+    "outputs": [
+      {"name": "S", "type": ["table"]}
+    ]
+  },
+
+  "gsua_noisemodel": {
+    "inputs": [
+      {"name": "T", "kind": "required", "type": ["table"]},
+      {"name": "xdata", "kind": "required", "type": ["numeric"]},
+      {"name": "ydata", "kind": "required", "type": ["numeric"]},
+      {"name": "thetaStar", "kind": "required", "type": ["double"]},
+      {"name": "cumulative", "kind": "ordered", "type": ["logical"]}
+    ],
+    "outputs": [
+      {"name": "f", "type": ["double"]},
+      {"name": "muClampedGrid", "type": ["double"]},
+      {"name": "phi", "type": ["double", "scalar"]},
+      {"name": "kGlobal", "type": ["double", "scalar"]},
+      {"name": "quasiFallback", "type": ["logical"]},
+      {"name": "nValid", "type": ["double", "scalar"]},
+      {"name": "pFree", "type": ["double", "scalar"]}
+    ]
+  },
+
+  "gsua_noisedraw": {
+    "inputs": [
+      {"name": "model", "kind": "required", "type": ["char", "choices={'poisson','quasipoisson','nbglobal'}"]},
+      {"name": "muClampedGrid", "kind": "required", "type": ["double"]},
+      {"name": "cumulative", "kind": "required", "type": ["logical"]},
+      {"name": "ydata", "kind": "required", "type": ["double"]},
+      {"name": "phi", "kind": "required", "type": ["numeric", "scalar"]},
+      {"name": "kGlobal", "kind": "required", "type": ["numeric", "scalar"]},
+      {"name": "quasiFallback", "kind": "required", "type": ["logical"]},
+      {"name": "B", "kind": "required", "type": ["numeric", "scalar"]}
+    ],
+    "outputs": [
+      {"name": "yb", "type": ["double"]}
+    ]
+  },
+
+  "gsua_iastats": {
+    "inputs": [
+      {"name": "statT_est", "kind": "required", "type": ["double"]},
+      {"name": "origRange", "kind": "required", "type": ["double"]},
+      {"name": "indexMethod", "kind": "required", "type": ["char", "choices={'spread','ci'}"]},
+      {"name": "ciMethod", "kind": "required", "type": ["char", "choices={'orderstat','normal'}"]},
+      {"name": "correction", "kind": "ordered", "type": ["logical"]}
+    ],
+    "outputs": [
+      {"name": "lb", "type": ["double"]},
+      {"name": "up", "type": ["double"]},
+      {"name": "ind", "type": ["double"]},
+      {"name": "med", "type": ["double"]},
+      {"name": "RHO", "type": ["double"]},
+      {"name": "boxin", "type": ["double"]},
+      {"name": "corrin", "type": ["double"]},
+      {"name": "extrin", "type": ["double"]}
     ]
   }
 }

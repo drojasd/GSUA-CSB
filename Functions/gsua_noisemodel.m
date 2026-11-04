@@ -30,8 +30,13 @@ function [f,muClampedGrid,phi,kGlobal,quasiFallback,nValid,pFree] = gsua_noisemo
 %
 %   See also GSUA_NOISEDRAW, GSUA_NOISEFLOOR, GSUA_BOOTSTRAP.
 
-inputs = size(ydata,1);
 len = length(xdata);
+% Orient ydata to outputs x samples (accept a single output passed as a column vector), matching
+% the inputs x len convention of gsua_deval/gsua_costf.
+if size(ydata,2) ~= len && size(ydata,1) == len
+    ydata = ydata.';
+end
+inputs = size(ydata,1);
 if nargin < 5 || isempty(cumulative)
     cumulative = false(1,inputs);
 end

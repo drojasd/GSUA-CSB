@@ -97,6 +97,10 @@ parallelRefit = p.Results.parallel;
 Opt = p.Results.opt;
 timer = p.Results.timer;
 
+% Orient ydata to outputs x samples (accept a single output passed as a column vector).
+if size(ydata,2) ~= length(xdata) && size(ydata,1) == length(xdata)
+    ydata = ydata.';
+end
 inputs = size(ydata,1);
 
 cumulative = p.Results.cumulative;
