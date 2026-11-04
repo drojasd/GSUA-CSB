@@ -36,6 +36,7 @@ if TYPE_CHECKING:
 
     from ._identifiability import IdentifiabilityResult
     from ._model import Model
+    from ._noisefloor import NoiseFloorResult
     from ._sensitivity import SensitivityResult
     from ._uncertainty import MCFResult, UncertaintyResult
 
@@ -490,3 +491,51 @@ def plot_cluster_curves(
     ax.set_title("Per-cluster curves vs data")
     ax.legend()
     return ax
+
+
+def plot_noise_floor(
+    result: "NoiseFloorResult", cost: ArrayLike, axes: "NDArray[Axes] | None" = None
+) -> "NDArray[Axes]":
+    """Threshold-selection diagnostic for a noise-floor calibration (#9).
+
+    Left panel: the pool costs sorted and on a log scale, with the acceptance threshold and the
+    accepted/rejected runs marked. Right panel: the bootstrap cost distribution (the cost a perfect
+    model incurs from noise alone) with the chosen-quantile threshold. MATLAB equivalent:
+    ``gsua_noisefloor(..., 'Show', true)``.
+
+    Args:
+        result: Result from :func:`gsua_csb.noise_floor`.
+        cost: The pool costs the threshold was applied to (same ``cost`` passed to ``noise_floor``).
+        axes: Two Axes (acceptance, distribution). A new 1x2 figure is created if not given.
+
+    Returns:
+        The array of two Axes drawn on.
+    """
+    import matplotlib.pyplot as plt
+
+    cost = np.atleast_1d(np.asarray(cost, dtype=np.float64))
+    if axes is None:
+        _, axes = plt.subplots(1, 2, figsize=(10, 4))
+    axes = np.atleast_1d(axes)
+    tiny = np.finfo(np.float64).tiny
+
+    sorted_cost = np.sort(cost)
+    acc = sorted_cost < result.threshold
+    idx = np.arange(1, sorted_cost.size + 1)
+    axes[0].semilogy(idx[acc], np.maximum(sorted_cost[acc], tiny), "o", color="green", label="accepted")
+    if np.any(~acc):
+        axes[0].semilogy(idx[~acc], np.maximum(sorted_cost[~acc], tiny), "o",
+                         markerfacecolor="none", color="red", label="rejected")
+    axes[0].axhline(result.threshold, color="black", linestyle="--", label="threshold")
+    axes[0].set_xlabel("Pool member (sorted by cost)")
+    axes[0].set_ylabel("Cost (log scale)")
+    axes[0].set_title(f"{int(result.accepted.sum())} of {cost.size} accepted")
+    axes[0].legend()
+
+    axes[1].hist(result.cost, bins=40, density=True)
+    axes[1].axvline(result.threshold, color="black", linestyle="--", label="threshold")
+    axes[1].set_xlabel("Bootstrap cost (perfect model under noise)")
+    axes[1].set_ylabel("pdf")
+    axes[1].set_title(f"Noise-floor distribution ({result.model})")
+    axes[1].legend()
+    return axes

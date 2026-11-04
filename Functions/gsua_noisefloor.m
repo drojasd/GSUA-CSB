@@ -61,6 +61,9 @@ function out = gsua_noisefloor(T,xdata,ydata,Est,res,varargin)
 %     'seed'       <-- Seed for the bootstrap draws, for reproducibility. Default: not set (draws
 %                      from the current global stream). The caller's global rng state is always
 %                      restored on return (or on error), regardless of whether 'seed' was given.
+%     'Show'       <-- {false,true}. If true, plot the sorted pool costs (log scale) with the
+%                      threshold and accepted/rejected runs marked, plus the bootstrap cost
+%                      distribution with the chosen quantile. Default false.
 %
 %   Noise models (do not default to Poisson -- it is almost always far too tight for real
 %   surveillance-style data, since real observation processes are typically overdispersed
@@ -116,6 +119,7 @@ addParameter(p,'noise','quasipoisson',@(x) any(validatestring(x,{'poisson','quas
 addParameter(p,'quantile',0.95,@(x) isnumeric(x) && isscalar(x) && x>0 && x<1);
 addParameter(p,'cumulative',[],@(x) isempty(x) || islogical(x));
 addParameter(p,'seed',[],@(x) isempty(x) || isnumeric(x));
+addParameter(p,'Show',false,@islogical);
 parse(p,T,xdata,ydata,Est,res,varargin{:});
 
 xdata = p.Results.xdata;
@@ -126,6 +130,7 @@ B = round(p.Results.B);
 noiseChoice = validatestring(p.Results.noise,{'poisson','quasipoisson','nbglobal'});
 quantileLevel = p.Results.quantile;
 seed = p.Results.seed;
+show = p.Results.Show;
 
 inputs = size(ydata,1);
 len = length(xdata);
@@ -238,6 +243,30 @@ if bestRes > out.threshold
         ['Best pool cost (%.6g) exceeds the noise-floor threshold (%.6g) at the %.0f%% level: ' ...
          'the model is rejected as a description of the data.'], ...
         bestRes, out.threshold, quantileLevel*100);
+end
+
+% --- Threshold-selection diagnostic plots (#9) ---
+if show
+    sortedRes = sort(res);
+    acc = sortedRes < out.threshold;
+    figure('Name','Noise-floor acceptance')
+    clf
+    subplot(1,2,1)
+    semilogy(find(acc),max(sortedRes(acc),realmin),'o','MarkerFaceColor',[0 0.6 0], ...
+        'MarkerEdgeColor',[0 0.6 0],'DisplayName','accepted'); hold on
+    if any(~acc)
+        semilogy(find(~acc),max(sortedRes(~acc),realmin),'o','MarkerEdgeColor',[0.8 0 0], ...
+            'DisplayName','rejected');
+    end
+    yline(out.threshold,'k--','threshold','LineWidth',1.2);
+    xlabel('Pool member (sorted by cost)'); ylabel('Cost (log scale)')
+    title(sprintf('%d of %d accepted', sum(out.accepted), numel(res)))
+    legend('Location','southeast'); grid on; hold off
+    subplot(1,2,2)
+    histogram(out.cost,'Normalization','pdf'); hold on
+    xline(out.threshold,'k--',sprintf('%.0f%% quantile',quantileLevel*100),'LineWidth',1.2);
+    xlabel('Bootstrap cost (perfect model under noise)'); ylabel('pdf')
+    title(['Noise-floor distribution (' noiseChoice ')']); grid on; hold off
 end
 
 end

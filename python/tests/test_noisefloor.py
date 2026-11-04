@@ -181,6 +181,23 @@ def test_costf_is_scale_invariant_under_joint_data_rescale():
     assert res_scaled == pytest.approx(res_original, abs=1e-9)
 
 
+def test_plot_noise_floor_smoke():
+    pytest.importorskip("matplotlib")
+    import matplotlib
+
+    matplotlib.use("Agg")
+    from gsua_csb import plot_noise_floor
+
+    ydata = _fixture_func(TRUE_PARS, XDATA)
+    model, pe = _fit_pool(ydata)
+    with warnings.catch_warnings():
+        warnings.simplefilter("ignore")
+        out = noise_floor(model, XDATA, ydata, pe.x, pe.cost, margin=pe.margin, alpha=pe.alpha,
+                          b=100, seed=1)
+    axes = plot_noise_floor(out, pe.cost)
+    assert np.atleast_1d(axes).size == 2
+
+
 def test_calibrated_band_covers_at_least_as_well_as_naive_rule():
     rng = np.random.default_rng(55)
     ydata0 = _fixture_func(TRUE_PARS, XDATA)
