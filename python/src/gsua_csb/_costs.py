@@ -83,11 +83,20 @@ def costf(ydata: ArrayLike, yfunction: ArrayLike, regulator: ArrayLike, alpha: f
     # non-NaN samples (not the fixed length) so a gappy row isn't silently deflated relative to a
     # fully-populated one. Identical to the pre-NaN-tolerant behavior when ydata has no NaN.
     n_valid = (~np.isnan(ydata)).sum(axis=1)
-    cost = np.nansum((ydata - yfunction) ** 2, axis=1) / n_valid / regulator
+    # A row with a non-finite/non-positive regulator (an all-zero or constant data row -- e.g. a 0-1
+    # fraction row whose synthetic draw came out all zeros) has no usable scale and an undefined
+    # correlation; exclude it (contribute 0, drop from the average) instead of letting inf/nan poison
+    # the scalar cost. With every regulator finite and positive (the usual case) this is identical to
+    # the previous behaviour.
+    keep = np.isfinite(regulator) & (regulator > 0)
+    with np.errstate(divide="ignore", invalid="ignore"):
+        cost = np.nansum((ydata - yfunction) ** 2, axis=1) / n_valid / regulator
     r = _pearson_rows(ydata, yfunction)
     r = np.where(np.isnan(r), 1.0, r)
-    cost = ((2 - r) * cost) ** alpha
-    return float(cost.sum() / n_outputs)
+    with np.errstate(invalid="ignore"):
+        cost = ((2 - r) * cost) ** alpha
+    cost = np.where(keep, cost, 0.0)
+    return float(cost.sum() / max(int(keep.sum()), 1))
 
 
 def rcostf(ydata: ArrayLike, yfunction: ArrayLike, margin: float = 1.1, alpha: float = 2.0) -> float:
@@ -124,11 +133,17 @@ def rcostf(ydata: ArrayLike, yfunction: ArrayLike, margin: float = 1.1, alpha: f
     # regulator and the MSE term (see costf's docstring/comment for why).
     n_valid = (~np.isnan(ydata)).sum(axis=1)
     regulator = np.nansum((ydata - ydata * margin) ** 2, axis=1) / n_valid
-    cost = np.nansum((ydata - yfunction) ** 2, axis=1) / n_valid / regulator
+    # Exclude a row whose self-derived regulator is zero/undefined (an all-zero or constant data
+    # row) rather than dividing by it; see costf for the rationale.
+    keep = np.isfinite(regulator) & (regulator > 0)
+    with np.errstate(divide="ignore", invalid="ignore"):
+        cost = np.nansum((ydata - yfunction) ** 2, axis=1) / n_valid / regulator
     r = _pearson_rows(ydata, yfunction)
     r = np.where(np.isnan(r), 1.0, r)
-    cost = ((2 - r) * cost) ** alpha
-    return float(cost.sum() / n_outputs)
+    with np.errstate(invalid="ignore"):
+        cost = ((2 - r) * cost) ** alpha
+    cost = np.where(keep, cost, 0.0)
+    return float(cost.sum() / max(int(keep.sum()), 1))
 
 
 def costf_multi(

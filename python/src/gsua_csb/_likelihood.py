@@ -37,6 +37,7 @@ Two deliberate deviations from the MATLAB source:
 
 from __future__ import annotations
 
+import warnings
 from dataclasses import dataclass
 from typing import Sequence
 
@@ -143,6 +144,16 @@ def profile_likelihood(
     Returns:
         A :class:`ProfileLikelihoodResult`.
     """
+    # margin is the RAW relative noise (0.08 = 8%); a value >= 1 looks like the pre-v1.18 MATLAB
+    # offset convention (1.08 for 8%), which here would assert ~100%+ noise. Warn so a ported script
+    # fails loudly instead of silently. (This mirrors gsua_likelihood's MarginConvention warning.)
+    if margin >= 1:
+        warnings.warn(
+            f"margin is the RAW relative noise (e.g. 0.08 = 8%); you passed {margin:g} (>=1), which "
+            "looks like the pre-v1.18 offset convention. Pass the raw fraction.",
+            stacklevel=2,
+        )
+
     d = np.asarray(xdata, dtype=np.float64)
     y_nom = np.asarray(model.evaluate(model.nominal, d), dtype=np.float64)
     ydata_arr = y_nom if ydata is None else np.asarray(ydata, dtype=np.float64)

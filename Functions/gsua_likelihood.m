@@ -22,8 +22,11 @@ function Tfinal = gsua_likelihood(T,xdata,ydata,alpha,step,margin,tolerance1,tol
 %                    (e.g. 0.95)
 %     step       <-- initial relative step size used to perturb each
 %                    parameter away from its nominal value
-%     margin     <-- relative standard deviation used in the Gaussian
-%                    likelihood weighting (see gsua_likecost)
+%     margin     <-- RAW relative standard deviation used in the Gaussian
+%                    likelihood weighting (see gsua_likecost), e.g. 0.08 = 8%% noise. This is the
+%                    same raw convention as gsua_pe/gsua_costf (unified in v1.18). NOTE: before v1.18
+%                    this was offset by one (1.08 meant 8%%); pass the raw fraction now. A value >= 1
+%                    triggers a MarginConvention warning.
 %     tolerance1 <-- convergence tolerance on the likelihood-ratio
 %                    statistic (bisection stopping criterion)
 %     tolerance2 <-- convergence tolerance on the step size (relative to
@@ -52,7 +55,16 @@ function Tfinal = gsua_likelihood(T,xdata,ydata,alpha,step,margin,tolerance1,tol
     if nargin<15 || isempty(verbose)
         verbose=true;   % default on, preserving prior behavior; pass false for a quiet run
     end
-    margin2=margin-1;
+    % margin is the RAW relative noise, unified with gsua_pe/gsua_costf since v1.18 (0.08 = 8%). The
+    % pre-v1.18 convention was offset by one (1.08 meant 8%); warn if a value that looks like the old
+    % convention arrives so a stale script fails loudly instead of asserting ~100% noise.
+    if margin >= 1
+        warning('GSUA:gsua_likelihood:MarginConvention', ...
+            ['margin is now the RAW relative noise (0.08 = 8%%), unified with gsua_pe. You passed ' ...
+             '%.4g (>=1), which looks like the pre-v1.18 offset convention; pass %.4g instead.'], ...
+            margin, margin-1);
+    end
+    margin2=margin;
     if isempty(pars)
         npars = size(T,1);
         pars=1:npars;
@@ -120,7 +132,7 @@ function Tfinal = gsua_likelihood(T,xdata,ydata,alpha,step,margin,tolerance1,tol
             while true
                 
                 Testim.Range(i,:)=[Testim.Nominal(i), Testim.Nominal(i)];
-                [Tprueba,res] = gsua_pe(Testim,xdata,ydata,'margin',-margin,'ipoint',repmat(Testim.Nominal,1,reps)','solver','fmincon','N',reps,'save',false,'timer',false,'opt',opt);
+                [Tprueba,res] = gsua_pe(Testim,xdata,ydata,'margin',-(margin+1),'ipoint',repmat(Testim.Nominal,1,reps)','solver','fmincon','N',reps,'save',false,'timer',false,'opt',opt);
                 obj =  [obj, thresh-res(1)];
 
                 if show

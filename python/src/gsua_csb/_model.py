@@ -144,6 +144,45 @@ class Model(ABC):
         self.range[i, :] = v
         self.nominal[i] = v
 
+    def full_params(self, free_values: ArrayLike) -> NDArray[np.float64]:
+        """Reinsert fixed factors into a free-parameter vector, returning the full ordered vector.
+
+        The Python counterpart of MATLAB ``gsua_fullpars``: a fixed factor (collapsed range) still
+        occupies a position in the full parameter order, but estimates (e.g. ``PEResult.x``) carry
+        only the free factors. This writes ``free_values`` into the free positions of a copy of
+        ``nominal`` (whose fixed positions already hold the pinned values) and returns the complete
+        vector; ``model.names`` gives the matching names.
+
+        Args:
+            free_values: Free-factor values as a 1-D array of length ``(~model.fixed).sum()``, or a
+                2-D ``(K, n_free)`` batch whose rows are each a free vector.
+
+        Returns:
+            The full ordered vector ``(Np,)``, or ``(K, Np)`` for a batch.
+
+        Raises:
+            ValueError: If ``free_values`` does not have one entry per free factor.
+        """
+        free_values = np.asarray(free_values, dtype=np.float64)
+        fixed = self.fixed
+        n_free = int((~fixed).sum())
+        template = np.asarray(self.nominal, dtype=np.float64)
+        if free_values.ndim == 1:
+            if free_values.shape[0] != n_free:
+                raise ValueError(
+                    f"free_values must have {n_free} entries (the free factors), got {free_values.shape[0]}"
+                )
+            full = template.copy()
+            full[~fixed] = free_values
+            return full
+        if free_values.shape[1] != n_free:
+            raise ValueError(
+                f"free_values must have {n_free} columns (the free factors), got {free_values.shape[1]}"
+            )
+        full = np.tile(template, (free_values.shape[0], 1))
+        full[:, ~fixed] = free_values
+        return full
+
     @property
     def active_output_names(self) -> list[str]:
         """``output_names`` restricted to the outputs :meth:`evaluate` currently returns."""

@@ -218,6 +218,12 @@ class ClusterInfo:
     orig_range: NDArray[np.float64] = field(default_factory=lambda: np.zeros((0, 2)))
     """(Np, 2) original parameter bounds (``model.range``) -- the denominator for
     :func:`gsua_csb.cluster_summary`'s percentile-interval width. MATLAB: ``clusterInfo.OrigRange``."""
+    clustering_evaluated: bool = False
+    """True only if spectral clustering actually ran (``cluster=True`` and >=3 runs). MATLAB:
+    ``clusterInfo.ClusteringEvaluated``."""
+    note: str = ""
+    """Human-readable note -- e.g. set when clustering was requested but could not be evaluated
+    (too few runs). MATLAB: ``clusterInfo.Note``."""
 
 
 @dataclass
@@ -466,10 +472,13 @@ def identifiability_analysis(
     dominant = 0
     num_clusters = 1
     stats_source = X
+    clustering_evaluated = False
+    cluster_note = ""
     if cluster:
         n_runs = X.shape[0]
         kmax = min(max_k, n_runs - 1)
         if kmax >= 2:
+            clustering_evaluated = True
             normalized = normalize(X)
             k_values = list(range(2, kmax + 1))
             sil_values: list[float] = []
@@ -510,6 +519,12 @@ def identifiability_analysis(
                 # summary -- report the dominant (largest) basin's statistics instead. The other
                 # basins are still available via cluster.centers and the per-cluster fields.
                 stats_source = X[labels_filtered == dominant]
+        else:
+            cluster_note = (
+                "Clustering requested but NOT evaluated (need >=3 estimation runs for max_k>=2); "
+                "results are single-basin."
+            )
+            warnings.warn(cluster_note, stacklevel=2)
 
     n_outliers_removed = 0
     if outlier:
@@ -564,6 +579,8 @@ def identifiability_analysis(
         estimates=cl_estimates,
         medians=cl_medians,
         orig_range=np.asarray(model.range, dtype=np.float64),
+        clustering_evaluated=clustering_evaluated,
+        note=cluster_note,
     )
 
     return IdentifiabilityResult(

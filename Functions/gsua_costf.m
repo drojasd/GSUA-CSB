@@ -48,8 +48,18 @@ function cos=gsua_costf(inputs,regulator,len,ydata,yfunction,alpha)
 %   See also GSUA_PE, GSUA_RCOSTF, GSUA_COSTFMULTI, GSUA_CORR2OMITNAN.
 nvalid=sum(~isnan(ydata),2);
 cost=(sum((ydata-yfunction).^2,2,'omitnan')./nvalid)./regulator;
+% A row with a non-finite/non-positive regulator (an all-zero or constant data row, which GSUA_PE
+% flags and sets to Inf) carries no usable scale and has an undefined correlation; exclude it
+% entirely -- contribute 0 and drop it from the average -- instead of letting NaN poison the scalar
+% cost (which otherwise makes fmincon report "objective undefined at initial point"). With every row
+% finite (the usual case) keep is all-true and this is identical to the previous behaviour.
+keep = isfinite(regulator) & regulator>0;
 for i=1:inputs
+    if ~keep(i)
+        cost(i)=0;
+        continue
+    end
     cost(i)=((2-gsua_corr2omitnan(ydata(i,:),yfunction(i,:)))*cost(i))^alpha;
 end
-cos=sum(cost)/inputs;
+cos=sum(cost)/max(sum(keep),1);
 end

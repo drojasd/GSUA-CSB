@@ -46,6 +46,10 @@ try
 switch kind
     case {2,6}
         y=fun(par);
+        if kind==6 && ~isscalar(y)
+            % one-arg models return the full [nSeries x nSteps] matrix; honor the selected series
+            y=y(out,:);
+        end
     case 3
         y=deval(fun(par(:,1:ni),par(:,ni+1:end)),xdata,out);
     case 4

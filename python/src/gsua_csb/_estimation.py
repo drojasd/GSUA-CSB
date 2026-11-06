@@ -27,7 +27,7 @@ an exception is a real bug to surface, not routine noise to paper over by retryi
 
 from __future__ import annotations
 
-from dataclasses import dataclass
+from dataclasses import dataclass, field
 from typing import Literal
 
 import numpy as np
@@ -65,6 +65,10 @@ class PEResult:
             "differential_evolution", "dual_annealing"}`` and ``margin != 0``; ``cost`` is raw
             squared-residual for ``solver="least_squares"`` regardless of this value.
         alpha: The ``alpha`` this call was made with -- same recovery purpose as ``margin``.
+        initial_points: (N, Np) the start point used for each row of ``x``, in the same cost-sorted
+            order, so you can see which start produced each fit. Python runs each start exactly once
+            (no retry-from-random loop, unlike MATLAB gsua_pe), so there is no retry count to report.
+            MATLAB equivalent: ``T.IP<solver>``.
     """
 
     names: list[str]
@@ -73,6 +77,7 @@ class PEResult:
     solver: str
     margin: float
     alpha: float
+    initial_points: NDArray[np.float64] = field(default_factory=lambda: np.zeros((0, 0)))
 
 
 def parameter_estimation(
@@ -223,7 +228,12 @@ def parameter_estimation(
         x0_free = to_search_space(initial_points[i, free_idx])
 
         if solver == "least_squares":
-            sol = least_squares(residual, x0_free, bounds=(lb, ub), **solver_kwargs)
+            # Default x_scale='jac' (scipy's adaptive scaling) when the caller hasn't set it: the
+            # counterpart of MATLAB gsua_pe's TypicalX default, it keeps finite differences sane when
+            # factors span many orders of magnitude. 'minimize'/DE/annealing have no TypicalX analog.
+            ls_kwargs = dict(solver_kwargs)
+            ls_kwargs.setdefault("x_scale", "jac")
+            sol = least_squares(residual, x0_free, bounds=(lb, ub), **ls_kwargs)
             results_x[i] = full_params(sol.x)
             fun = float(np.sum(sol.fun**2))
         elif solver == "minimize":
@@ -246,7 +256,7 @@ def parameter_estimation(
     order = np.argsort(results_cost)
     result = PEResult(
         names=list(model.names), x=results_x[order], cost=results_cost[order], solver=solver,
-        margin=margin, alpha=alpha,
+        margin=margin, alpha=alpha, initial_points=np.asarray(initial_points)[order],
     )
 
     if save_path is not None:
@@ -255,7 +265,7 @@ def parameter_estimation(
         # working directory) and save_path here, which writes an .npz with the same information.
         np.savez(
             save_path, x=result.x, cost=result.cost, names=np.asarray(result.names),
-            solver=solver, margin=margin, alpha=alpha,
+            solver=solver, margin=margin, alpha=alpha, initial_points=result.initial_points,
         )
 
     return result

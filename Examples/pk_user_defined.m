@@ -95,13 +95,11 @@ array2table(corr(Est3'), 'VariableNames', T3.Properties.RowNames, 'RowNames', T3
 % reps, show, parallel, saver, pars). alpha = 0.95 is the confidence level; limit is
 % the bisection budget per bound; pars = [] profiles every factor.
 %
-% margin is a RELATIVE STANDARD DEVIATION OFFSET BY ONE here: gsua_likelihood uses
-% (margin-1) as the assumed relative noise, so 1.08 means the 8% noise the data
-% actually carries. Passing 0.1 would assert 90% noise -- and would also make
-% gsua_pe's internal +1 offset positive, silently switching its inner refit from the
-% likelihood to plain least squares. The Python port drops the offset, so its
-% margin=0.08 is this margin=1.08.
-Tci3 = gsua_likelihood(T3, xdata, ydata, 0.95, 0.05, 1.08, 0.01, 0.01, 15, 1, false, false, false, [], false);
+% margin is the RAW relative noise, unified with gsua_pe/gsua_costf since v1.18: 0.08 means the 8%
+% noise the data actually carries. (Before v1.18 this argument was offset by one -- you passed 1.08
+% for 8% -- so a stale 1.08 now triggers a MarginConvention warning.) The Python port uses the same
+% raw 0.08.
+Tci3 = gsua_likelihood(T3, xdata, ydata, 0.95, 0.05, 0.08, 0.01, 0.01, 15, 1, false, false, false, [], false);
 table(Tci3.Range(:,1), Tci3.Range(:,2), Tci3.Range(:,2)-Tci3.Range(:,1), ranges(:,1), ranges(:,2), ...
     'VariableNames', {'CI_low','CI_high','width','prior_low','prior_high'}, ...
     'RowNames', T3.Properties.RowNames)
@@ -114,7 +112,7 @@ rangesFixed = [0.6 3.0; 0.05 0.5; 15 15];            % V pinned at its known val
     'names', {'ka','ke','V'}, 'out_names', {'concentration'});
 Tf.Nominal = truth(1:height(Tf));                    % only the free factors remain
 [T2,res2] = gsua_pe(Tf, xdata, ydata, 'solver','lsqc', 'N',20, 'margin',0.1, 'timer',false);
-Tci2 = gsua_likelihood(T2, xdata, ydata, 0.95, 0.05, 1.08, 0.01, 0.01, 15, 1, false, false, false, [], false);
+Tci2 = gsua_likelihood(T2, xdata, ydata, 0.95, 0.05, 0.08, 0.01, 0.01, 15, 1, false, false, false, [], false);
 table(truth(1:2), T2.Estlsqc(:,1), Tci2.Range(:,1), Tci2.Range(:,2), Tci2.Range(:,2)-Tci2.Range(:,1), ...
     'VariableNames', {'true','estimated','CI_low','CI_high','width'}, ...
     'RowNames', T2.Properties.RowNames)

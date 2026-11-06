@@ -60,6 +60,7 @@ addParameter(p,'verbose',true,@islogical);
 addParameter(p,'xdata',defaultXdata,@isnumeric);
 addParameter(p,'xAlpha',dxAlpha,checkxAlpha);
 addParameter(p,'bandwidth',dxAlpha,@isnumeric);
+addParameter(p,'multiObjective',false,@islogical);
 
 parse(p,M,ParT,varargin{:})
 
@@ -83,13 +84,11 @@ end
 
 kind=PT.Kind;
 
-if length(ParT.Properties.CustomProperties.output)>1
-    warning('Multiobjetive SA is now supported')
-    disp(strcat('Current outputs: ',num2str(ParT.Properties.CustomProperties.output)))
-    multiObjt=true;
-else
-    multiObjt=false;
-end
+% Multi-output models default to PER-SERIES time-dependent indices: the single-objective path below
+% now carries a native series dimension, so Si_vec/STi_vec come back as (Np x Nd x nSeries). The
+% former depth-based scalarization of several output series into ONE objective is opt-in via
+% 'multiObjective',true (it returns scalar Si/STi only).
+multiObjt = p.Results.multiObjective;
 
 if isempty(xdata)
     if kind~=1
@@ -134,14 +133,21 @@ if ~multiObjt
     if isempty(y_exp)
         y_exp=gsua_deval(ParT.Nominal',ParT,xdata);
     end
+    % Native series dimension: y_exp is (nSeries x Nd) and the batched Y is (N x Nd x nSeries) for a
+    % multi-series (matrix) user model, or the usual 2-D (N x Nd) when nSeries==1. yexp3 is the
+    % reference reshaped to (1 x Nd x nSeries) so it broadcasts against Y; summing a per-sample scalar
+    % cost J over BOTH time and series keeps the scalar Si/STi defined while Si_vec/STi_vec stay
+    % per-series (Np x Nd x nSeries). nSeries==1 reduces to the previous 2-D math exactly.
+    nSeries = size(y_exp,1);
+    Nd = size(y_exp,2);
+    yexp3 = reshape(y_exp.',1,Nd,nSeries);
     switch SensMethod
 
         case 'brute-force'
             Nsim = N + Np2*N^2; % Number of Montecarlo simulations
             [Y] = gsua_pardeval(M,ParT,xdata,Parallel,[0 Nsim],verbose); % Y is a matrix (NxNd) with time responses in rows
             Nd = size(y_exp,2); % Number of simulation data
-            Y_nom = ones(N,1)*y_exp;
-            J = sum((Y-Y_nom).^2,2); % Scalar model output
+            J = sum((Y-yexp3).^2,[2 3]); % Scalar model output (summed over time and series)
             % Generation of (1xNp) cell with all combinations of parameters for calculation of
             % fractional variances. Every matrix has dimension (N^2xNp)
             % Mi{i} = [p1(1) ... pi(1) ... pNp(1);
@@ -167,54 +173,53 @@ if ~multiObjt
                 % Simulation with every set of parameters (row of Mi{k}) and storage
                 % in matrix Yi (a cell for every parameter)
                 [Yi{k}] = gsua_pardeval(Mi{k},ParT,xdata,Parallel,[N+(k-1)*N^2,Nsim],verbose);
-                Y_nom2 = ones(N^2,1)*y_exp;
-                Ji{k} = sum((Yi{k}-Y_nom2).^2,2);
+                Ji{k} = sum((Yi{k}-yexp3).^2,[2 3]);
                 end
             end
-            V_vec = var(Y,0,1); % Total variance in every sample time of every column
-            Vi_vec = zeros(Np,Nd);
+            V_vec = var(Y,0,1); % Total variance in every sample time of every column (1xNdxnSeries)
+            Vi_vec = zeros(Np,Nd,nSeries);
             VJ = var(J,0);
             VJi = zeros(Np,1);
             for k = 1:Np
                 if ~(fixed(k))
-                ymean = zeros(N,Nd);
+                ymean = zeros(N,Nd,nSeries);
                 Jmean = zeros(N,1);
                 for i = 1:N
-                    ymean(i,:) = mean(Yi{k}((i-1)*N+1:i*N,:),1);
+                    ymean(i,:,:) = mean(Yi{k}((i-1)*N+1:i*N,:,:),1);
                     Jmean(i) = mean(Ji{k}((i-1)*N+1:i*N,:));
                 end
-                Vi_vec(k,:) = var(ymean,0,1); % Time-dependent fractional variances of every column
+                Vi_vec(k,:,:) = var(ymean,0,1); % Time-dependent fractional variances per series
                 % Vi = V[E(Y|p(i)=p*)] with p*=[pi1 ... piN]'
                 VJi(k) = var(Jmean,0);
                 end
             end
-            Si_vec = zeros(Np,Nd);
+            Si_vec = zeros(Np,Nd,nSeries);
             Si = zeros(Np,1);
             for k = 1:Np
                 if ~(fixed(k))
-                Si_vec(k,:) = Vi_vec(k,:)./V_vec; % Time-dependent fractional sensitivity indices
+                Si_vec(k,:,:) = Vi_vec(k,:,:)./V_vec; % Time-dependent fractional sensitivity indices
                 Si(k) = VJi(k)/VJ;
                 end
             end
-            VTi_vec = zeros(Np,Nd); % Time-dependent total variances: VTi_vec=E[V(Y|p(~i)=p*)]
+            VTi_vec = zeros(Np,Nd,nSeries); % Time-dependent total variances: VTi_vec=E[V(Y|p(~i)=p*)]
             VTJi = zeros(Np,1);
             for k = 1:Np
                 if ~(fixed(k))
-                vary = zeros(N,Nd);
+                vary = zeros(N,Nd,nSeries);
                 varJ = zeros(N,1);
                 for i = 1:N
-                    vary(i,:) = var(Yi{k}(i:N:(N-1)*N+i,:),0,1);
+                    vary(i,:,:) = var(Yi{k}(i:N:(N-1)*N+i,:,:),0,1);
                     varJ(i) = var(Ji{k}(i:N:(N-1)*N+i,:),0);
                 end
-                VTi_vec(k,:) = mean(vary,1);
+                VTi_vec(k,:,:) = mean(vary,1);
                 VTJi(k) = mean(varJ);
                 end
             end
-            STi_vec = zeros(Np,Nd);
+            STi_vec = zeros(Np,Nd,nSeries);
             STi = zeros(Np,1);
             for k = 1:Np
                 if ~(fixed(k))
-                STi_vec(k,:) = VTi_vec(k,:)./V_vec; % Time-depndent total sensitivity
+                STi_vec(k,:,:) = VTi_vec(k,:,:)./V_vec; % Time-dependent total sensitivity
                 STi(k) = VTJi(k)/VJ;
                 end
             end
@@ -248,12 +253,12 @@ if ~multiObjt
             [YA] = gsua_pardeval(A,ParT,xdata,Parallel,[0,Nsim],verbose);
             [YB] = gsua_pardeval(B,ParT,xdata,Parallel,[N/2,Nsim],verbose); % dim(YA)=dim(YB)=(Nd x N/2)
             Y = [YA;YB];
-            JA = sum((YA-ones(N/2,1)*y_exp).^2,2);
-            JB = sum((YB-ones(N/2,1)*y_exp).^2,2);
+            JA = sum((YA-yexp3).^2,[2 3]);
+            JB = sum((YB-yexp3).^2,[2 3]);
             J = [JA;JB];
             Nd = size(y_exp,2); % Number of simulation data
-            Si_vec = zeros(Np,Nd);
-            STi_vec = zeros(Np,Nd);
+            Si_vec = zeros(Np,Nd,nSeries);
+            STi_vec = zeros(Np,Nd,nSeries);
             Si = zeros(Np,1);
             STi = zeros(Np,1);
             V_vec = var(Y,0,1); % Total variance (1xNd) of every column in every sample time
@@ -271,10 +276,10 @@ if ~multiObjt
                         if ~(fixed(k))
                             [YBAi{k}] = gsua_pardeval(BAi{k},ParT,xdata,Parallel,[k*N,Nsim],verbose);
                             [YABi{k}] = gsua_pardeval(ABi{k},ParT,xdata,Parallel,[k*N+N/2,Nsim],verbose);
-                            JBAi{k} = sum((YBAi{k}-ones(N/2,1)*y_exp).^2,2);
-                            JABi{k} = sum((YABi{k}-ones(N/2,1)*y_exp).^2,2);
-                            Si_vec(k,:) = ( mean( YA.*YBAi{k},1 ) - f02_vec )./V_vec;
-                            STi_vec(k,:) = mean( YA.*(YA - YABi{k}),1 )./V_vec;
+                            JBAi{k} = sum((YBAi{k}-yexp3).^2,[2 3]);
+                            JABi{k} = sum((YABi{k}-yexp3).^2,[2 3]);
+                            Si_vec(k,:,:) = ( mean( YA.*YBAi{k},1 ) - f02_vec )./V_vec;
+                            STi_vec(k,:,:) = mean( YA.*(YA - YABi{k}),1 )./V_vec;
                             Si(k) = ( mean( JA.*JBAi{k} ) - f02 )/VJ;
                             STi(k) = mean( JA.*(JA - JABi{k}) )/VJ;
                         end
@@ -283,25 +288,25 @@ if ~multiObjt
                     for k = 1:Np
                         if ~(fixed(k))
                             [YABi{k}] = gsua_pardeval(ABi{k},ParT,xdata,Parallel,[N+(k-1)*N/2,Nsim],verbose);
-                            JABi{k} = sum((YABi{k}-ones(N/2,1)*y_exp).^2,2);
-                            Si_vec(k,:) = 1 - mean((YB - YABi{k}).^2,1)./(2*V_vec);
-                            STi_vec(k,:) = mean( (YA - YABi{k}).^2,1 )./(2*V_vec);
+                            JABi{k} = sum((YABi{k}-yexp3).^2,[2 3]);
+                            Si_vec(k,:,:) = 1 - mean((YB - YABi{k}).^2,1)./(2*V_vec);
+                            STi_vec(k,:,:) = mean( (YA - YABi{k}).^2,1 )./(2*V_vec);
                             Si(k) = 1 - mean((JB - JABi{k}).^2)/(2*VJ);
                             STi(k) = mean((JA - JABi{k}).^2)/(2*VJ);
                         end
                     end
                 case 'Saltelli'
-                    Y2=(Y-y_exp).^2;
+                    Y2=(Y-yexp3).^2;
                     V_vec2 = var(Y2,0,1);
-                    YA2=(YA-y_exp).^2;
-                    YB2=(YB-y_exp).^2;
+                    YA2=(YA-yexp3).^2;
+                    YB2=(YB-yexp3).^2;
                     for k = 1:Np
                         if ~(fixed(k))
                             [YABi{k}] = gsua_pardeval(ABi{k},ParT,xdata,Parallel,[N+(k-1)*N/2,Nsim],verbose);
-                            JABi{k} = sum((YABi{k}-ones(N/2,1)*y_exp).^2,2);
-                            YABi2=(YABi{k}-y_exp).^2;
-                            Si_vec(k,:) = mean(YB2.*(YABi2 - YA2),1)./V_vec2;
-                            STi_vec(k,:) = mean((YA2 - YABi2).^2,1)./(2*V_vec2);
+                            JABi{k} = sum((YABi{k}-yexp3).^2,[2 3]);
+                            YABi2=(YABi{k}-yexp3).^2;
+                            Si_vec(k,:,:) = mean(YB2.*(YABi2 - YA2),1)./V_vec2;
+                            STi_vec(k,:,:) = mean((YA2 - YABi2).^2,1)./(2*V_vec2);
                             %Si(k) = sum(mean(YB.*(YABi{k} - YA),1))/sum(V_vec);
                             %STi(k) = sum(mean((YA - YABi{k}).^2,1))/sum((2*V_vec));
                             Si(k) = mean(JB.*(JABi{k} - JA))/VJ;
@@ -309,16 +314,16 @@ if ~multiObjt
                         end
                     end
                 case 'Xiao'
-                    den=mean(vecnorm(YA-YB,2).^pod);
-                    denv=mean((abs(YA-YB)).^pod);
+                    den=mean(vecnorm(reshape(YA-YB,size(YA,1),[]),2).^pod);  % scalar: norm over time & series
+                    denv=mean((abs(YA-YB)).^pod);                            % per series: (1 x Nd x nSeries)
                         for k = 1:Np
                             if ~(fixed(k))
                                 [YABi{k}] = gsua_pardeval(ABi{k},ParT,xdata,Parallel,[N+(k-1)*N/2,Nsim],verbose);
-                                JABi{k} = sum((YABi{k}-ones(N/2,1)*y_exp).^2,2);
-                                Si_vec(k,:)=(denv-mean((abs(YB-YABi{k})).^pod))./denv;
-                                STi_vec(k,:) = mean((abs(YA-YABi{k})).^pod)./denv;
-                                Si(k) = (den-mean(vecnorm(YB-YABi{k},2).^pod))/den;
-                                STi(k) = mean(vecnorm(YA-YABi{k},2).^pod)/den;
+                                JABi{k} = sum((YABi{k}-yexp3).^2,[2 3]);
+                                Si_vec(k,:,:)=(denv-mean((abs(YB-YABi{k})).^pod))./denv;
+                                STi_vec(k,:,:) = mean((abs(YA-YABi{k})).^pod)./denv;
+                                Si(k) = (den-mean(vecnorm(reshape(YB-YABi{k},size(YB,1),[]),2).^pod))/den;
+                                STi(k) = mean(vecnorm(reshape(YA-YABi{k},size(YA,1),[]),2).^pod)/den;
                             end 
                         end
             end
@@ -335,7 +340,7 @@ if ~multiObjt
                     if ~(fixed(i))
                     M_oat=M(:,i);
                     [Y_oat]=gsua_pardeval(M_oat,ParT,xdata,Parallel,[i*N,Nsim],verbose);
-                    J(i) = var(sum((Y_oat-y_exp).^2,2));
+                    J(i) = var(sum((Y_oat-yexp3).^2,[2 3]));
                     end
                 end
 

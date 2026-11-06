@@ -1,5 +1,60 @@
 # Changelog
 
+## 1.18.0 (MATLAB) / 0.4.0 (Python) — 2026-11-05
+
+User-defined multi-output models, `gsua_pe` robustness, and a unified `margin` convention. MATLAB
+and Python, tests in both. Found while calibrating a user-defined model that returns a matrix of
+output series.
+
+### ⚠ Breaking
+
+- **Unified `margin` convention.** `margin` is now the RAW relative noise everywhere (`0.1 = 10%`),
+  matching `gsua_pe`/`gsua_costf` and the Python port. **`gsua_likelihood` changed**: it previously
+  took the value offset by one (`1.08` meant 8%); pass the raw fraction now (`0.08`). A value `>= 1`
+  raises a `MarginConvention` warning. (`profile_likelihood` in Python was already raw; it gained the
+  same warning.)
+
+### New
+
+- **Matrix-output user models (Kind 6).** A one-argument user function that returns an
+  `[nSeries x nSteps]` matrix now flows through `gsua_ua`/`gsua_sa`/`gsua_pe`/`gsua_dia` without a
+  scalar adapter (it used to crash `gsua_pardeval` with an opaque `parfor` assignment error). The
+  output shape is discovered from the nominal run (or an explicit `'output_size'`), and
+  `gsua_ua`/`gsua_sa` carry a native series dimension. New example `Examples/twoScaleUserModel.m`.
+- **Per-series time-dependent sensitivity.** `gsua_sa` returns `Si_vec`/`STi_vec` of shape
+  `(Np x Nd x nSeries)` for a multi-series model (single-series results are unchanged, bit-for-bit).
+  The former depth-based multi-output scalarization is now opt-in via `'multiObjective',true`. (Python
+  `sensitivity_analysis(..., output_index=None)` returns one result per series.)
+- **`gsua_fullpars(T, freeValues)`** — reinsert fixed factors into a free-parameter vector, returning
+  the full ordered vector + names. (Python: `Model.full_params`.)
+- **Per-row bootstrap noise.** `gsua_bootstrap`'s `'noise'` accepts a per-row cellstr (e.g.
+  `{'quasipoisson','none'}`), with new `'gaussian'` and `'none'` models, so a joint count+fraction fit
+  no longer draws count noise (and zeros) on a 0-1 fraction row. (Python: a `noise` list.)
+- **`gsua_pe` records its starts.** `T.IP<solver>` (the initial point actually used per estimate,
+  sorted with the results) and the `Retries<solver>` custom property (silent-restart count), so the
+  retry-from-a-random-point behaviour is traceable. (Python: `PEResult.initial_points`.)
+- **Clustering-not-evaluated flag.** `gsua_ia`/`gsua_dia` `clusterInfo` gains `ClusterRequested`,
+  `ClusteringEvaluated` and `Note`, so "cluster=true but <3 runs" is visible in the result, not only a
+  warning. (Python: `ClusterInfo.clustering_evaluated` / `.note`.)
+
+### Changed
+
+- **Automatic parameter scaling.** For the gradient solvers (`fmincon`/`lsqc`/`lsqn`), `gsua_pe` now
+  fills `TypicalX` with the nominal factor magnitudes when the caller hasn't set it, so factors
+  spanning many orders of magnitude are scaled sanely. (Python `least_squares` defaults to
+  `x_scale='jac'`.)
+- `gsua_ua` defaults `xdata` to the nominal output length for matrix user models (was a single point).
+
+### Fixed
+
+- **Zero cost-scale guard.** An all-zero or constant data row (e.g. a fraction row drawn to zeros)
+  used to give `gsua_costf` a zero regulator and make `fmincon` fail "objective undefined at initial
+  point" 100 times without naming the row. `gsua_pe`/`gsua_costf` now exclude such a row with a
+  single `ZeroRegulator` warning. (Python `costf`/`rcostf` guard the same.)
+
+> Note: item 2 from the report (undocumented `gsua_pe` defaults, `save=true`) was already addressed
+> in v1.15 — `margin`/`alpha`/`save`/`timer` are documented and `save` defaults to `false`.
+
 ## 1.17.1 (MATLAB) / 0.3.1 (Python) — 2026-11-04
 
 Patch release: three fixes, with MATLAB/Python parity and tests in both languages.

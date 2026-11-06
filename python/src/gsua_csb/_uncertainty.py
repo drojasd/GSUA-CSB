@@ -81,7 +81,12 @@ def uncertainty_analysis(
         y_nom = np.atleast_1d(np.asarray(y_exp, dtype=np.float64))
 
     Y = eval_batch(model, M, d, output_index, n_jobs=n_jobs)
-    return UncertaintyResult(Y=Y, y_nom=y_nom, xdata=np.asarray(d) if d is not None else None)
+    # Default the reported domain to the output length for a domain-less user model (parity with
+    # MATLAB gsua_ua, which defaults xdata to 1:length(nominal output) rather than a single point),
+    # so the ensemble is plottable against an x axis.
+    if d is None:
+        d = np.arange(np.asarray(y_nom).shape[-1], dtype=np.float64)
+    return UncertaintyResult(Y=Y, y_nom=y_nom, xdata=np.asarray(d))
 
 
 @dataclass

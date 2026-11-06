@@ -44,7 +44,14 @@ function [Est,costs,out] = gsua_bootstrap(T,xdata,ydata,Est0,res,varargin)
 %                      from T.Properties.CustomProperties.Margin (stored already offset; converted
 %                      back to raw here).
 %     'alpha'      <-- cost exponent for the refits. Default: recovered from T's Alpha property.
-%     'noise'      <-- 'poisson', 'quasipoisson' (default) or 'nbglobal'. See GSUA_NOISEFLOOR.
+%     'noise'      <-- noise model for the synthetic datasets. A single name applies to EVERY row:
+%                      'poisson', 'quasipoisson' (default) or 'nbglobal' -- these are COUNT models
+%                      (they assume integer-count data). For a joint fit mixing count rows and
+%                      fraction/continuous rows, pass a 1 x inputs cellstr with a PER-ROW model,
+%                      adding 'gaussian' (additive noise, std from that row's residuals) or 'none'
+%                      (no perturbation): e.g. {'quasipoisson','none'}. This avoids drawing count
+%                      noise (and zeros) on a 0-1 fraction row, which otherwise zeroes that row's
+%                      cost scale and makes the refit fail. See GSUA_NOISEFLOOR.
 %     'cumulative' <-- 1 x inputs logical; a true row is drawn on the incident series and
 %                      re-accumulated. Default: all false.
 %     'seed'       <-- seed for the synthetic-data draws (and, for parity, the GSUA_PE starts via
@@ -79,7 +86,7 @@ addParameter(p,'solver','fmincon',@(x) any(validatestring(x,{'lsqc','lsqn','ga',
 addParameter(p,'N',20,@(x) isnumeric(x) && isscalar(x) && x>0);
 addParameter(p,'margin',[],@(x) isempty(x) || isnumeric(x));
 addParameter(p,'alpha',[],@(x) isempty(x) || isnumeric(x));
-addParameter(p,'noise','quasipoisson',@(x) any(validatestring(x,{'poisson','quasipoisson','nbglobal'})));
+addParameter(p,'noise','quasipoisson',@(x) ischar(x)||isstring(x)||iscell(x));
 addParameter(p,'cumulative',[],@(x) isempty(x) || islogical(x));
 addParameter(p,'seed',[],@(x) isempty(x) || isnumeric(x));
 addParameter(p,'parallel',false,@islogical);
@@ -94,7 +101,7 @@ res = p.Results.res(:);
 B = round(p.Results.B);
 solver = validatestring(p.Results.solver,{'lsqc','lsqn','ga','particle','psearch','surrogate','annealing','fmincon'});
 Nstarts = round(p.Results.N);
-noiseChoice = validatestring(p.Results.noise,{'poisson','quasipoisson','nbglobal'});
+noiseRaw = p.Results.noise;
 parallelRefit = p.Results.parallel;
 Opt = p.Results.opt;
 timer = p.Results.timer;
@@ -113,6 +120,24 @@ if size(ydata,2) ~= length(xdata) && size(ydata,1) == length(xdata)
     ydata = ydata.';
 end
 inputs = size(ydata,1);
+
+% Resolve the noise model(s). A single name applies to EVERY row (the count models assume integer
+% counts); a 1 x inputs cellstr gives a PER-ROW model, so a joint count+fraction fit can use e.g.
+% {'quasipoisson','none'} and never draw count noise (nor zeros) on a 0-1 fraction row. 'gaussian'
+% draws additive noise (std from that row's residuals) and 'none' leaves the row at its fitted mean.
+validModels = {'poisson','quasipoisson','nbglobal','gaussian','none'};
+if ischar(noiseRaw) || isstring(noiseRaw)
+    noiseChoice = validatestring(char(noiseRaw),validModels);
+    noiseCell = repmat({noiseChoice},1,inputs);
+else
+    if numel(noiseRaw) ~= inputs
+        error('gsua_bootstrap:BadNoise', ...
+            'noise cellstr must have one model per fitted output row (%d), got %d.', inputs, numel(noiseRaw));
+    end
+    noiseCell = cellfun(@(c) validatestring(char(c),validModels), noiseRaw(:).', 'UniformOutput', false);
+    noiseChoice = noiseCell;   % per-row cellstr, passed through to gsua_noisedraw
+end
+noiseStr = strjoin(unique(noiseCell,'stable'),'/');
 
 cumulative = p.Results.cumulative;
 if isempty(cumulative)
@@ -161,17 +186,23 @@ if nValid - pFree <= 0
         'Only %d valid (non-NaN, mu>0) pooled residuals for %d free parameters; the noise model may be unreliable.', ...
         nValid, pFree);
 end
-if quasiFallback && strcmp(noiseChoice,'quasipoisson')
+if quasiFallback && any(strcmp(noiseCell,'quasipoisson'))
     warning('gsua_bootstrap:QuasiPoissonDegenerate', ...
         'Pooled Pearson dispersion phi=%.6g <= 1; quasipoisson falls back to Poisson draws.', phi);
 end
-if isinf(kGlobal) && strcmp(noiseChoice,'nbglobal')
+if isinf(kGlobal) && any(strcmp(noiseCell,'nbglobal'))
     warning('gsua_bootstrap:UnderdispersedNB', ...
         'Method-of-moments global-NB k is degenerate; nbglobal falls back to Poisson draws.');
 end
 
+% Per-row additive-Gaussian std for any 'gaussian' row, from theta*'s residuals on that row.
+sigmaRow = zeros(1,inputs);
+for gi = find(strcmp(noiseCell,'gaussian'))
+    sigmaRow(gi) = std(ydata(gi,:) - f(gi,:), 'omitnan');
+end
+
 % Draw the B synthetic datasets once (inputs x len x B), then refit each.
-yb = gsua_noisedraw(noiseChoice,muClampedGrid,cumulative,ydata,phi,kGlobal,quasiFallback,B);
+yb = gsua_noisedraw(noiseChoice,muClampedGrid,cumulative,ydata,phi,kGlobal,quasiFallback,B,sigmaRow);
 
 Np = size(Est0,1);
 Est = zeros(Np,B);
@@ -180,7 +211,7 @@ estCol = ['Est' solver];
 
 if timer
     fprintf('gsua_bootstrap: %d parametric-bootstrap refits (%s, N=%d per replica, noise=%s)\n', ...
-        B, solver, Nstarts, noiseChoice);
+        B, solver, Nstarts, noiseStr);
 end
 
 if parallelRefit

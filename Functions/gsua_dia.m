@@ -148,6 +148,7 @@ bestSil=[];
 silByK=[];
 silK=[];
 dominant=1;
+clusteringEvaluated=false;   % set true only if clustering actually ran (>=3 runs, no error)
 if cluster
     Nruns=size(Normalized,2);
     X=Normalized';
@@ -159,6 +160,7 @@ if cluster
             silByK=eva.CriterionValues(:)';
             bestK=eva.OptimalK;
             bestSil=max(eva.CriterionValues,[],'omitnan');
+            clusteringEvaluated=true;
         catch ME
             warning(ME.message)
             bestK=1;
@@ -182,7 +184,8 @@ if cluster
             disp('Treating estimations as a single basin (1 candidate global minimum)')
         end
     else
-        warning('Not enough estimation runs to test clustering (need at least 3 for maxK>=2)')
+        warning('GSUA:gsua_dia:FewRunsNoCluster', ...
+            'Not enough estimation runs to test clustering (need at least 3 for maxK>=2); see clusterInfo.Note.')
     end
 end
 
@@ -223,6 +226,14 @@ clusterInfo.Index=clIndex;
 clusterInfo.Est=clEst;
 clusterInfo.Median=clMedian;
 clusterInfo.OrigRange=origRange;   % original bounds (GSUA_CLUSTERSUMMARY's percentile-width denominator)
+% #10: make "clustering requested but not evaluated" visible in the output instead of only a warning.
+clusterInfo.ClusterRequested=logical(cluster);
+clusterInfo.ClusteringEvaluated=clusteringEvaluated;
+if logical(cluster) && ~clusteringEvaluated
+    clusterInfo.Note='Clustering requested but NOT evaluated (need >=3 estimation runs for maxK>=2); results are single-basin.';
+else
+    clusterInfo.Note='';
+end
 
 T.Est=statT_est;
 T.Range=[lb,up];

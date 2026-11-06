@@ -72,6 +72,7 @@ addParameter(p,'output',defaultOutput,checkRange);
 addParameter(p,'out_names',defaultONames,@(x) iscellstr(x)||isstring(x)||ischar(x));
 addParameter(p,'vectorized',defaultVector,@islogical);
 addParameter(p,'opt',dfOpt);
+addParameter(p,'output_size',[],@(x) isnumeric(x) && (isempty(x)||numel(x)==2));
 
 parse(p,func,Range,varargin{:})
 func=p.Results.func;
@@ -182,10 +183,50 @@ else
     
 end
 
+% Output-shape discovery for one-argument (Kind 6) models that return a full [nSeries x nSteps]
+% matrix. gsua_deval accepts such output, but the batched UA/SA paths need nSeries (series count)
+% and nSteps. Learn them from an explicit 'output_size' or by evaluating the nominal once; fall back
+% to scalar behaviour (a single output) on any failure, so existing scalar models are unchanged.
+outSize = p.Results.output_size;
+if kind==6
+    if isempty(outSize)
+        try
+            freeNom = Table.Nominal(~fixed).';
+            probe = solver(freeNom);
+            outSize = size(probe);
+        catch
+            outSize = [1 1];
+        end
+    end
+    nSeries = outSize(1);
+    if nSeries > 1
+        if numel(out_names)==1 && strcmp(out_names{1},'out')
+            out_names = arrayfun(@(k) sprintf('out%d',k), 1:nSeries, 'UniformOutput', false);
+        elseif numel(out_names) ~= nSeries
+            warning('gsua_userdefined:OutNamesMismatch', ...
+                'out_names has %d entries but the model returns %d output series; auto-numbering.', ...
+                numel(out_names), nSeries);
+            out_names = arrayfun(@(k) sprintf('out%d',k), 1:nSeries, 'UniformOutput', false);
+        end
+    end
+else
+    outSize = [];
+end
+creator.output_size = outSize;
+
+% Full-ordering / fixed-parameter bookkeeping for gsua_fullpars: recorded BEFORE the fixed rows are
+% dropped from the table below, since that information is otherwise only trapped inside the solver
+% closure. FullNames is the complete ordered name list; FixedValues holds the pinned value at each
+% fixed position (NaN elsewhere); FixedMask flags them.
+fullNames = reshape(Table.Properties.RowNames,1,[]);
+fixedMask = reshape(fixed,1,[]);
+fixedValues = nan(1,numel(fixedMask));
+fixedValues(fixedMask) = Table.Range(fixedMask,1).';
+
 %Table custom properties
 try
-    Table=addprop(Table,{'Solver' 'NumVars' 'output' 'Domain' 'rMethod' 'Kind' 'Fixed' 'Vars' 'copt','creator'},...
-    {'table' 'table' 'table' 'table','table' 'table' 'table', 'table', 'table','table'});
+    Table=addprop(Table,{'Solver' 'NumVars' 'output' 'Domain' 'rMethod' 'Kind' 'Fixed' 'Vars' 'copt' 'creator' 'OutSize' 'FullNames' 'FixedMask' 'FixedValues'},...
+    repmat({'table'},1,14));
     Table.Properties.CustomProperties.NumVars=length(out_names);
     Table.Properties.CustomProperties.Domain=domain;
     Table.Properties.CustomProperties.rMethod=rMethod;
@@ -195,7 +236,11 @@ try
     Table.Properties.CustomProperties.Fixed=[];
     Table.Properties.CustomProperties.copt=opt;
     Table.Properties.CustomProperties.creator=creator;
-    
+    Table.Properties.CustomProperties.OutSize=outSize;
+    Table.Properties.CustomProperties.FullNames=fullNames;
+    Table.Properties.CustomProperties.FixedMask=fixedMask;
+    Table.Properties.CustomProperties.FixedValues=fixedValues;
+
     if isempty(output)
         Table.Properties.CustomProperties.output=1:Table.Properties.CustomProperties.NumVars;
     else

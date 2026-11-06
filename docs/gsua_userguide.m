@@ -75,6 +75,7 @@ Y = gsua_ua(M, T, 'xdata', xdata, 'parallel', false);
 %[text] - **`'verbose'`** (default `true`) — print progress. \
 %[text] - **`'xAlpha'`** (default `1`) — exponent in the distance-component estimator, in `(0,2]`. \
 %[text] - **`'bandwidth'`** (default `1`) — bandwidth for the distance-component estimator. \
+%[text] - **`'multiObjective'`** (default `false`) — for a model with several outputs, set `true` to collapse them into one depth-based objective (scalar `Si`/`STi` only). Left `false`, a multi-series user model — a one-argument function returning an `nSeries x nSteps` matrix — is analyzed **per series**, so `Si_vec`/`STi_vec` come back as `Np x Nd x nSeries` (a single output series stays the usual `Np x Nd`). \
 [T,Y,J] = gsua_sa(M, T, 'SensMethod', 'Xiao', 'parallel', false);
 %[text] **Visualizing the indices.** `gsua_plot` draws them in several forms (see also the scatter options for `gsua_eval`/UA results):
 %[text] - `gsua_plot('Pie',T,T.STi)` — pie of total indices. \
@@ -87,12 +88,12 @@ gsua_plot('Bar', T, T.STi)
 %[text] **Interpreting the indices.** `STi` is the key measure of factor relevance. The sum of `STi` is always `>= 1` and the sum of `Si` always `<= 1`; if either equals 1 so does the other, and the model is purely additive. As a rule of thumb, if `sum(Si) > 0.65` the factor interactions are weak enough to treat as negligible, and local or analytical SA becomes appropriate. For the Saltelli and distance-based estimators, negative `Si` values are the signal that `N` was too small — raise it.
 %%
 %[text] ## 5. Parameter estimation — `gsua_pe`
-%[text] `gsua_pe` fits the model to data by multistart optimization, returning the table with the estimates attached (`T.Est<solver>`, e.g. `T.Estlsqc`) and the per-run cost `res`.
+%[text] `gsua_pe` fits the model to data by multistart optimization, returning the table with the estimates attached (`T.Est<solver>`, e.g. `T.Estlsqc`) and the per-run cost `res`. It also records, aligned to the sorted results, the initial point actually used for each run in `T.IP<solver>` and the number of silent restarts from a random point in the `Retries<solver>` custom property, so the retry behaviour is traceable rather than hidden.
 %[text] Call syntax: `[T,res] = gsua_pe(T, xdata, ydata, ...)`.
 %[text] **Name–value arguments**
 %[text] - **`'N'`** (default `1`) — number of estimation runs (multistart restarts from different points). \
 %[text] - **`'solver'`** (default `'lsqc'`) — optimizer: `'lsqc'` (lsqcurvefit), `'lsqn'` (lsqnonlin), `'fmincon'`, `'ga'`, `'particle'` (particleswarm), `'psearch'` (patternsearch), `'surrogate'`, or `'annealing'` (simulannealbnd). \
-%[text] - **`'opt'`** (default `[]`) — an `optimoptions` object for the chosen optimizer (the optimizer name must match). \
+%[text] - **`'opt'`** (default `[]`) — an `optimoptions` object for the chosen optimizer (the optimizer name must match). For the gradient solvers (`fmincon`/`lsqc`/`lsqn`), if you leave `TypicalX` unset, `gsua_pe` fills it with the nominal factor magnitudes (`max(abs(T.Nominal),eps)`), so factors spanning many orders of magnitude are scaled sensibly by the finite differences. \
 %[text] - **`'Multistart'`** (default `1`) — number of estimations per cycle using MATLAB's MultiStart (lsqcurvefit only). \
 %[text] - **`'ipoint'`** (default `[]`) — explicit initial points, with `N` rows and one column per free factor, instead of random starts. \
 %[text] - **`'margin'`** (default `0`) and **`'alpha'`** (default `2`) — switch the objective from plain least squares to the correlation-penalized multi-objective cost (`gsua_costf`), which is what you want when one model must match several signals at once. `gsua_pe` records both on the table so `gsua_noisefloor` (section 7) recovers them automatically. The value you pass is a **relative residual band**: with a good-shape fit, `cost < 1` means the residual RMS is within that fraction of the data RMS (`0.3` ≈ 30%). It is used internally as `m+1` and, because the regulator does not depend on the parameters, it only rescales the cost — it does not move the optimum, only what `cost < 1` and the noise-floor threshold mean. \
@@ -135,7 +136,8 @@ T_newRange = gsua_ia(T, T.Estlsqc)
 %[text] Call syntax: `[Est,costs] = gsua_bootstrap(T, xdata, ydata, Est0, res, ...)`, where `Est0`/`res` are a pool (e.g. `T.Estfmincon`, `res`) whose best member seeds the noise model.
 %[text] - **`'B'`** (default `200`) — number of synthetic datasets / refits. \
 %[text] - **`'solver'`** (default `'fmincon'`), **`'N'`** (default `20`), **`'margin'`**/**`'alpha'`** (default recovered from `T`) — the `gsua_pe` options used per replica. \
-%[text] - **`'noise'`** (default `'quasipoisson'`), **`'cumulative'`**, **`'seed'`**, **`'parallel'`** (default `false`) — the noise model, per-row cumulative flags, RNG seed, and whether to parallelize the refits. \
+%[text] - **`'noise'`** (default `'quasipoisson'`) — the observation-noise model. A single name applies to every output row (count models `'poisson'`/`'quasipoisson'`/`'nbglobal'`, which assume integer counts); for a joint fit mixing count rows and 0–1 fraction rows, pass a **per-row cellstr** adding `'gaussian'` (additive, std from that row's residuals) or `'none'` (no perturbation), e.g. `{'quasipoisson','none'}`, so count noise — and zeros — are never drawn on a fraction row. \
+%[text] - **`'cumulative'`**, **`'seed'`**, **`'parallel'`** (default `false`) — per-row cumulative flags, RNG seed, and whether to parallelize the refits. \
 %%
 %[text]
 %   [T,res] = gsua_pe(T, xdata, ydata, 'solver','fmincon', 'margin',0.3, 'N',200);
@@ -211,10 +213,10 @@ T_oat = gsua_oatr(T);
 %%
 %[text] ## 7.4 Profile-likelihood confidence intervals — `gsua_likelihood`
 %[text] `gsua_likelihood` scans each factor across a range while re-estimating all the others at every step, and reports the interval where the profiled cost stays below a likelihood-ratio threshold. It is slower than the distribution-free interval `gsua_ia` reports, but because it re-fits the remaining factors it accounts for their trade-offs — the better choice precisely when factors are correlated.
-%[text] Call syntax (all arguments **positional**): `Tfinal = gsua_likelihood(T, xdata, ydata, alpha, step, margin, tolerance1, tolerance2, limit, reps, show, parallel, saver, pars, verbose)`. Here `alpha` is the confidence level (e.g. `0.95`), `step` the initial relative step, `margin` the relative standard deviation in the Gaussian likelihood weighting, `tolerance1`/`tolerance2` the bisection stopping tolerances, `limit` the iteration cap per bound, `reps` the estimations per inner `gsua_pe` call, and `pars` the factor indices to profile (`[]` = all). `verbose` (default `true`) is optional.
+%[text] Call syntax (all arguments **positional**): `Tfinal = gsua_likelihood(T, xdata, ydata, alpha, step, margin, tolerance1, tolerance2, limit, reps, show, parallel, saver, pars, verbose)`. Here `alpha` is the confidence level (e.g. `0.95`), `step` the initial relative step, `margin` the relative standard deviation in the Gaussian likelihood weighting, `tolerance1`/`tolerance2` the bisection stopping tolerances, `limit` the iteration cap per bound, `reps` the estimations per inner `gsua_pe` call, and `pars` the factor indices to profile (`[]` = all). `verbose` (default `true`) is optional. **Note (v1.18):** `margin` is now the **raw** relative standard deviation (`0.08` = 8% noise), unified with `gsua_pe`/`gsua_costf`. It used to be offset by one (you passed `1.08` for 8%); a value `>= 1` now raises a `MarginConvention` warning.
 %%
 %[text]
-%   Tci = gsua_likelihood(T,xdata,yexp,0.95,0.05,1.1,0.01,0.01,15,10,false,false,false,[]);
+%   Tci = gsua_likelihood(T,xdata,yexp,0.95,0.05,0.08,0.01,0.01,15,10,false,false,false,[]);
 %
 %%
 %[text] ## 8. Supporting functions
@@ -225,6 +227,7 @@ T_oat = gsua_oatr(T);
 %[text] - **`gsua_depth`** — generalized band depth, `[depth,idx] = gsua_depth(x, parallel)`, for ranking curves by centrality; `gsua_sa` uses it to pick a reference output when no `'ynom'` is given. \
 %[text] - **`gsua_MCF`** — Monte-Carlo filtering on its own, `[Jsup,Jinf] = gsua_MCF(T, M, Y, y_exp, tIn, tOut)`, outside of `gsua_ua`. \
 %[text] - **`gsua_userdefined`** — build `T` straight from a user function, bypassing `gsua_dataprep` (same name–value arguments; see the appendix). \
+%[text] - **`gsua_fullpars`** — reinsert fixed factors into a free-parameter vector: `[full,names] = gsua_fullpars(T, freeValues)`. A fixed factor drops out of `T`, so estimates carry only the free factors; this rebuilds the complete ordered vector (with the pinned values put back) for computing derived quantities or comparing against a full ground truth. \
 %[text] - **`gsua_deval`** and **`gsua_pardeval`** — single and batched model evaluation used internally; `gsua_pardeval(M,T,xdata,parallel,init,verbose)`. \
 %[text] - **`gsua_costf`, `gsua_rcostf`, `gsua_costfMulti`, `gsua_likecost`** — the cost functions `gsua_pe` minimizes. \
 %%
@@ -266,7 +269,7 @@ T_oat = gsua_oatr(T);
 %
 %%
 %[text] ## Appendix C — User-defined functions
-%[text] Store the model as a `.m` file. A **time-dependent** function has the form `sol = user_function(factors, domain)` (or `(factors, domain, opt)`), where `factors` is `Np x N` and `domain` is `[t0 tf]`, and returns a struct with `sol.x` (time, `1 x N`) and `sol.y` (outputs, `nOutputs x N`). The native output of MATLAB's `ode*`/`dde*` solvers already meets this; the toolbox accepts either `ode45` output orientation and normalizes it internally. A **time-free** function has the form `out = user_function(factors)` and returns a numeric array (vectorized) or a scalar; if its output is a vector, treat it as time-dependent and ignore the `domain` argument inside the function.
+%[text] Store the model as a `.m` file. A **time-dependent** function has the form `sol = user_function(factors, domain)` (or `(factors, domain, opt)`), where `factors` is `Np x N` and `domain` is `[t0 tf]`, and returns a struct with `sol.x` (time, `1 x N`) and `sol.y` (outputs, `nOutputs x N`). The native output of MATLAB's `ode*`/`dde*` solvers already meets this; the toolbox accepts either `ode45` output orientation and normalizes it internally. A **time-free** function has the form `out = user_function(factors)` and returns a numeric array (vectorized) or a scalar; if its output is a vector, treat it as time-dependent and ignore the `domain` argument inside the function. If it returns a **matrix** (`nSeries x nSteps`, several output series at once), the whole workflow — `gsua_ua`, `gsua_sa`, `gsua_pe`, `gsua_dia` — now handles it per series without a scalar adapter; the output shape is detected from the nominal run (or set it explicitly with `'output_size'`).
 %[text] Prepare it with `[T,sol] = gsua_dataprep(func, Ranges, 'domain', domain)` (`func` is the file name as a char). `gsua_userdefined` does the same directly.
 %[text] **Name–value arguments**
 %[text] - **`'domain'`** (default `1`) — time span passed to the function when it takes 2+ inputs. \
@@ -274,7 +277,8 @@ T_oat = gsua_oatr(T);
 %[text] - **`'nominal'`** (default midpoint of `Ranges`) — explicit nominal factor family. \
 %[text] - **`'output'`** (default all) — indices of the function's outputs to expose. \
 %[text] - **`'names'`** (default auto `1..Np`) — factor names (cellstr, string array, or char), shown on plots; TeX and LaTeX are both rendered. \
-%[text] - **`'out_names'`** (default `{'out'}`) — output names, shown on plots. \
+%[text] - **`'out_names'`** (default `{'out'}`) — output names, shown on plots (auto-numbered `out1..outN` for a matrix-returning function left at the default). \
+%[text] - **`'output_size'`** (default `[]`) — `[nSeries nSteps]` for a matrix-returning one-argument function, to skip the automatic shape detection (useful when evaluating the nominal is costly or unsafe at build time). \
 %[text] - **`'vectorized'`** (default `false`) — set `true` if the function accepts a batch of factor sets at once (single-input functions only). \
 %[text] - **`'opt'`** (default `struct('action',1)`) — anything passed through to a three-input function's third argument. \
 %%

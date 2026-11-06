@@ -28,6 +28,7 @@ honest parameter-uncertainty intervals and correlations.
 from __future__ import annotations
 
 import warnings
+from collections.abc import Sequence
 from dataclasses import dataclass
 
 import numpy as np
@@ -65,7 +66,7 @@ class BootstrapResult:
     theta_star: NDArray[np.float64]
     phi: float
     k: float
-    noise: NoiseModel
+    noise: "NoiseModel | list[str]"
     quasi_fallback: bool
     example_synthetic: NDArray[np.float64]
     solver: str
@@ -85,7 +86,7 @@ def parametric_bootstrap(
     n: int = 20,
     margin: float = 0.0,
     alpha: float = 2.0,
-    noise: NoiseModel = "quasipoisson",
+    noise: "NoiseModel | Sequence[str]" = "quasipoisson",
     cumulative: ArrayLike | None = None,
     seed: int | np.random.Generator | None = None,
     n_jobs: int = 1,
@@ -108,8 +109,12 @@ def parametric_bootstrap(
         n: Starts per replica (multistart within each refit). Default 20.
         margin: Margin for the refits (pass ``PEResult.margin`` to reuse the pool's objective).
         alpha: Cost exponent for the refits (pass ``PEResult.alpha``).
-        noise: ``"poisson"``, ``"quasipoisson"`` (default) or ``"nbglobal"``. See
-            :func:`gsua_csb.noise_floor`.
+        noise: Noise model for the synthetic datasets. A single name applies to EVERY row -- the
+            COUNT models ``"poisson"``, ``"quasipoisson"`` (default), ``"nbglobal"`` (they assume
+            integer-count data). For a joint fit mixing count rows and fraction/continuous rows, pass
+            a per-row sequence, adding ``"gaussian"`` (additive noise, std from that row's residuals)
+            or ``"none"`` (no perturbation): e.g. ``["quasipoisson", "none"]``. This avoids drawing
+            count noise (and zeros) on a 0-1 fraction row. See :func:`gsua_csb.noise_floor`.
         cumulative: (n_outputs,) bool, one flag per fitted output row (default: all False). A
             cumulative row is drawn on the incident series and re-accumulated.
         seed: Seed (or Generator) for the synthetic draws and the per-replica refit seeds.
@@ -140,8 +145,6 @@ def parametric_bootstrap(
     b = int(b)
     n = int(n)
 
-    if noise not in _MODELS:
-        raise ValueError(f"Unknown noise model: {noise!r}, expected one of {list(_MODELS)}")
     if cost.shape[0] != estimates.shape[0]:
         raise ValueError(
             f"cost must have {estimates.shape[0]} entries (one per row of estimates), got {cost.shape[0]}"
@@ -158,6 +161,25 @@ def parametric_bootstrap(
                 f"got {cumulative_mask.shape[0]}"
             )
 
+    # Resolve the noise model(s). A single name applies to every row (count models assume integer
+    # counts); a sequence gives a PER-ROW model so a joint count+fraction fit can use e.g.
+    # ("quasipoisson", "none"). 'gaussian' (additive, std from that row's residuals) and 'none' (no
+    # perturbation) are only meaningful per row. See gsua_bootstrap in MATLAB for the rationale.
+    bootstrap_models = tuple(_MODELS) + ("gaussian", "none")
+    if isinstance(noise, str):
+        if noise not in bootstrap_models:
+            raise ValueError(f"Unknown noise model: {noise!r}, expected one of {list(bootstrap_models)}")
+        noise_list = [noise] * n_outputs
+    else:
+        noise_list = list(noise)
+        if len(noise_list) != n_outputs:
+            raise ValueError(
+                f"noise must be a single model or one per fitted output row ({n_outputs}), got {len(noise_list)}"
+            )
+        for m in noise_list:
+            if m not in bootstrap_models:
+                raise ValueError(f"Unknown noise model: {m!r}, expected one of {list(bootstrap_models)}")
+
     ibest = int(np.argmin(cost))
     theta_star = estimates[ibest]
 
@@ -170,19 +192,28 @@ def parametric_bootstrap(
             "parameters; the noise model may be unreliable.",
             stacklevel=2,
         )
-    if quasi_fallback and noise == "quasipoisson":
+    if quasi_fallback and "quasipoisson" in noise_list:
         warnings.warn(
             f"Pooled Pearson dispersion phi={phi:.6g} <= 1; quasipoisson falls back to Poisson draws.",
             stacklevel=2,
         )
-    if np.isinf(k_global) and noise == "nbglobal":
+    if np.isinf(k_global) and "nbglobal" in noise_list:
         warnings.warn(
             "Method-of-moments global-NB k is degenerate; nbglobal falls back to Poisson draws.",
             stacklevel=2,
         )
 
+    # Per-row additive-Gaussian std for any 'gaussian' row, from theta*'s residuals on that row.
+    sigma_row = np.zeros(n_outputs)
+    for i, m in enumerate(noise_list):
+        if m == "gaussian":
+            sigma_row[i] = float(np.nanstd(ydata[i] - f[i]))
+
     rng = np.random.default_rng(seed)
-    yb = _generate_bootstrap(rng, noise, mu_clamped, cumulative_mask, ydata, phi, k_global, quasi_fallback, b)
+    noise_arg = noise if isinstance(noise, str) else noise_list
+    yb = _generate_bootstrap(
+        rng, noise_arg, mu_clamped, cumulative_mask, ydata, phi, k_global, quasi_fallback, b, sigma_row
+    )
     # Distinct, reproducible per-replica seeds drawn from the same stream, so each refit explores
     # different starts yet the whole bootstrap is reproducible from `seed`.
     replica_seeds = rng.integers(0, 2**32 - 1, size=b)

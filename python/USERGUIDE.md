@@ -75,7 +75,9 @@ through `model.evaluate`. That includes `parameter_estimation`, `profile_likelih
 before this existed, fitting one state of a multi-state model meant wrapping it in a second model
 just to slice the output. The `output_index` arguments on `sensitivity_analysis` and
 `uncertainty_analysis` still work and index the *active* outputs, i.e. whatever is left after this
-selection.
+selection. Pass `sensitivity_analysis(..., output_index=None)` to analyze **every** active series at
+once — it returns a list of per-series results (the counterpart of MATLAB `gsua_sa`'s stacked
+`Si_vec` of shape `Np x Nd x nSeries`).
 
 Prefer `model.evaluate(params, xdata)` over calling your own function directly: it is the
 toolbox's evaluation path, it applies this selection, and it is what every routine uses
@@ -401,7 +403,11 @@ wrong ones would be silently meaningless. Three selectable noise models (`noise=
 `k` is dominated by the largest-`mu` points). `out.by_model` reports all three regardless, as a
 sensitivity check. For a fitted output that is a *cumulative* series, pass `cumulative=[...]` (one
 flag per output row) — noise is estimated/generated on the incident (first-differenced) series and
-re-accumulated, not applied to the cumulative series directly.
+re-accumulated, not applied to the cumulative series directly. `parametric_bootstrap` additionally
+accepts a **per-row** `noise=` list (adding `"gaussian"` and `"none"`), e.g.
+`["quasipoisson", "none"]`, so a joint fit mixing count rows and 0–1 fraction rows does not draw
+count noise — and zeros — on the fraction row (which would zero its cost scale); `costf`/`rcostf`
+also guard such a zero-regulator row.
 
 This is a goodness-of-fit band-sizing calibration, not a formal confidence region — it doesn't
 replace `profile_likelihood`/`confidence_subcontour_box` above, it's complementary and needs no
@@ -466,8 +472,7 @@ thing here, read the first table.
 | | MATLAB | Python | What happens if you carry it across |
 |---|---|---|---|
 | **Argument order** | `gsua_sa(M, T)`, `gsua_ua(M, T)` | `sensitivity_analysis(model, M)`, `uncertainty_analysis(model, M)` | Model and design matrix are **swapped**. A swap now raises a clear `TypeError` naming the correct order, rather than silently returning nonsense. |
-| **`margin` in profile likelihood** | `gsua_likelihood(..., margin=1.08, ...)` — the assumed relative std is `margin - 1` | `profile_likelihood(..., margin=0.08)` — the assumed relative std *is* `margin` | **Offset by one.** Passing MATLAB's `1.1` to Python asserts 110% noise; passing Python's `0.1` to MATLAB asserts 90% noise *and* flips `gsua_pe`'s internal `+1` offset positive, silently switching its inner refit from the likelihood to plain least squares. Use `1+m` in MATLAB where Python takes `m`. |
-| **`margin` sign in estimation** | `gsua_pe` with `margin < 0` (after its `+1` offset) selects a Gaussian negative-log-likelihood objective | `parameter_estimation` takes `abs(margin)` and always uses the regulator cost | Same input, **different objective**, no error. |
+| **`margin` in profile likelihood** | `gsua_likelihood(..., margin=0.08, ...)` — the assumed relative std *is* `margin` | `profile_likelihood(..., margin=0.08)` — same | **Unified in v1.18 / 0.4.0.** `margin` is now the RAW relative std in both (`0.08` = 8%). It used to be offset by one in MATLAB (`1.08`); that convention is gone, and a MATLAB value `>= 1` now raises a `MarginConvention` warning — so a stale `1.08` fails loudly instead of asserting 108% noise. |
 | **Repeated-estimate orientation** | `gsua_ia(T, T_est)` with `T_est` as Np × N — one **column** per run | `identifiability_analysis(model, estimates)` with `(N, Np)` — one **row** per run | Transposed. Consistent with `PEResult.x`, but a square case (Np == N) fails silently. |
 | **Joint-sampling pool orientation** | `Tia.Est` is Np × nPool | `pool=` is `(n_pool, Np)` | Transposed, for the same reason. |
 
@@ -475,6 +480,8 @@ thing here, read the first table.
 
 - **Fixed factors.** MATLAB drops them from `T`, so the table shrinks and indices shift. Python
   keeps them, with `model.fixed` marking them, so indices stay stable across a `fix()` call.
+  `model.full_params(free_values)` expands an estimate (which carries only the free factors) back to
+  the full ordered vector with the pinned values restored — the counterpart of MATLAB `gsua_fullpars`.
 - **Output selection.** MATLAB sets `T.Properties.CustomProperties.output`; Python sets
   `model.output` / `model.set_output(...)`. Same idea, and both are honoured everywhere.
 - **Results.** MATLAB writes back into the table (`T.Range`, `T.Est`, `T.Si`, ...), so calls chain

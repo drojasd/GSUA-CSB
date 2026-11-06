@@ -55,9 +55,11 @@ Each capability is exposed two ways:
 | Sampling / design matrix (`scipy.stats.qmc`), incl. joint correlation-preserving sampling | Done | `gsua_dmatrix` |
 | Sensitivity analysis (Sobol, Jansen, Saltelli, Xiao, OAT) | Done | `gsua_sa` |
 | Uncertainty analysis + Monte Carlo filtering | Done | `gsua_ua`, `gsua_MCF` |
-| Parameter estimation (`scipy.optimize`) | Done | `gsua_pe` |
+| Parameter estimation (`scipy.optimize`), auto `x_scale`, records start points | Done | `gsua_pe` |
+| Matrix-output user models through UA/SA/PE/DIA, per-series sensitivity | Done | `gsua_sa(output_index=None)`, `gsua_ua` |
+| Reinsert fixed factors into a free-parameter vector | Done | `Model.full_params` (MATLAB `gsua_fullpars`) |
 | Identifiability + multi-minima clustering (`sklearn`), per-cluster stats, spread-based index | Done | `gsua_ia`, `gsua_dia` |
-| Parametric bootstrap of parameter uncertainty | Done | `gsua_bootstrap` (new to both ports) |
+| Parametric bootstrap of parameter uncertainty (per-row noise: counts/gaussian/none) | Done | `gsua_bootstrap` (new to both ports) |
 | Per-cluster identifiability summary + verdict | Done | `gsua_clustersummary` (new to both ports) |
 | Range refinement, confidence sub-contour box | Done | `gsua_oatr`, `gsua_oatr2`, `gsua_csb` |
 | Profile likelihood | Done | `gsua_likelihood` |

@@ -133,11 +133,37 @@ switch kind
             end
         end
     case 6
-        y=zeros(size(M,1),1);
-        parfor (i=1:size(M,1),parforArg)
-            y(i)=fun(M(i,:));
+        % One-argument user model: fun(pars) returns a full [nSeries x nSteps] matrix (or a scalar).
+        % Learn the shape (recorded by gsua_userdefined, else probe one row) so a matrix output flows
+        % through as (N x nSteps x nout) -- mirroring the Kind-5 nout>1 branch -- instead of being
+        % forced into the scalar assignment that crashed before.
+        osz = [];
+        try, osz = Table.OutSize; catch, end
+        if isempty(osz) || numel(osz)~=2
+            try, osz = size(fun(M(1,:))); catch, osz = [1 1]; end
         end
-            
+        if osz(1)==1 && osz(2)==1
+            y=zeros(size(M,1),1);
+            parfor (i=1:size(M,1),parforArg)
+                try
+                    y(i)=fun(M(i,:));
+                catch
+                    nFailed = nFailed + 1;
+                end
+            end
+        else
+            nStepsK = osz(2);
+            y=zeros(size(M,1),nStepsK,nout);
+            parfor (i=1:size(M,1),parforArg)
+                try
+                    yi = fun(M(i,:));          % [nSeries x nSteps]
+                    y(i,:,:) = yi(out,:).';    % select requested series -> (1 x nSteps x nout)
+                catch
+                    nFailed = nFailed + 1;
+                end
+            end
+        end
+
 end
 if nFailed > 0
     warning('GSUA:gsua_pardeval:FailedSimulations', ...

@@ -286,7 +286,7 @@ def noise_floor(
 
 def _generate_bootstrap(
     rng: np.random.Generator,
-    model_name: str,
+    model_name,
     mu_clamped: NDArray[np.float64],
     cumulative_mask: NDArray[np.bool_],
     ydata: NDArray[np.float64],
@@ -294,39 +294,81 @@ def _generate_bootstrap(
     k_global: float,
     quasi_fallback: bool,
     b: int,
+    sigma_row: NDArray[np.float64] | None = None,
 ) -> NDArray[np.float64]:
-    """Draw ``b`` synthetic datasets (n_outputs, len(xdata), b) under the given noise model."""
+    """Draw ``b`` synthetic datasets (n_outputs, len(xdata), b) under the given noise model.
+
+    ``model_name`` is either a single count-model name applied to every row, or a per-row sequence
+    (one model per output row) that may also use ``'gaussian'`` (additive, std ``sigma_row[i]``) or
+    ``'none'`` (the fitted mean, no draw) -- the per-row path a joint count+fraction fit needs.
+    """
     n_outputs, length = mu_clamped.shape
-    mu_rep = np.broadcast_to(mu_clamped[:, :, None], (n_outputs, length, b))
 
-    if model_name == "poisson":
-        s = rng.poisson(mu_rep).astype(np.float64)
-    elif model_name == "quasipoisson":
-        if quasi_fallback:
+    # Homogeneous single count model: keep the original vectorized draw byte-for-byte, so noise_floor
+    # and the default bootstrap reproduce exactly for a given seed.
+    if isinstance(model_name, str) and model_name in ("poisson", "quasipoisson", "nbglobal"):
+        mu_rep = np.broadcast_to(mu_clamped[:, :, None], (n_outputs, length, b))
+        if model_name == "poisson":
             s = rng.poisson(mu_rep).astype(np.float64)
-        else:
-            k_point = np.maximum(mu_clamped / (phi - 1), np.finfo(np.float64).tiny)
-            k_rep = np.broadcast_to(k_point[:, :, None], (n_outputs, length, b))
-            p_rep = k_rep / (k_rep + mu_rep)
-            s = rng.negative_binomial(k_rep, p_rep).astype(np.float64)
-    elif model_name == "nbglobal":
-        if np.isinf(k_global):
-            s = rng.poisson(mu_rep).astype(np.float64)
-        else:
-            k_rep = np.full((n_outputs, length, b), max(k_global, np.finfo(np.float64).tiny))
-            p_rep = k_rep / (k_rep + mu_rep)
-            s = rng.negative_binomial(k_rep, p_rep).astype(np.float64)
-    else:  # pragma: no cover - guarded by the Literal type / caller validation
-        raise ValueError(f"Unknown noise model: {model_name!r}")
+        elif model_name == "quasipoisson":
+            if quasi_fallback:
+                s = rng.poisson(mu_rep).astype(np.float64)
+            else:
+                k_point = np.maximum(mu_clamped / (phi - 1), np.finfo(np.float64).tiny)
+                k_rep = np.broadcast_to(k_point[:, :, None], (n_outputs, length, b))
+                p_rep = k_rep / (k_rep + mu_rep)
+                s = rng.negative_binomial(k_rep, p_rep).astype(np.float64)
+        else:  # nbglobal
+            if np.isinf(k_global):
+                s = rng.poisson(mu_rep).astype(np.float64)
+            else:
+                k_rep = np.full((n_outputs, length, b), max(k_global, np.finfo(np.float64).tiny))
+                p_rep = k_rep / (k_rep + mu_rep)
+                s = rng.negative_binomial(k_rep, p_rep).astype(np.float64)
+        s = np.where(np.isnan(s), 0.0, s)
+        yb = np.zeros((n_outputs, length, b))
+        for i in range(n_outputs):
+            yb[i] = np.cumsum(s[i], axis=0) if cumulative_mask[i] else s[i]
+            yb[i, np.isnan(ydata[i]), :] = np.nan
+        return yb
 
-    s = np.where(np.isnan(s), 0.0, s)
-
+    # Per-row path: one model per row, plus 'gaussian'/'none'.
+    models = [model_name] * n_outputs if isinstance(model_name, str) else list(model_name)
+    if len(models) != n_outputs:
+        raise ValueError(f"noise must be a single model or one per output row ({n_outputs}), got {len(models)}")
+    if sigma_row is None:
+        sigma_row = np.zeros(n_outputs)
+    tiny = np.finfo(np.float64).tiny
     yb = np.zeros((n_outputs, length, b))
     for i in range(n_outputs):
-        if cumulative_mask[i]:
-            yb[i] = np.cumsum(s[i], axis=0)
+        mu_i = mu_clamped[i]
+        mu_rep_i = np.broadcast_to(mu_i[:, None], (length, b))
+        m = models[i]
+        if m == "poisson":
+            s = rng.poisson(mu_rep_i).astype(np.float64)
+        elif m == "quasipoisson":
+            if quasi_fallback:
+                s = rng.poisson(mu_rep_i).astype(np.float64)
+            else:
+                k_point = np.maximum(mu_i / (phi - 1), tiny)
+                k_rep = np.broadcast_to(k_point[:, None], (length, b))
+                p_rep = k_rep / (k_rep + mu_rep_i)
+                s = rng.negative_binomial(k_rep, p_rep).astype(np.float64)
+        elif m == "nbglobal":
+            if np.isinf(k_global):
+                s = rng.poisson(mu_rep_i).astype(np.float64)
+            else:
+                k_rep = np.full((length, b), max(k_global, tiny))
+                p_rep = k_rep / (k_rep + mu_rep_i)
+                s = rng.negative_binomial(k_rep, p_rep).astype(np.float64)
+        elif m == "gaussian":
+            s = mu_rep_i + sigma_row[i] * rng.standard_normal((length, b))
+        elif m == "none":
+            s = np.array(mu_rep_i, dtype=np.float64)
         else:
-            yb[i] = s[i]
+            raise ValueError(f"Unknown noise model: {m!r}")
+        s = np.where(np.isnan(s), 0.0, s)
+        yb[i] = np.cumsum(s, axis=0) if cumulative_mask[i] else s
         yb[i, np.isnan(ydata[i]), :] = np.nan
     return yb
 

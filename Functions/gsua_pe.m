@@ -6,8 +6,15 @@ function [Table,res,IP] = gsua_pe(Table,xdata,ydata,varargin)
 % xdata <-- array of points where the model will be evaluated
 % ydata <-- array with expected model output
 % Outputs:
-% T   <-- summary table with parameter estimation results
+% T   <-- summary table with parameter estimation results. Besides T.Est<solver> (Np x N, columns
+%         sorted best-first), it now carries T.IP<solver> (Np x N, the initial point actually used
+%         for each run, same column order) and the CustomProperty Retries<solver> (1 x N, how many
+%         silent restarts from a random start point each estimate cost), so the retry behaviour is
+%         traceable instead of silent.
 % res <-- cost functions for each estimation
+% Also, for the gradient solvers ('fmincon','lsqc','lsqn'), if you do not pass an 'opt' with a
+% TypicalX set, gsua_pe fills TypicalX with the nominal factor magnitudes (max(abs(T.Nominal),eps)),
+% which greatly improves finite-difference scaling when factors span many orders of magnitude.
 % Additional paired features:
 % 'N',N     <-- number of parameter estimations
 % 'Multistart',k <-- activate multistart feature for lsqcurvefit optimizer,
@@ -132,8 +139,38 @@ if (isempty(IP) || size(IP,1)~=N) && any(strcmp(OS,{'lsqc','Multistart','lsqn','
     [IP,~]=gsua_dmatrix(T,N);
 end
 
+% Default TypicalX for the gradient solvers when the user did not set one. With factors spanning
+% many orders of magnitude (e.g. 1e-4 to 1e4) a single global finite-difference step behaves poorly;
+% TypicalX = the nominal magnitudes rescales the differences. Only filled in when absent, so an
+% explicit user optimoptions is never overridden.
+gradSolver = '';
+switch OS
+    case 'fmincon', gradSolver = 'fmincon';
+    case 'lsqc',    gradSolver = 'lsqcurvefit';
+    case 'lsqn',    gradSolver = 'lsqnonlin';
+end
+if ~isempty(gradSolver)
+    if ismember('Nominal', T.Properties.VariableNames)
+        typX = max(abs(T.Nominal(:).'),eps);
+    else
+        typX = max(abs(mean(T.Range,2).'),eps);
+    end
+    if isempty(Opt)
+        Opt = optimoptions(gradSolver);
+    end
+    try
+        if isempty(Opt.TypicalX)
+            Opt = optimoptions(Opt,'TypicalX',typX);
+        end
+    catch
+        % options object without a settable TypicalX: leave Opt untouched
+    end
+end
+
 x=zeros(N,Np);
 res=inf(N,1);
+retries=zeros(N,1);   % number of silent restarts (random IP) spent on each estimate
+warnedZeroReg=false;  % so the zero-cost-scale warning (below) fires at most once
 lastME=[];   % remember the last genuine estimation error, for the diagnostics below
 
 % Pre-flight: the most common reason gsua_pe "returns only Inf" is a model that does
@@ -211,6 +248,22 @@ end
                  % (which would poison gsua_costf's cost for every row, not just the
                  % gappy one).
                  regulator=sum((ydata-ydata*margin).^2,2,'omitnan')./sum(~isnan(ydata),2);
+                 % Guard a zero/undefined cost scale (an all-zero or constant data row -- e.g. a 0-1
+                 % fraction row whose synthetic draw came out all zeros): gsua_costf would divide by
+                 % it and hand fmincon an undefined objective, failing every start without saying
+                 % which row. Set it to Inf so that row contributes 0, and name the row(s) once.
+                 badReg = ~(regulator>0 & isfinite(regulator));
+                 if any(badReg)
+                     if ~warnedZeroReg
+                         warning('GSUA:gsua_pe:ZeroRegulator', ...
+                             ['Output row(s) %s have a zero/undefined cost scale (all-zero or ' ...
+                              'constant data); excluding them from the cost. For a joint count+' ...
+                              'fraction fit, set a per-row noise model in gsua_bootstrap.'], ...
+                             mat2str(find(badReg(:).')));
+                         warnedZeroReg = true;
+                     end
+                     regulator(badReg) = Inf;
+                 end
                  obj=@(pars) gsua_costf(inputs,regulator,len,ydata,gsua_deval(pars,T,xdata),costAlpha);
              else
                  if margin <0
@@ -245,11 +298,13 @@ end
             warning('GSUA:gsua_pe:ErrorLimit', ...
                 ['Reached the %d-error limit on estimation %d of %d; %d estimation(s) left unattempted.\n' ...
                  'Last error (%s): %s'], err_limit, i, N, N-i, ME.identifier, ME.message);
+            retries(i)=err_counter;
             [res,index] = sort(res);
             %res=res(res ~= inf);
             res=res';
             x=x(index(1:size(res,2)),:);
             Table.(['Est' char(OS)]) = x';
+            [Table,IP] = local_storeStarts(Table,OS,IP,retries,index,N);
             if all(~isfinite(res))
                 error('GSUA:gsua_pe:AllEstimationsFailed', ...
                     ['Every estimation failed before any converged (error limit hit on #%d).\n' ...
@@ -270,11 +325,14 @@ end
                 throw(ME)
             otherwise
                 lastME=ME;
-                warning(ME.message)
+                warning('GSUA:gsua_pe:RetryEstimate', ...
+                    'Estimation %d failed (%s): %s -- retrying from a new random start point.', ...
+                    i, ME.identifier, ME.message);
                 IP(i,:)=gsua_dmatrix(T,1);
         end
     end
     end
+    retries(i)=err_counter;
     if timer
         gsua_timer(1,[i,N]);
     end
@@ -287,6 +345,7 @@ end
 res=res';
 x=x(index(1:size(res,2)),:);
 Table.(['Est' char(OS)]) = x';
+[Table,IP] = local_storeStarts(Table,OS,IP,retries,index,N);
 if all(~isfinite(res))
     % Every estimation returned a non-finite cost. Fail loudly with the likely cause
     % instead of handing back an all-Inf res the caller has to decode.
@@ -326,4 +385,25 @@ if ~isequal(size(A),size(B))
 end
 d = double(A) - double(B);
 e = sum(d(:).^2) / numel(d);
+end
+
+function [Table,IP] = local_storeStarts(Table,OS,IP,retries,index,N)
+%LOCAL_STORESTARTS Record, aligned to the SORTED estimates, the initial point actually used for each
+%   run (Table.IP<solver>, Np x N, columns best-first like Est<solver>) and the number of silent
+%   restarts it took (CustomProperty Retries<solver>, 1 x N), and return IP reordered to match
+%   res/Est. This makes the previously silent "retry from a random point" traceable: you can see
+%   which start produced each fit and how many attempts it cost.
+if ~isempty(IP) && size(IP,1)==N
+    IP = IP(index,:);
+    Table.(['IP' char(OS)]) = IP.';
+end
+rprop = ['Retries' char(OS)];
+try
+    Table = addprop(Table,{rprop},{'table'});
+catch
+end
+try
+    Table.Properties.CustomProperties.(rprop) = reshape(retries(index),1,[]);
+catch
+end
 end

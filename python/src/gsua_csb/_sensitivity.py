@@ -101,9 +101,9 @@ def sensitivity_analysis(
     y_exp: ArrayLike | None = None,
     method: SensMethod = "xiao",
     pod: float = 1.0,
-    output_index: int = 0,
+    output_index: int | None = 0,
     n_jobs: int = 1,
-) -> SensitivityResult:
+) -> "SensitivityResult | list[SensitivityResult]":
     """Estimate global sensitivity indices for ``model``'s free parameters.
 
     Args:
@@ -121,13 +121,17 @@ def sensitivity_analysis(
             but ignores parameter interactions).
         pod: Exponent for the Xiao method's norm (``0 < pod <= 2``). Ignored for other methods.
         output_index: For a multi-state model whose ``evaluate`` returns (n_states, Nd), which
-            state to analyze. Ignored for single-output models.
+            state to analyze (default 0). Pass ``None`` to analyze EVERY active output series and get
+            a list of per-series :class:`SensitivityResult` back (the per-series time-dependent
+            indices that MATLAB's gsua_sa now returns stacked as ``Si_vec`` of shape
+            ``(Np, Nd, nSeries)``). Ignored for single-output models.
         n_jobs: Parallel worker processes for the model evaluations, the counterpart of MATLAB
             ``gsua_sa``'s default-on ``'parallel'`` (default here is ``1``, serial; ``-1`` uses all
             cores). Worth setting only when a single ``model.evaluate`` is genuinely expensive.
 
     Returns:
-        A :class:`SensitivityResult`.
+        A :class:`SensitivityResult`, or -- when ``output_index is None`` -- a list of them, one per
+        active output series.
 
     Raises:
         ValueError: If ``method`` is not one of the five supported values, or ``pod`` is out of
@@ -139,6 +143,16 @@ def sensitivity_analysis(
         raise ValueError(f"Unknown sensitivity method: {method!r}, expected one of {sorted(_VALID_METHODS)}")
     if not (0 < pod <= 2):
         raise ValueError(f"pod must be in (0, 2], got {pod}")
+
+    # Per-series mode: analyze each active output and return a list (parity with MATLAB's native
+    # series dimension). Each entry is an ordinary 2-D SensitivityResult, so plotting/consumers are
+    # unchanged; y_exp is re-derived per series.
+    if output_index is None:
+        return [
+            sensitivity_analysis(model, M, xdata=xdata, method=method, pod=pod,
+                                 output_index=oi, n_jobs=n_jobs)
+            for oi in range(len(model.active_output_names))
+        ]
 
     M = np.asarray(M, dtype=np.float64)
     N = M.shape[0]

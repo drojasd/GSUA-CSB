@@ -62,11 +62,23 @@
       {"name": "output", "kind": "namevalue"},
       {"name": "out_names", "kind": "namevalue", "type": ["cell","string","char"]},
       {"name": "vectorized", "kind": "namevalue", "type": ["logical"]},
-      {"name": "opt", "kind": "namevalue"}
+      {"name": "opt", "kind": "namevalue"},
+      {"name": "output_size", "kind": "namevalue", "type": ["numeric"]}
     ],
     "outputs": [
       {"name": "Table", "type": ["table"]},
       {"name": "solver", "type": ["function_handle"]}
+    ]
+  },
+
+  "gsua_fullpars": {
+    "inputs": [
+      {"name": "T", "kind": "required", "type": ["table"]},
+      {"name": "freeValues", "kind": "required", "type": ["numeric"]}
+    ],
+    "outputs": [
+      {"name": "full", "type": ["double"]},
+      {"name": "names", "type": ["cell"]}
     ]
   },
 
@@ -99,7 +111,8 @@
       {"name": "xdata", "kind": "namevalue", "type": ["numeric"]},
       {"name": "xAlpha", "kind": "namevalue", "type": ["numeric", "scalar"]},
       {"name": "bandwidth", "kind": "namevalue", "type": ["numeric"]},
-      {"name": "verbose", "kind": "namevalue", "type": ["logical"]}
+      {"name": "verbose", "kind": "namevalue", "type": ["logical"]},
+      {"name": "multiObjective", "kind": "namevalue", "type": ["logical"]}
     ],
     "outputs": [
       {"name": "ParT", "type": ["table"]},
@@ -556,7 +569,7 @@
       {"name": "N", "kind": "namevalue", "type": ["numeric", "scalar"]},
       {"name": "margin", "kind": "namevalue", "type": ["numeric", "scalar"]},
       {"name": "alpha", "kind": "namevalue", "type": ["numeric", "scalar"]},
-      {"name": "noise", "kind": "namevalue", "type": ["char", "choices={'quasipoisson','poisson','nbglobal'}"]},
+      {"name": "noise", "kind": "namevalue", "type": [["char", "choices={'quasipoisson','poisson','nbglobal','gaussian','none'}"], ["cell"]]},
       {"name": "cumulative", "kind": "namevalue", "type": ["logical"]},
       {"name": "seed", "kind": "namevalue", "type": ["numeric"]},
       {"name": "parallel", "kind": "namevalue", "type": ["logical"]},

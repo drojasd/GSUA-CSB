@@ -56,7 +56,23 @@ nout=size(out,2);
 vars=TP.Vars;
 domain=TP.Domain;
 
-if kind==6 || kind==2
+% Kind 6 (one-arg user model) may return a full [nSeries x nSteps] matrix. Learn its shape so the
+% default xdata spans the output length (not the legacy single column) and plotting uses the 3-D
+% series path. Kind 2 (vectorized scalar metric) stays one value per sample.
+matrix6=false;
+if kind==6
+    osz=[];
+    try, osz=TP.OutSize; catch, end
+    if isempty(osz) || numel(osz)~=2
+        try, osz=size(gsua_deval(T.Nominal',T,1)); catch, osz=[1 1]; end
+    end
+    matrix6 = ~(osz(1)==1 && osz(2)==1);
+    if matrix6
+        if isempty(xdata), xdata=1:osz(2); end
+    else
+        xdata=1;
+    end
+elseif kind==2
     xdata=1;
 end
 
@@ -84,7 +100,7 @@ for i=1:nout
         figure
     end
     clf
-    if ismember(kind,[2,6])
+    if kind==2 || (kind==6 && ~matrix6)
         [~]=gsua_MCF(T,M,y(:,i)',ynom(i,:));
     else
         [~]=gsua_MCF(T,M,y(:,:,i),ynom(i,:));
