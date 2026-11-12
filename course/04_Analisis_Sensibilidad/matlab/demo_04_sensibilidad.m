@@ -40,14 +40,14 @@ fprintf('=======================================================================
 % Para GSA usamos rangos amplios: el análisis mide la importancia de cada factor
 % a lo largo de todo su rango de variación plausible.
 ranges_sir = [
-    0.0001, 0.0008;  % beta
-    0.05,   0.20;    % gamma
     900,    999;     % S0
-    1,      50       % I0
+    1,      50;      % I0
+    0.0001, 0.0008;  % beta
+    0.05,   0.20     % gamma
 ];
 [T, ~] = gsua_dataprep('sir_continuous_userdefined', ranges_sir, ...
     'domain', [0, 80], ...
-    'names', {'beta', 'gamma', 'S0', 'I0'}, ...
+    'names', {'S0', 'I0', 'beta', 'gamma'}, ...
     'out_names', {'Susceptibles', 'Infectados', 'Recuperados'});
 T.Properties.CustomProperties.output = 2;     % Infectados
 
@@ -93,7 +93,7 @@ title('Fracción de ST_i(t): qué factor domina la varianza en cada instante');
 % las propiedades del método Xiao y reutilizarla generaría un warning inofensivo.
 [Tcmp, ~] = gsua_dataprep('sir_continuous_userdefined', ranges_sir, ...
     'domain', [0, 80], ...
-    'names', {'beta', 'gamma', 'S0', 'I0'}, ...
+    'names', {'S0', 'I0', 'beta', 'gamma'}, ...
     'out_names', {'Susceptibles', 'Infectados', 'Recuperados'});
 Tcmp.Properties.CustomProperties.output = 2;
 [Tsalt, ~, ~] = gsua_sa(M, Tcmp, 'SensMethod', 'Saltelli', 'parallel', false, 'verbose', false);

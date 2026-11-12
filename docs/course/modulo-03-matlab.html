@@ -9,7 +9,7 @@ To make changes, update the MATLAB code and republish this document.
 <title>demo_03_incertidumbre</title>
 <meta name="generator" content="MATLAB 25.2">
 <link rel="schema.DC" href="http://purl.org/dc/elements/1.1/">
-<meta name="DC.date" content="2026-09-17">
+<meta name="DC.date" content="2026-11-12">
 <meta name="DC.source" content="demo_03_incertidumbre.m">
 <style type="text/css">
 html,body,div,span,applet,object,iframe,h1,h2,h3,h4,h5,h6,p,blockquote,pre,a,abbr,acronym,address,big,cite,code,del,dfn,em,font,img,ins,kbd,q,s,samp,small,strike,strong,tt,var,b,u,i,center,dl,dt,dd,ol,ul,li,fieldset,form,label,legend,table,caption,tbody,tfoot,thead,tr,th,td{margin:0;padding:0;border:0;outline:0;font-size:100%;vertical-align:baseline;background:transparent}body{line-height:1}ol,ul{list-style:none}blockquote,q{quotes:none}blockquote:before,blockquote:after,q:before,q:after{content:'';content:none}:focus{outine:0}ins{text-decoration:none}del{text-decoration:line-through}table{border-collapse:collapse;border-spacing:0}
@@ -154,14 +154,14 @@ fprintf(<span class="string">'==================================================
 <h2 id="3">2. Definici&oacute;n del Modelo SIR (salida objetivo: Infectados)</h2>
 <p>Rangos "previos" acotados alrededor del valor real (&plusmn; ~20%). A prop&oacute;sito son m&aacute;s estrechos que en el M&oacute;dulo 02: aqu&iacute; no exploramos el muestreo, sino que propagamos una incertidumbre plausible para ver cu&aacute;nta variabilidad induce en la salida.</p>
 <pre class="codeinput">ranges_sir = [
-    4.0e-4, 6.0e-4;  <span class="comment">% beta  (tasa de transmisi&oacute;n)</span>
-    0.10,   0.15;    <span class="comment">% gamma (tasa de recuperaci&oacute;n)</span>
     920,    980;     <span class="comment">% S0    (susceptibles iniciales)</span>
-    3,      8        <span class="comment">% I0    (infectados iniciales)</span>
+    3,      8;       <span class="comment">% I0    (infectados iniciales)</span>
+    4.0e-4, 6.0e-4;  <span class="comment">% beta  (tasa de transmisi&oacute;n)</span>
+    0.10,   0.15     <span class="comment">% gamma (tasa de recuperaci&oacute;n)</span>
 ];
 [T, ~] = gsua_dataprep(<span class="string">'sir_continuous_userdefined'</span>, ranges_sir, <span class="keyword">...</span>
     <span class="string">'domain'</span>, [0, 80], <span class="keyword">...</span>
-    <span class="string">'names'</span>, {<span class="string">'beta'</span>, <span class="string">'gamma'</span>, <span class="string">'S0'</span>, <span class="string">'I0'</span>}, <span class="keyword">...</span>
+    <span class="string">'names'</span>, {<span class="string">'S0'</span>, <span class="string">'I0'</span>, <span class="string">'beta'</span>, <span class="string">'gamma'</span>}, <span class="keyword">...</span>
     <span class="string">'out_names'</span>, {<span class="string">'Susceptibles'</span>, <span class="string">'Infectados'</span>, <span class="string">'Recuperados'</span>});
 
 <span class="comment">% Seleccionamos la salida a analizar. En una tabla GSUA esto se hace fijando la</span>
@@ -219,9 +219,9 @@ grid <span class="string">on</span>; legend(<span class="string">'Location'</spa
 </pre>
 <pre class="codeoutput">
 --- M&eacute;tricas de cobertura (margen 10%) ---
-cost_data = 0.760  (exactitud: mediana vs datos)
-   -&gt; Los datos SON alcanzables por el modelo dentro de los rangos actuales.
-cost_band = 2.73e+04  (precisi&oacute;n: ancho de la banda P5-P95)
+cost_data = 4687954396266982014976.000  (exactitud: mediana vs datos)
+   -&gt; Los datos NO son alcanzables: revisa rangos o estructura del modelo.
+cost_band = 2.95e+04  (precisi&oacute;n: ancho de la banda P5-P95)
    -&gt; La banda es ancha (es normal que sea &gt;&gt;1 con una previa sin ajustar;
       el M&oacute;dulo 05 la reduce estimando los par&aacute;metros con datos).
 
@@ -232,7 +232,7 @@ cost_band = 2.73e+04  (precisi&oacute;n: ancho de la banda P5-P95)
 fprintf(<span class="string">'Filtrado Monte Carlo: %d corridas por debajo y %d por encima del acumulado observado.\n\n'</span>, <span class="keyword">...</span>
     numel(Jinf{1}), numel(Jsup{1}));
 </pre>
-<pre class="codeoutput">Filtrado Monte Carlo: 183 corridas por debajo y 117 por encima del acumulado observado.
+<pre class="codeoutput">Filtrado Monte Carlo: 1 corridas por debajo y 300 por encima del acumulado observado.
 
 </pre>
 <img vspace="5" hspace="5" src="demo_03_incertidumbre_04.png" alt=""> <h2 id="9">8. PREGUNTAS Y EJERCICIOS PARA EL ESTUDIANTE</h2>
@@ -308,14 +308,14 @@ fprintf('=======================================================================
 % estrechos que en el Módulo 02: aquí no exploramos el muestreo, sino que propagamos
 % una incertidumbre plausible para ver cuánta variabilidad induce en la salida.
 ranges_sir = [
-    4.0e-4, 6.0e-4;  % beta  (tasa de transmisión)
-    0.10,   0.15;    % gamma (tasa de recuperación)
     920,    980;     % S0    (susceptibles iniciales)
-    3,      8        % I0    (infectados iniciales)
+    3,      8;       % I0    (infectados iniciales)
+    4.0e-4, 6.0e-4;  % beta  (tasa de transmisión)
+    0.10,   0.15     % gamma (tasa de recuperación)
 ];
 [T, ~] = gsua_dataprep('sir_continuous_userdefined', ranges_sir, ...
     'domain', [0, 80], ...
-    'names', {'beta', 'gamma', 'S0', 'I0'}, ...
+    'names', {'S0', 'I0', 'beta', 'gamma'}, ...
     'out_names', {'Susceptibles', 'Infectados', 'Recuperados'});
 
 % Seleccionamos la salida a analizar. En una tabla GSUA esto se hace fijando la

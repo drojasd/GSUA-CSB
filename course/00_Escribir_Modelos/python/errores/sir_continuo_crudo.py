@@ -11,7 +11,7 @@ from scipy.integrate import solve_ivp
 
 def pasos_del_integrador(pars, tf, t0=0.0):
     """Los tiempos y estados que solve_ivp calcula por su cuenta (sin t_eval)."""
-    beta, gamma, S0, I0 = pars
+    S0, I0, beta, gamma = pars
     rhs = lambda t, y: [-beta * y[0] * y[1], beta * y[0] * y[1] - gamma * y[1], gamma * y[1]]
     sol = solve_ivp(rhs, (t0, tf), [S0, I0, 0.0])                     # tolerancias por defecto
     return sol.t, sol.y

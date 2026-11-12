@@ -21,10 +21,10 @@ def sir_continuous_func(params, domain):
     """
     Función de evaluación para el modelo SIR continuo resuelto con solve_ivp.
     """
-    beta = params[0]
-    gamma = params[1]
-    S0 = params[2] if len(params) >= 3 else 990.0
-    I0 = params[3] if len(params) >= 4 else 10.0
+    S0 = params[0]
+    I0 = params[1]
+    beta = params[2] if len(params) >= 3 else 4.5e-4
+    gamma = params[3] if len(params) >= 4 else 0.125
     R0_pop = params[4] if len(params) >= 5 else 0.0
         
     y0 = [S0, I0, R0_pop]
@@ -42,10 +42,10 @@ def sir_continuous_func(params, domain):
     return sol.y
 
 def create_sir_continuous_model(
-    beta_range=(0.0001, 0.0008),
-    gamma_range=(0.05, 0.20),
     S0_range=(900.0, 999.0),
     I0_range=(1.0, 50.0),
+    beta_range=(0.0001, 0.0008),
+    gamma_range=(0.05, 0.20),
     t_max=80,
     n_points=200,
     output_selection=None
@@ -54,8 +54,8 @@ def create_sir_continuous_model(
     Construye y retorna una instancia de UserFunctionModel (Objeto de Control del Sistema).
     """
     domain = np.linspace(0, t_max, n_points)
-    names = ["beta", "gamma", "S0", "I0"]
-    param_ranges = np.array([beta_range, gamma_range, S0_range, I0_range])
+    names = ["S0", "I0", "beta", "gamma"]
+    param_ranges = np.array([S0_range, I0_range, beta_range, gamma_range])
     output_names = ["Susceptibles", "Infectados", "Recuperados"]
     
     model = UserFunctionModel(

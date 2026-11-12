@@ -3,7 +3,7 @@
 %
 % Este script proporciona una introducción pedagógica a la formulación de
 % modelos en tiempo discreto y continuo definidos por el usuario,
-% declarando explícitamente factores (parámetros + condiciones iniciales)
+% declarando explícitamente factores (condiciones iniciales + parámetros)
 % y nombres de salidas, así como exploraciones de ensamble de incertidumbre.
 
 %% 1. Configuración del Entorno
@@ -56,20 +56,20 @@ fprintf('=======================================================================
 fprintf('--- 1. MODELO LOGÍSTICO DISCRETO ---\n');
 fprintf('Ecuación: N(t+1) = N(t) + r * N(t) * (1 - N(t) / K)\n\n');
 
-% Definición de rangos para Factores: [Parámetros + Condición Inicial]
-%   Fila 1: r  (tasa de crecimiento)
-%   Fila 2: K  (capacidad de carga)
-%   Fila 3: N0 (población inicial en t=0)
+% Definición de rangos para Factores: [Condición Inicial + Parámetros]
+%   Fila 1: N0 (población inicial en t=0)
+%   Fila 2: r  (tasa de crecimiento)
+%   Fila 3: K  (capacidad de carga)
 ranges_discrete = [
+    5,    50;    % N0 (Condición inicial)
     0.05, 0.50;  % r
-    100,  1000;  % K
-    5,    50     % N0 (Condición inicial)
+    100,  1000   % K
 ];
 
 domain_discrete = [0, 50]; % 50 pasos discretos
 
 % Especificación explícita de nombres de factores y nombres de salidas
-factor_names_discrete = {'r', 'K', 'N0'};
+factor_names_discrete = {'N0', 'r', 'K'};
 out_names_discrete    = {'Poblacion'};
 
 [T_discrete, ~] = gsua_dataprep('discrete_logistic_userdefined', ranges_discrete, ...
@@ -105,22 +105,22 @@ legend('Muestras', 'Nominal', 'Location', 'southeast');
 fprintf('\n--- 2. MODELO EPIDÉMICO SIR CONTINUO ---\n');
 fprintf('Sistema EDO: dS/dt = -beta*S*I, dI/dt = beta*S*I - gamma*I, dR/dt = gamma*I\n\n');
 
-% Definición de rangos para Factores: [Parámetros + Condiciones Iniciales]
-%   Fila 1: beta  (tasa de transmisión)
-%   Fila 2: gamma (tasa de recuperación)
-%   Fila 3: S0    (Susceptibles iniciales)
-%   Fila 4: I0    (Infectados iniciales)
+% Definición de rangos para Factores: [Condiciones Iniciales + Parámetros]
+%   Fila 1: S0    (Susceptibles iniciales)
+%   Fila 2: I0    (Infectados iniciales)
+%   Fila 3: beta  (tasa de transmisión)
+%   Fila 4: gamma (tasa de recuperación)
 ranges_sir = [
-    0.0001, 0.0008;  % beta
-    0.05,   0.20;    % gamma
     900,    999;     % S0 (Condición inicial)
-    1,      50       % I0 (Condición inicial)
+    1,      50;      % I0 (Condición inicial)
+    0.0001, 0.0008;  % beta
+    0.05,   0.20     % gamma
 ];
 
 domain_sir = [0, 80]; % 80 días
 
 % Especificación explícita de nombres de factores (4) y salidas (3)
-factor_names_sir = {'beta', 'gamma', 'S0', 'I0'};
+factor_names_sir = {'S0', 'I0', 'beta', 'gamma'};
 out_names_sir    = {'Susceptibles', 'Infectados', 'Recuperados'};
 
 [T_sir, ~] = gsua_dataprep('sir_continuous_userdefined', ranges_sir, ...
@@ -128,7 +128,7 @@ out_names_sir    = {'Susceptibles', 'Infectados', 'Recuperados'};
     'names', factor_names_sir, ...
     'out_names', out_names_sir);
 
-disp('Tabla Resumen del Modelo SIR (Parámetros + Condiciones Iniciales):');
+disp('Tabla Resumen del Modelo SIR (Condiciones Iniciales + Parámetros):');
 disp(T_sir);
 
 % A. Simulación Nominal de Todos los Compartimentos (S, I, R)
@@ -150,9 +150,9 @@ I_nom = Y(:,2).';
 R_nom = Y(:,3).';
 
 % Cálculo del Número Reproductivo Básico R0 = (beta * S0) / gamma
-beta_nom  = T_sir.Nominal(1);
-gamma_nom = T_sir.Nominal(2);
-S0_nom    = T_sir.Nominal(3);
+beta_nom  = T_sir.Nominal(3);
+gamma_nom = T_sir.Nominal(4);
+S0_nom    = T_sir.Nominal(1);
 R0_basic  = (beta_nom * S0_nom) / gamma_nom;
 
 fprintf('Parámetros Nominales: beta = %.5f, gamma = %.2f, S0 = %.0f\n', beta_nom, gamma_nom, S0_nom);

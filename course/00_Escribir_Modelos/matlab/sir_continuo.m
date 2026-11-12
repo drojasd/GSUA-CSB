@@ -7,11 +7,11 @@ function sol = sir_continuo(pars, domain, opt)
 %   dI/dt =  beta*S*I - gamma*I
 %   dR/dt =  gamma*I
 %
-%   Factores, en este orden (primero parámetros, después condiciones iniciales):
-%       pars(1) -> beta  : tasa de transmisión (1/(persona*día))
-%       pars(2) -> gamma : tasa de recuperación (1/día)
-%       pars(3) -> S0    : susceptibles en t0 (personas)
-%       pars(4) -> I0    : infectados en t0 (personas)
+%   Factores, en este orden (primero las condiciones iniciales, después los parámetros):
+%       pars(1) -> S0    : susceptibles en t0 (personas)
+%       pars(2) -> I0    : infectados en t0 (personas)
+%       pars(3) -> beta  : tasa de transmisión (1/(persona*día))
+%       pars(4) -> gamma : tasa de recuperación (1/día)
 %   R(t0) = 0 no es un factor: es una constante del modelo.
 %
 %   domain = [t0, tf] en días.
@@ -20,9 +20,11 @@ function sol = sir_continuo(pars, domain, opt)
 %   Salida: sol.x (1 x Nt) rejilla t0:dt:tf
 %           sol.y (3 x Nt) filas = salidas [S; I; R]
 
-beta  = pars(1);
-gamma = pars(2);
-y0    = [pars(3); pars(4); 0];
+S0    = pars(1);
+I0    = pars(2);
+beta  = pars(3);
+gamma = pars(4);
+y0    = [S0; I0; 0];
 
 dt = 0.1;
 if isstruct(opt) && isfield(opt, 'dt')

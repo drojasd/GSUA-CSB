@@ -5,10 +5,10 @@ logistica_discreta.py — crecimiento logístico en tiempo discreto (modelo de u
 
 Ecuación en diferencias:  N(t+1) = N(t) + r*N(t)*(1 - N(t)/K)
 
-Factores, en este orden (primero parámetros, después condición inicial):
-    pars[0] -> r  : tasa de crecimiento por paso (adimensional)
-    pars[1] -> K  : capacidad de carga (individuos)
-    pars[2] -> N0 : población en t0 (individuos)
+Factores, en este orden (primero la condición inicial, después los parámetros):
+    pars[0] -> N0 : población en t0 (individuos)
+    pars[1] -> r  : tasa de crecimiento por paso (adimensional)
+    pars[2] -> K  : capacidad de carga (individuos)
 
 domain = la rejilla de tiempos donde se quiere la salida (model.domain o el xdata de evaluate).
 t0     = el paso donde vale N0. Llega por opt={"t0": ...}; por defecto 0.
@@ -19,7 +19,7 @@ import numpy as np
 
 
 def logistica_discreta(pars, domain, t0=0):
-    r, K, N0 = pars
+    N0, r, K = pars
     domain = np.asarray(domain, dtype=float)
 
     t = np.arange(t0, int(np.ceil(domain.max())) + 1)   # un punto por paso de tiempo

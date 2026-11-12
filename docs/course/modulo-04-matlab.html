@@ -9,7 +9,7 @@ To make changes, update the MATLAB code and republish this document.
 <title>demo_04_sensibilidad</title>
 <meta name="generator" content="MATLAB 25.2">
 <link rel="schema.DC" href="http://purl.org/dc/elements/1.1/">
-<meta name="DC.date" content="2026-09-17">
+<meta name="DC.date" content="2026-11-12">
 <meta name="DC.source" content="demo_04_sensibilidad.m">
 <style type="text/css">
 html,body,div,span,applet,object,iframe,h1,h2,h3,h4,h5,h6,p,blockquote,pre,a,abbr,acronym,address,big,cite,code,del,dfn,em,font,img,ins,kbd,q,s,samp,small,strike,strong,tt,var,b,u,i,center,dl,dt,dd,ol,ul,li,fieldset,form,label,legend,table,caption,tbody,tfoot,thead,tr,th,td{margin:0;padding:0;border:0;outline:0;font-size:100%;vertical-align:baseline;background:transparent}body{line-height:1}ol,ul{list-style:none}blockquote,q{quotes:none}blockquote:before,blockquote:after,q:before,q:after{content:'';content:none}:focus{outine:0}ins{text-decoration:none}del{text-decoration:line-through}table{border-collapse:collapse;border-spacing:0}
@@ -152,14 +152,14 @@ fprintf(<span class="string">'==================================================
 <h2 id="3">2. Modelo SIR sobre TODO el espacio de factores (salida: Infectados)</h2>
 <p>Para GSA usamos rangos amplios: el an&aacute;lisis mide la importancia de cada factor a lo largo de todo su rango de variaci&oacute;n plausible.</p>
 <pre class="codeinput">ranges_sir = [
-    0.0001, 0.0008;  <span class="comment">% beta</span>
-    0.05,   0.20;    <span class="comment">% gamma</span>
     900,    999;     <span class="comment">% S0</span>
-    1,      50       <span class="comment">% I0</span>
+    1,      50;      <span class="comment">% I0</span>
+    0.0001, 0.0008;  <span class="comment">% beta</span>
+    0.05,   0.20     <span class="comment">% gamma</span>
 ];
 [T, ~] = gsua_dataprep(<span class="string">'sir_continuous_userdefined'</span>, ranges_sir, <span class="keyword">...</span>
     <span class="string">'domain'</span>, [0, 80], <span class="keyword">...</span>
-    <span class="string">'names'</span>, {<span class="string">'beta'</span>, <span class="string">'gamma'</span>, <span class="string">'S0'</span>, <span class="string">'I0'</span>}, <span class="keyword">...</span>
+    <span class="string">'names'</span>, {<span class="string">'S0'</span>, <span class="string">'I0'</span>, <span class="string">'beta'</span>, <span class="string">'gamma'</span>}, <span class="keyword">...</span>
     <span class="string">'out_names'</span>, {<span class="string">'Susceptibles'</span>, <span class="string">'Infectados'</span>, <span class="string">'Recuperados'</span>});
 T.Properties.CustomProperties.output = 2;     <span class="comment">% Infectados</span>
 </pre>
@@ -185,15 +185,15 @@ fprintf(<span class="string">'Factor MENOS influyente: %s (ST_i = %.3f)\n'</span
 fprintf(<span class="string">'=&gt; Regla pr&aacute;ctica: estima los factores con ST_i alto; considera FIJAR los de ST_i ~ 0.\n\n'</span>);
 </pre>
 <pre class="codeoutput">&Iacute;ndices de sensibilidad (m&eacute;todo Xiao):
-                S_i         ST_i  
-             _________    ________
+                S_i          ST_i  
+             __________    ________
 
-    beta        0.2453     0.71937
-    gamma       0.2165     0.64413
-    S0       0.0021145    0.070469
-    I0        0.041585     0.30662
+    S0       0.00081349    0.069729
+    I0       0.00020535     0.32072
+    beta        0.22968     0.72045
+    gamma       0.25818      0.6813
 
-Factor M&Aacute;S influyente : beta (ST_i = 0.719)
+Factor M&Aacute;S influyente : beta (ST_i = 0.720)
 Factor MENOS influyente: S0 (ST_i = 0.070)
 =&gt; Regla pr&aacute;ctica: estima los factores con ST_i alto; considera FIJAR los de ST_i ~ 0.
 
@@ -218,7 +218,7 @@ title(<span class="string">'Fracci&oacute;n de ST_i(t): qu&eacute; factor domina
 <p>Un buen resultado de GSA no deber&iacute;a depender fuertemente del estimador elegido. Partimos de una tabla FRESCA para el segundo m&eacute;todo: la anterior ya lleva escritas las propiedades del m&eacute;todo Xiao y reutilizarla generar&iacute;a un warning inofensivo.</p>
 <pre class="codeinput">[Tcmp, ~] = gsua_dataprep(<span class="string">'sir_continuous_userdefined'</span>, ranges_sir, <span class="keyword">...</span>
     <span class="string">'domain'</span>, [0, 80], <span class="keyword">...</span>
-    <span class="string">'names'</span>, {<span class="string">'beta'</span>, <span class="string">'gamma'</span>, <span class="string">'S0'</span>, <span class="string">'I0'</span>}, <span class="keyword">...</span>
+    <span class="string">'names'</span>, {<span class="string">'S0'</span>, <span class="string">'I0'</span>, <span class="string">'beta'</span>, <span class="string">'gamma'</span>}, <span class="keyword">...</span>
     <span class="string">'out_names'</span>, {<span class="string">'Susceptibles'</span>, <span class="string">'Infectados'</span>, <span class="string">'Recuperados'</span>});
 Tcmp.Properties.CustomProperties.output = 2;
 [Tsalt, ~, ~] = gsua_sa(M, Tcmp, <span class="string">'SensMethod'</span>, <span class="string">'Saltelli'</span>, <span class="string">'parallel'</span>, false, <span class="string">'verbose'</span>, false);
@@ -230,10 +230,10 @@ Comparaci&oacute;n ST_i (Xiao vs Saltelli):
                Xiao      Saltelli
              ________    ________
 
-    beta      0.71937     0.56491
-    gamma     0.64413     0.58365
-    S0       0.070469    0.023159
-    I0        0.30662     0.13353
+    S0       0.069729     0.0211 
+    I0        0.32072    0.17631 
+    beta      0.72045     0.5441 
+    gamma      0.6813    0.54233 
 
 </pre>
 <h2 id="9">8. PREGUNTAS Y EJERCICIOS PARA EL ESTUDIANTE</h2>
@@ -307,14 +307,14 @@ fprintf('=======================================================================
 % Para GSA usamos rangos amplios: el análisis mide la importancia de cada factor
 % a lo largo de todo su rango de variación plausible.
 ranges_sir = [
-    0.0001, 0.0008;  % beta
-    0.05,   0.20;    % gamma
     900,    999;     % S0
-    1,      50       % I0
+    1,      50;      % I0
+    0.0001, 0.0008;  % beta
+    0.05,   0.20     % gamma
 ];
 [T, ~] = gsua_dataprep('sir_continuous_userdefined', ranges_sir, ...
     'domain', [0, 80], ...
-    'names', {'beta', 'gamma', 'S0', 'I0'}, ...
+    'names', {'S0', 'I0', 'beta', 'gamma'}, ...
     'out_names', {'Susceptibles', 'Infectados', 'Recuperados'});
 T.Properties.CustomProperties.output = 2;     % Infectados
 
@@ -360,7 +360,7 @@ title('Fracción de ST_i(t): qué factor domina la varianza en cada instante');
 % las propiedades del método Xiao y reutilizarla generaría un warning inofensivo.
 [Tcmp, ~] = gsua_dataprep('sir_continuous_userdefined', ranges_sir, ...
     'domain', [0, 80], ...
-    'names', {'beta', 'gamma', 'S0', 'I0'}, ...
+    'names', {'S0', 'I0', 'beta', 'gamma'}, ...
     'out_names', {'Susceptibles', 'Infectados', 'Recuperados'});
 Tcmp.Properties.CustomProperties.output = 2;
 [Tsalt, ~, ~] = gsua_sa(M, Tcmp, 'SensMethod', 'Saltelli', 'parallel', false, 'verbose', false);

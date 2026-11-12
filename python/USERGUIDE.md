@@ -487,10 +487,12 @@ thing here, read the first table.
 - **Results.** MATLAB writes back into the table (`T.Range`, `T.Est`, `T.Si`, ...), so calls chain
   naturally. Python returns a dataclass per routine, so to feed one result into the next you
   assign it back yourself (`model.range = ia.range`).
-- **Plotting.** MATLAB's analysis functions open figures as a side effect — `gsua_ua` opens at
-  least two unless you pass `'plot', false` (since v1.15), `gsua_ia` four, and `gsua_eval` plots
-  by default unless you pass its sixth argument as `false`. Python never plots implicitly; the
-  `plot_*` functions take a result object.
+- **Plotting & printing.** Some MATLAB functions have side effects: `gsua_ua` opens at least two
+  figures unless you pass `'plot', false` (since v1.15); `gsua_eval` plots unless its sixth argument
+  is `false`; `gsua_ia` opens its diagnostic figures only when its `show` argument is `true`
+  (default `false`), and `gsua_dia` never plots. `gsua_pe`/`gsua_eval` print progress unless silenced
+  (`gsua_pe`'s `'timer', false`; `gsua_eval`'s seventh `verbose` argument). Python never plots or
+  prints implicitly (only `warnings.warn`); the `plot_*` functions take a result object.
 - **Log-scale search** (`model.log_scale`) is Python-only. **Simulink models** are MATLAB-only.
 
 ### Defaults that differ

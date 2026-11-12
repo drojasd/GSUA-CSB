@@ -8,7 +8,7 @@
 % versión Python (mismas secciones, mismos modelos, mismos resultados):
 %
 % # la firma del modelo y la forma de su salida;
-% # el orden de los factores: primero los parámetros, después las condiciones iniciales;
+% # el orden de los factores: primero las condiciones iniciales, después los parámetros;
 % # un modelo discreto (un bucle) y uno continuo (un integrador de EDO evaluado en una rejilla);
 % # cómo se declaran los rangos, los nombres de los factores y de las salidas, qué guarda la toolbox del modelo y cómo se evalúa;
 % # los errores típicos (firma, nombres de salidas, orientación, rejilla, pasos del integrador, unidades);
@@ -52,8 +52,8 @@ addpath(aqui, fullfile(aqui, 'errores'));
 %
 % * |pars|: vector con los factores. La posición manda: |pars(1)| es el
 %   factor de la fila 1 de los rangos, |pars(2)| el de la fila 2, etc.
-%   Convención del curso: *primero los parámetros, después las condiciones
-%   iniciales*.
+%   Convención del curso: *primero las condiciones iniciales, después los
+%   parámetros*.
 % * |domain|: |[t0, tf]|, el intervalo de simulación. Es el que declaras con
 %   |'domain'| en |gsua_dataprep|; la toolbox no lo cambia, así que la
 %   condición inicial vale siempre en |t0 = domain(1)|.
@@ -75,15 +75,15 @@ addpath(aqui, fullfile(aqui, 'errores'));
 % (salidas, tiempo) evaluado en esos puntos y nadie interpola por ti.
 
 %% 3. Paso 1 — un modelo discreto: la logística
-% $N(t+1) = N(t) + r\,N(t)\,(1 - N(t)/K)$, con tres factores: |r|, |K| (parámetros)
-% y |N0| (condición inicial). Un bucle avanza un paso de tiempo por iteración.
+% $N(t+1) = N(t) + r\,N(t)\,(1 - N(t)/K)$, con tres factores: |N0| (condición
+% inicial), |r| y |K| (parámetros). Un bucle avanza un paso de tiempo por iteración.
 % Este es el archivo |logistica_discreta.m| completo:
 %
 % <include>logistica_discreta.m</include>
 %
 % Antes de dárselo a la toolbox, llámalo tú a mano y mira las formas:
 
-sol = logistica_discreta([0.3; 500; 10], [0 50], []);
+sol = logistica_discreta([10; 0.3; 500], [0 50], []);
 fprintf('sol.x: %d x %d   (tiempos t0:tf)\n', size(sol.x));
 fprintf('sol.y: %d x %d   (1 salida x %d tiempos)\n', size(sol.y), numel(sol.x));
 fprintf('N(0) = %.1f,  N(50) = %.1f\n', sol.y(1), sol.y(end));
@@ -95,14 +95,14 @@ fprintf('N(0) = %.1f,  N(50) = %.1f\n', sol.y(1), sol.y(end));
 % orden. |out_names| nombra las filas de |sol.y|, también en orden.
 
 rangos_log = [
+    5,     50;     % N0  (condición inicial, ahora primero)
     0.05,  0.50;   % r   (parámetro)
-    100,   1000;   % K   (parámetro)
-    5,     50      % N0  (condición inicial, al final)
+    100,   1000    % K   (parámetro)
 ];
 
 [T_log, ~] = gsua_dataprep('logistica_discreta', rangos_log, ...
     'domain',    [0 50], ...
-    'names',     {'r', 'K', 'N0'}, ...
+    'names',     {'N0', 'r', 'K'}, ...
     'out_names', {'Poblacion'});
 
 %%
@@ -132,14 +132,14 @@ xdata = 0:50;
 y_nom = gsua_eval(T_log.Nominal, T_log, xdata, [], false, false, false);
 fprintf('una simulación   : size(y) = %s\n', mat2str(size(y_nom)));
 
-par3 = [T_log.Nominal, [0.45; 800; 10], [0.10; 300; 40]];   % 3 columnas = 3 simulaciones
+par3 = [T_log.Nominal, [10; 0.45; 800], [40; 0.10; 300]];   % 3 columnas = 3 simulaciones
 y3 = gsua_eval(par3, T_log, xdata, [], false, false, false);
 fprintf('tres simulaciones: size(y) = %s\n', mat2str(size(y3)));
 
 figure('Name', 'Logística discreta');
 plot(xdata, y3', 'LineWidth', 1.5);
 xlabel('Paso de tiempo t'); ylabel('Población N(t)'); grid on;
-legend('nominal', 'r=0.45, K=800, N0=10', 'r=0.10, K=300, N0=40', 'Location', 'southeast');
+legend('nominal', 'N0=10, r=0.45, K=800', 'N0=40, r=0.10, K=300', 'Location', 'southeast');
 title('Cada simulación es un vector de factores');
 
 %% 6. Paso 4 — un modelo continuo: el SIR
@@ -149,12 +149,12 @@ title('Cada simulación es un vector de factores');
 % # evaluar la solución con |deval| en una rejilla fina y regular;
 % # devolver esa rejilla en |sol.x| y los estados en |sol.y| (estados x tiempo).
 %
-% Factores: |beta|, |gamma| (parámetros), |S0|, |I0| (condiciones iniciales).
+% Factores: |S0|, |I0| (condiciones iniciales), |beta|, |gamma| (parámetros).
 % Salidas: S, I y R, en ese orden de filas. Archivo |sir_continuo.m| completo:
 %
 % <include>sir_continuo.m</include>
 
-sol = sir_continuo([4.5e-4; 0.125; 950; 25], [0 80], struct('dt', 0.5));
+sol = sir_continuo([950; 25; 4.5e-4; 0.125], [0 80], struct('dt', 0.5));
 fprintf('sol.x: %d x %d,  sol.y: %d x %d  (S, I, R x tiempo)\n', size(sol.x), size(sol.y));
 
 %%
@@ -163,15 +163,15 @@ fprintf('sol.x: %d x %d,  sol.y: %d x %d  (S, I, R x tiempo)\n', size(sol.x), si
 % modelo: aquí, la separación de la rejilla de salida.
 
 rangos_sir = [
-    1e-4,  8e-4;   % beta  (1/(persona*día))
-    0.05,  0.20;   % gamma (1/día)
     900,   999;    % S0    (personas)
-    1,     50      % I0    (personas)
+    1,     50;     % I0    (personas)
+    1e-4,  8e-4;   % beta  (1/(persona*día))
+    0.05,  0.20    % gamma (1/día)
 ];
 
 [T_sir, ~] = gsua_dataprep('sir_continuo', rangos_sir, ...
     'domain',    [0 80], ...
-    'names',     {'beta', 'gamma', 'S0', 'I0'}, ...
+    'names',     {'S0', 'I0', 'beta', 'gamma'}, ...
     'out_names', {'S', 'I', 'R'}, ...
     'opt',       struct('dt', 0.1));
 
@@ -207,14 +207,14 @@ title('Las tres salidas del SIR continuo');
 % factores; |design_matrix| mantiene constante la columna del fijo.
 
 rangos_fijo = rangos_sir;
-rangos_fijo(4, :) = [10 10];                    % I0 fijo en 10
+rangos_fijo(2, :) = [10 10];                    % I0 fijo en 10 (ahora fila 2)
 [T_fijo, ~] = gsua_dataprep('sir_continuo', rangos_fijo, 'domain', [0 80], ...
-    'names', {'beta', 'gamma', 'S0', 'I0'}, 'out_names', {'S', 'I', 'R'});
+    'names', {'S0', 'I0', 'beta', 'gamma'}, 'out_names', {'S', 'I', 'R'});
 disp(T_fijo)
 M_fijo = gsua_dmatrix(T_fijo, 4);
 fprintf('gsua_dmatrix: %s (solo factores libres)\n', mat2str(size(M_fijo)));
 y_fijo = gsua_eval(T_fijo.Nominal, T_fijo, xs, [], false, false, false);
-fprintf('el modelo recibió I0 = 10 en pars(4): I(0) = %.1f\n', y_fijo(1, 1, 2));
+fprintf('el modelo recibió I0 = 10 en pars(2): I(0) = %.1f\n', y_fijo(1, 1, 2));
 
 %% 8. Errores típicos
 % *(a) Firma.* En MATLAB, |gsua_eval| llama siempre al modelo con tres
@@ -327,9 +327,9 @@ fprintf('R0 con S0 en fracción (0.95): %.4f   <- mismas ecuaciones, otra escala
 % precisión: el modelo crudo de (e) cumple el contrato. Úsalo cada vez que
 % escribas un modelo nuevo. (La versión Python revisa además que el valor en
 % un tiempo no dependa de la rejilla pedida: el error (d) de Python.)
-verificar_modelo('logistica_discreta', [0.3; 500; 10], [0 50], {'Poblacion'});
+verificar_modelo('logistica_discreta', [10; 0.3; 500], [0 50], {'Poblacion'});
 verificar_modelo('sir_continuo', T_sir.Nominal, [0 80], {'S', 'I', 'R'});
-verificar_modelo('logistica_dos_entradas', [0.3; 500; 10], [0 50], {'Poblacion'});
+verificar_modelo('logistica_dos_entradas', [10; 0.3; 500], [0 50], {'Poblacion'});
 verificar_modelo('sir_transpuesto', T_sir.Nominal, [0 80], {'S', 'I', 'R'});
 verificar_modelo('sir_continuo_crudo', T_sir.Nominal, [0 80], {'S', 'I', 'R'});
 
@@ -359,7 +359,7 @@ verificar_modelo('sir_continuo_crudo', T_sir.Nominal, [0 80], {'S', 'I', 'R'});
 
 verificar_modelo('sir_discreto_plantilla', T_sir.Nominal, [0 80], {'S', 'I', 'R'});
 [T_ej, ~] = gsua_dataprep('sir_discreto_plantilla', rangos_sir, 'domain', [0 80], ...
-    'names', {'beta', 'gamma', 'S0', 'I0'}, 'out_names', {'S', 'I', 'R'}, 'output', 2);
+    'names', {'S0', 'I0', 'beta', 'gamma'}, 'out_names', {'S', 'I', 'R'}, 'output', 2);
 I_ej = gsua_eval(T_ej.Nominal, T_ej, 0:80, [], false, false, false);
 if all(abs(I_ej - I_ej(1)) < 1e-12)
     fprintf('La plantilla cumple el contrato, pero I(t) sigue constante: completa el TODO.\n');
@@ -370,7 +370,7 @@ end
 
 %% 11. Resumen: lista de chequeo
 % * Archivo |.m| propio, en el path, con *tres* entradas: |sol = f(pars, domain, opt)|.
-% * |pars(i)| = fila i de los rangos = |names{i}|: parámetros primero, condiciones iniciales después.
+% * |pars(i)| = fila i de los rangos = |names{i}|: condiciones iniciales primero, parámetros después.
 % * |sol.x| de 1 x Nt que cubre |[t0, tf]|; |sol.y| de nSalidas x Nt, filas en el orden de |out_names|.
 % * Discreto: un bucle de |t0| a |tf|. Continuo: |ode45| sobre |domain| y |deval| en una rejilla fina.
 % * |gsua_dataprep('f', rangos, 'domain', ..., 'names', ..., 'out_names', ...)| crea |T|.

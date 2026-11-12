@@ -11,7 +11,7 @@ UN BUEN AJUSTE NO GARANTIZA PARÁMETROS CONFIABLES.
   - CANTIDAD IDENTIFICABLE: aunque beta, gamma y S0 se dispersen, su combinación
     R0 = beta*S0/gamma queda determinada.
 
-Modelo: SIR continuo. Observamos SOLO Infectados; I0 fijo; estimamos beta, gamma, S0.
+Modelo: SIR continuo. Observamos SOLO Infectados; I0 fijo; estimamos S0, beta, gamma.
 """
 import os
 import sys
@@ -39,14 +39,14 @@ def run_demo():
     print("  MÓDULO 05: ESTIMACIÓN DE PARÁMETROS E IDENTIFICABILIDAD (PYTHON)")
     print("=========================================================================\n")
 
-    # 1. Modelo SIR con I0 FIJO (range degenerado); estimamos beta, gamma, S0.
+    # 1. Modelo SIR con I0 FIJO (range degenerado, 2.o factor); estimamos S0, beta, gamma.
     model = create_sir_continuous_model(I0_range=(5.0, 5.0), output_selection="Infectados")
     free_idx = [i for i, fx in enumerate(model.fixed) if not fx]
     free_names = [model.names[i] for i in free_idx]
     print(f"Factores a estimar: {free_names} (I0 fijo en 5); se observa solo Infectados.\n")
 
     # 2. Datos "observados" sintéticos (verdad + 5% de ruido).
-    true_par = np.array([5e-4, 0.12, 950.0, 5.0])          # beta, gamma, S0, I0 (fijo)
+    true_par = np.array([950.0, 5.0, 5e-4, 0.12])          # S0, I0 (fijo), beta, gamma
     true_free = true_par[free_idx]
     y_clean = np.squeeze(model.evaluate(true_par, model.domain))
     rng = np.random.default_rng(3)
@@ -56,9 +56,9 @@ def run_demo():
     pe = parameter_estimation(model, model.domain, ydata, n=10, solver="least_squares", seed=0)
     best = pe.x[0]
     print("--- Mejor ajuste ---")
-    print(f"   beta  = {best[0]:.3e}   (verdad 5.000e-04)")
-    print(f"   gamma = {best[1]:.4f}    (verdad 0.1200)")
-    print(f"   S0    = {best[2]:.1f}     (verdad 950.0)")
+    print(f"   S0    = {best[0]:.1f}     (verdad 950.0)")
+    print(f"   beta  = {best[2]:.3e}   (verdad 5.000e-04)")
+    print(f"   gamma = {best[3]:.4f}    (verdad 0.1200)")
     print(f"   El ajuste es EXCELENTE (costo = {pe.cost[0]:.4g}). ¿Son confiables los parámetros?\n")
 
     y_best = np.squeeze(model.evaluate(best, model.domain))
@@ -108,8 +108,8 @@ def run_demo():
     fig2.tight_layout(); fig2.savefig("demo_05_identificabilidad.png")
 
     # 5. La cantidad identificable: R0 = beta*S0/gamma.
-    R0_ens = est[:, 0] * est[:, 2] / est[:, 1]
-    R0_true = true_par[0] * true_par[2] / true_par[1]
+    R0_ens = est[:, 2] * est[:, 0] / est[:, 3]     # beta*S0/gamma (orden nuevo: S0,I0,beta,gamma)
+    R0_true = true_par[2] * true_par[0] / true_par[3]
     print("--- Número reproductivo básico R0 = beta*S0/gamma ---")
     cv_ind = np.mean([cv(est_free[:, j]) for j in range(len(free_names))])
     print(f"   CV de los parámetros individuales ~ {cv_ind:.1f}%, pero CV de R0 = {cv(R0_ens):.2f}%")

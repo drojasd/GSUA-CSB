@@ -8,20 +8,21 @@
 
 clc; clear; close all;
 
-% Asegurar la inclusión de funciones del toolbox
-toolbox_path = fullfile('C:', 'Users', 'Lanre', 'MATLAB Drive', 'Toolbox', 'Functions');
+% Asegurar la inclusión de funciones del toolbox (ruta relativa a este archivo)
+toolbox_root = fileparts(fileparts(fileparts(fileparts(mfilename('fullpath')))));
+toolbox_path = fullfile(toolbox_root, 'Functions');
 if exist(toolbox_path, 'dir'), addpath(toolbox_path); end
 
 fprintf('=== EJEMPLO 1: MODELO LOGÍSTICO DISCRETO ===\n\n');
 
 %% PASO 1: Especificar Rangos, Dominio, Nombres de Factores y Salidas
 ranges = [
+    5,    50;    % N0 (población inicial)
     0.05, 0.50;  % r  (tasa de crecimiento)
-    100,  1000;  % K  (capacidad de carga)
-    5,    50     % N0 (población inicial)
+    100,  1000   % K  (capacidad de carga)
 ];
 domain = [0, 50]; % t0 = 0, tf = 50
-factor_names = {'r', 'K', 'N0'};
+factor_names = {'N0', 'r', 'K'};
 output_names = {'Poblacion'};
 
 %% PASO 2: Crear la Tabla de Control del Sistema (T) con gsua_dataprep
@@ -46,7 +47,7 @@ xdata = 0:50; % Puntos de tiempo para la evaluación
 y_nominal = gsua_eval(T.Nominal, T, xdata);
 
 % Evaluación en un punto de prueba alternativo
-test_params = [0.40; 800; 10]; % r=0.40, K=800, N0=10
+test_params = [10; 0.40; 800]; % N0=10, r=0.40, K=800
 y_test = gsua_eval(test_params, T, xdata);
 
 %% PASO 4: Graficar los Resultados de gsua_eval

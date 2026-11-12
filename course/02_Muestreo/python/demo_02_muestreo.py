@@ -41,19 +41,19 @@ def run_demo():
     # 3. Visualizar y comparar proyecciones 2D (beta vs gamma)
     fig, axes = plt.subplots(1, 3, figsize=(13, 4))
     
-    axes[0].scatter(M_uni[:, 0], M_uni[:, 1], color='tab:red', alpha=0.7, s=15)
+    axes[0].scatter(M_uni[:, 2], M_uni[:, 3], color='tab:red', alpha=0.7, s=15)
     axes[0].set_xlabel('beta')
     axes[0].set_ylabel('gamma')
     axes[0].set_title('Muestreo Uniforme Aleatorio')
     axes[0].grid(True)
     
-    axes[1].scatter(M_lhs[:, 0], M_lhs[:, 1], color='tab:green', alpha=0.7, s=15)
+    axes[1].scatter(M_lhs[:, 2], M_lhs[:, 3], color='tab:green', alpha=0.7, s=15)
     axes[1].set_xlabel('beta')
     axes[1].set_ylabel('gamma')
     axes[1].set_title('Hipercubo Latino (LHS)')
     axes[1].grid(True)
     
-    axes[2].scatter(M_sobol[:, 0], M_sobol[:, 1], color='tab:blue', alpha=0.7, s=15)
+    axes[2].scatter(M_sobol[:, 2], M_sobol[:, 3], color='tab:blue', alpha=0.7, s=15)
     axes[2].set_xlabel('beta')
     axes[2].set_ylabel('gamma')
     axes[2].set_title('Secuencia de Sobol')

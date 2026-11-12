@@ -6,10 +6,10 @@ function sol = discrete_logistic_userdefined(params, domain, ~)
 %   Ecuación en diferencias:
 %       N(t+1) = N(t) + r * N(t) * (1 - N(t) / K)
 %
-%   Parámetros:
-%       params(1) -> r : Tasa intrínseca de crecimiento (1/tiempo)
-%       params(2) -> K : Capacidad de carga poblacional
-%       params(3) -> N0: Población inicial en t = t0
+%   Factores (primero la condición inicial, después los parámetros):
+%       params(1) -> N0: Población inicial en t = t0
+%       params(2) -> r : Tasa intrínseca de crecimiento (1/tiempo)
+%       params(3) -> K : Capacidad de carga poblacional
 %
 %   Dominio:
 %       domain = [t0, tf] (pasos discretos de tiempo)
@@ -17,13 +17,11 @@ function sol = discrete_logistic_userdefined(params, domain, ~)
 %   Retorna:
 %       Estructura sol con campos sol.x (puntos de tiempo) y sol.y (población).
 
-r  = params(1);
-K  = params(2);
-if length(params) >= 3
-    N0 = params(3);
-else
-    N0 = 10; % Valor por defecto si N0 se fija exteriormente
-end
+% gsua reinserta los factores fijos en su posición, así que el modelo
+% siempre recibe el vector completo (N0 incluido) en el orden declarado.
+N0 = params(1);
+r  = params(2);
+K  = params(3);
 
 t0 = floor(domain(1));
 tf = ceil(domain(2));

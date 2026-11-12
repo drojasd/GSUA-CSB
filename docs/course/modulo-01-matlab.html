@@ -9,7 +9,7 @@ To make changes, update the MATLAB code and republish this document.
 <title>demo_01_introduccion</title>
 <meta name="generator" content="MATLAB 25.2">
 <link rel="schema.DC" href="http://purl.org/dc/elements/1.1/">
-<meta name="DC.date" content="2026-10-26">
+<meta name="DC.date" content="2026-11-12">
 <meta name="DC.source" content="demo_01_introduccion.m">
 <style type="text/css">
 html,body,div,span,applet,object,iframe,h1,h2,h3,h4,h5,h6,p,blockquote,pre,a,abbr,acronym,address,big,cite,code,del,dfn,em,font,img,ins,kbd,q,s,samp,small,strike,strong,tt,var,b,u,i,center,dl,dt,dd,ol,ul,li,fieldset,form,label,legend,table,caption,tbody,tfoot,thead,tr,th,td{margin:0;padding:0;border:0;outline:0;font-size:100%;vertical-align:baseline;background:transparent}body{line-height:1}ol,ul{list-style:none}blockquote,q{quotes:none}blockquote:before,blockquote:after,q:before,q:after{content:'';content:none}:focus{outine:0}ins{text-decoration:none}del{text-decoration:line-through}table{border-collapse:collapse;border-spacing:0}
@@ -102,7 +102,7 @@ table td { padding:7px 5px; text-align:left; vertical-align:top; border:1px soli
 <span class="comment">%</span>
 <span class="comment">% Este script proporciona una introducci&oacute;n pedag&oacute;gica a la formulaci&oacute;n de</span>
 <span class="comment">% modelos en tiempo discreto y continuo definidos por el usuario,</span>
-<span class="comment">% declarando expl&iacute;citamente factores (par&aacute;metros + condiciones iniciales)</span>
+<span class="comment">% declarando expl&iacute;citamente factores (condiciones iniciales + par&aacute;metros)</span>
 <span class="comment">% y nombres de salidas, as&iacute; como exploraciones de ensamble de incertidumbre.</span>
 </pre>
 <h2 id="2">1. Configuraci&oacute;n del Entorno</h2>
@@ -152,10 +152,10 @@ fprintf(<span class="string">'==================================================
 <span class="comment">%   Ecuaci&oacute;n en diferencias:</span>
 <span class="comment">%       N(t+1) = N(t) + r * N(t) * (1 - N(t) / K)</span>
 <span class="comment">%</span>
-<span class="comment">%   Par&aacute;metros:</span>
-<span class="comment">%       params(1) -&gt; r : Tasa intr&iacute;nseca de crecimiento (1/tiempo)</span>
-<span class="comment">%       params(2) -&gt; K : Capacidad de carga poblacional</span>
-<span class="comment">%       params(3) -&gt; N0: Poblaci&oacute;n inicial en t = t0</span>
+<span class="comment">%   Factores (primero la condici&oacute;n inicial, despu&eacute;s los par&aacute;metros):</span>
+<span class="comment">%       params(1) -&gt; N0: Poblaci&oacute;n inicial en t = t0</span>
+<span class="comment">%       params(2) -&gt; r : Tasa intr&iacute;nseca de crecimiento (1/tiempo)</span>
+<span class="comment">%       params(3) -&gt; K : Capacidad de carga poblacional</span>
 <span class="comment">%</span>
 <span class="comment">%   Dominio:</span>
 <span class="comment">%       domain = [t0, tf] (pasos discretos de tiempo)</span>
@@ -163,13 +163,11 @@ fprintf(<span class="string">'==================================================
 <span class="comment">%   Retorna:</span>
 <span class="comment">%       Estructura sol con campos sol.x (puntos de tiempo) y sol.y (poblaci&oacute;n).</span>
 
-r  = params(1);
-K  = params(2);
-<span class="keyword">if</span> length(params) &gt;= 3
-    N0 = params(3);
-<span class="keyword">else</span>
-    N0 = 10; <span class="comment">% Valor por defecto si N0 se fija exteriormente</span>
-<span class="keyword">end</span>
+<span class="comment">% gsua reinserta los factores fijos en su posici&oacute;n, as&iacute; que el modelo</span>
+<span class="comment">% siempre recibe el vector completo (N0 incluido) en el orden declarado.</span>
+N0 = params(1);
+r  = params(2);
+K  = params(3);
 
 t0 = floor(domain(1));
 tf = ceil(domain(2));
@@ -197,12 +195,12 @@ sol.y = N;
 <span class="comment">%</span>
 <span class="comment">%   sol = sir_continuous_userdefined(params, domain, opt)</span>
 <span class="comment">%</span>
-<span class="comment">%   Factores (Par&aacute;metros + Condiciones Iniciales):</span>
-<span class="comment">%       params(1) -&gt; beta  : Tasa de transmisi&oacute;n / contacto infectivo (1/(persona*d&iacute;a))</span>
-<span class="comment">%       params(2) -&gt; gamma : Tasa de recuperaci&oacute;n (1/d&iacute;a)</span>
-<span class="comment">%       params(3) -&gt; S0    : Susceptibles iniciales en t0</span>
-<span class="comment">%       params(4) -&gt; I0    : Infectados iniciales en t0</span>
-<span class="comment">%       params(5) -&gt; R0_pop: Recuperados iniciales en t0 (opcional, por defecto 0)</span>
+<span class="comment">%   Factores (Condiciones Iniciales + Par&aacute;metros):</span>
+<span class="comment">%       params(1) -&gt; S0    : Susceptibles iniciales en t0</span>
+<span class="comment">%       params(2) -&gt; I0    : Infectados iniciales en t0</span>
+<span class="comment">%       params(3) -&gt; beta  : Tasa de transmisi&oacute;n / contacto infectivo (1/(persona*d&iacute;a))</span>
+<span class="comment">%       params(4) -&gt; gamma : Tasa de recuperaci&oacute;n (1/d&iacute;a)</span>
+<span class="comment">%       params(5) -&gt; R0_pop: Recuperados iniciales en t0 (constante opcional, por defecto 0)</span>
 <span class="comment">%</span>
 <span class="comment">%   Salidas (3 componentes):</span>
 <span class="comment">%       Fila 1 -&gt; S(t): Susceptibles</span>
@@ -212,10 +210,10 @@ sol.y = N;
 <span class="comment">%   Retorna:</span>
 <span class="comment">%       Estructura sol compatible con GSUA_EVAL / GSUA_INTRP.</span>
 
-beta  = params(1);
-gamma = params(2);
-S0    = params(3);
-I0    = params(4);
+S0    = params(1);
+I0    = params(2);
+beta  = params(3);
+gamma = params(4);
 
 <span class="keyword">if</span> length(params) &gt;= 5
     R0_pop = params(5);
@@ -252,20 +250,20 @@ dydt = [dSdt; dIdt; dRdt];
 <pre class="codeinput">fprintf(<span class="string">'--- 1. MODELO LOG&Iacute;STICO DISCRETO ---\n'</span>);
 fprintf(<span class="string">'Ecuaci&oacute;n: N(t+1) = N(t) + r * N(t) * (1 - N(t) / K)\n\n'</span>);
 
-<span class="comment">% Definici&oacute;n de rangos para Factores: [Par&aacute;metros + Condici&oacute;n Inicial]</span>
-<span class="comment">%   Fila 1: r  (tasa de crecimiento)</span>
-<span class="comment">%   Fila 2: K  (capacidad de carga)</span>
-<span class="comment">%   Fila 3: N0 (poblaci&oacute;n inicial en t=0)</span>
+<span class="comment">% Definici&oacute;n de rangos para Factores: [Condici&oacute;n Inicial + Par&aacute;metros]</span>
+<span class="comment">%   Fila 1: N0 (poblaci&oacute;n inicial en t=0)</span>
+<span class="comment">%   Fila 2: r  (tasa de crecimiento)</span>
+<span class="comment">%   Fila 3: K  (capacidad de carga)</span>
 ranges_discrete = [
+    5,    50;    <span class="comment">% N0 (Condici&oacute;n inicial)</span>
     0.05, 0.50;  <span class="comment">% r</span>
-    100,  1000;  <span class="comment">% K</span>
-    5,    50     <span class="comment">% N0 (Condici&oacute;n inicial)</span>
+    100,  1000   <span class="comment">% K</span>
 ];
 
 domain_discrete = [0, 50]; <span class="comment">% 50 pasos discretos</span>
 
 <span class="comment">% Especificaci&oacute;n expl&iacute;cita de nombres de factores y nombres de salidas</span>
-factor_names_discrete = {<span class="string">'r'</span>, <span class="string">'K'</span>, <span class="string">'N0'</span>};
+factor_names_discrete = {<span class="string">'N0'</span>, <span class="string">'r'</span>, <span class="string">'K'</span>};
 out_names_discrete    = {<span class="string">'Poblacion'</span>};
 
 [T_discrete, ~] = gsua_dataprep(<span class="string">'discrete_logistic_userdefined'</span>, ranges_discrete, <span class="keyword">...</span>
@@ -305,31 +303,31 @@ Tabla Resumen del Modelo Discreto (Factores y Salida):
              Range        Nominal
           ____________    _______
 
+    N0       5      50      27.5 
     r     0.05     0.5     0.275 
     K      100    1000       550 
-    N0       5      50      27.5 
 
 </pre>
 <img vspace="5" hspace="5" src="demo_01_introduccion_01.png" alt=""> <h2 id="5">3. MODELO 2: TIEMPO CONTINUO (Modelo Epid&eacute;mico SIR)</h2>
 <pre class="codeinput">fprintf(<span class="string">'\n--- 2. MODELO EPID&Eacute;MICO SIR CONTINUO ---\n'</span>);
 fprintf(<span class="string">'Sistema EDO: dS/dt = -beta*S*I, dI/dt = beta*S*I - gamma*I, dR/dt = gamma*I\n\n'</span>);
 
-<span class="comment">% Definici&oacute;n de rangos para Factores: [Par&aacute;metros + Condiciones Iniciales]</span>
-<span class="comment">%   Fila 1: beta  (tasa de transmisi&oacute;n)</span>
-<span class="comment">%   Fila 2: gamma (tasa de recuperaci&oacute;n)</span>
-<span class="comment">%   Fila 3: S0    (Susceptibles iniciales)</span>
-<span class="comment">%   Fila 4: I0    (Infectados iniciales)</span>
+<span class="comment">% Definici&oacute;n de rangos para Factores: [Condiciones Iniciales + Par&aacute;metros]</span>
+<span class="comment">%   Fila 1: S0    (Susceptibles iniciales)</span>
+<span class="comment">%   Fila 2: I0    (Infectados iniciales)</span>
+<span class="comment">%   Fila 3: beta  (tasa de transmisi&oacute;n)</span>
+<span class="comment">%   Fila 4: gamma (tasa de recuperaci&oacute;n)</span>
 ranges_sir = [
-    0.0001, 0.0008;  <span class="comment">% beta</span>
-    0.05,   0.20;    <span class="comment">% gamma</span>
     900,    999;     <span class="comment">% S0 (Condici&oacute;n inicial)</span>
-    1,      50       <span class="comment">% I0 (Condici&oacute;n inicial)</span>
+    1,      50;      <span class="comment">% I0 (Condici&oacute;n inicial)</span>
+    0.0001, 0.0008;  <span class="comment">% beta</span>
+    0.05,   0.20     <span class="comment">% gamma</span>
 ];
 
 domain_sir = [0, 80]; <span class="comment">% 80 d&iacute;as</span>
 
 <span class="comment">% Especificaci&oacute;n expl&iacute;cita de nombres de factores (4) y salidas (3)</span>
-factor_names_sir = {<span class="string">'beta'</span>, <span class="string">'gamma'</span>, <span class="string">'S0'</span>, <span class="string">'I0'</span>};
+factor_names_sir = {<span class="string">'S0'</span>, <span class="string">'I0'</span>, <span class="string">'beta'</span>, <span class="string">'gamma'</span>};
 out_names_sir    = {<span class="string">'Susceptibles'</span>, <span class="string">'Infectados'</span>, <span class="string">'Recuperados'</span>};
 
 [T_sir, ~] = gsua_dataprep(<span class="string">'sir_continuous_userdefined'</span>, ranges_sir, <span class="keyword">...</span>
@@ -337,7 +335,7 @@ out_names_sir    = {<span class="string">'Susceptibles'</span>, <span class="str
     <span class="string">'names'</span>, factor_names_sir, <span class="keyword">...</span>
     <span class="string">'out_names'</span>, out_names_sir);
 
-disp(<span class="string">'Tabla Resumen del Modelo SIR (Par&aacute;metros + Condiciones Iniciales):'</span>);
+disp(<span class="string">'Tabla Resumen del Modelo SIR (Condiciones Iniciales + Par&aacute;metros):'</span>);
 disp(T_sir);
 
 <span class="comment">% A. Simulaci&oacute;n Nominal de Todos los Compartimentos (S, I, R)</span>
@@ -359,9 +357,9 @@ I_nom = Y(:,2).';
 R_nom = Y(:,3).';
 
 <span class="comment">% C&aacute;lculo del N&uacute;mero Reproductivo B&aacute;sico R0 = (beta * S0) / gamma</span>
-beta_nom  = T_sir.Nominal(1);
-gamma_nom = T_sir.Nominal(2);
-S0_nom    = T_sir.Nominal(3);
+beta_nom  = T_sir.Nominal(3);
+gamma_nom = T_sir.Nominal(4);
+S0_nom    = T_sir.Nominal(1);
 R0_basic  = (beta_nom * S0_nom) / gamma_nom;
 
 fprintf(<span class="string">'Par&aacute;metros Nominales: beta = %.5f, gamma = %.2f, S0 = %.0f\n'</span>, beta_nom, gamma_nom, S0_nom);
@@ -419,14 +417,14 @@ legend(<span class="string">'Ensamble (30 Muestras)'</span>, <span class="string
 Sistema EDO: dS/dt = -beta*S*I, dI/dt = beta*S*I - gamma*I, dR/dt = gamma*I
 
 Setting environment to work with user-defined function
-Tabla Resumen del Modelo SIR (Par&aacute;metros + Condiciones Iniciales):
+Tabla Resumen del Modelo SIR (Condiciones Iniciales + Par&aacute;metros):
                   Range          Nominal
              ________________    _______
 
-    beta     0.0001    0.0008    0.00045
-    gamma      0.05       0.2      0.125
     S0          900       999      949.5
     I0            1        50       25.5
+    beta     0.0001    0.0008    0.00045
+    gamma      0.05       0.2      0.125
 
 Par&aacute;metros Nominales: beta = 0.00045, gamma = 0.12, S0 = 950
 N&uacute;mero Reproductivo B&aacute;sico Calculado: R0 = 3.42
@@ -464,7 +462,7 @@ fprintf(<span class="string">'==================================================
 %
 % Este script proporciona una introducción pedagógica a la formulación de
 % modelos en tiempo discreto y continuo definidos por el usuario,
-% declarando explícitamente factores (parámetros + condiciones iniciales)
+% declarando explícitamente factores (condiciones iniciales + parámetros)
 % y nombres de salidas, así como exploraciones de ensamble de incertidumbre.
 
 %% 1. Configuración del Entorno
@@ -517,20 +515,20 @@ fprintf('=======================================================================
 fprintf('REPLACE_WITH_DASH_DASH- 1. MODELO LOGÍSTICO DISCRETO REPLACE_WITH_DASH_DASH-\n');
 fprintf('Ecuación: N(t+1) = N(t) + r * N(t) * (1 - N(t) / K)\n\n');
 
-% Definición de rangos para Factores: [Parámetros + Condición Inicial]
-%   Fila 1: r  (tasa de crecimiento)
-%   Fila 2: K  (capacidad de carga)
-%   Fila 3: N0 (población inicial en t=0)
+% Definición de rangos para Factores: [Condición Inicial + Parámetros]
+%   Fila 1: N0 (población inicial en t=0)
+%   Fila 2: r  (tasa de crecimiento)
+%   Fila 3: K  (capacidad de carga)
 ranges_discrete = [
+    5,    50;    % N0 (Condición inicial)
     0.05, 0.50;  % r
-    100,  1000;  % K
-    5,    50     % N0 (Condición inicial)
+    100,  1000   % K
 ];
 
 domain_discrete = [0, 50]; % 50 pasos discretos
 
 % Especificación explícita de nombres de factores y nombres de salidas
-factor_names_discrete = {'r', 'K', 'N0'};
+factor_names_discrete = {'N0', 'r', 'K'};
 out_names_discrete    = {'Poblacion'};
 
 [T_discrete, ~] = gsua_dataprep('discrete_logistic_userdefined', ranges_discrete, ...
@@ -566,22 +564,22 @@ legend('Muestras', 'Nominal', 'Location', 'southeast');
 fprintf('\nREPLACE_WITH_DASH_DASH- 2. MODELO EPIDÉMICO SIR CONTINUO REPLACE_WITH_DASH_DASH-\n');
 fprintf('Sistema EDO: dS/dt = -beta*S*I, dI/dt = beta*S*I - gamma*I, dR/dt = gamma*I\n\n');
 
-% Definición de rangos para Factores: [Parámetros + Condiciones Iniciales]
-%   Fila 1: beta  (tasa de transmisión)
-%   Fila 2: gamma (tasa de recuperación)
-%   Fila 3: S0    (Susceptibles iniciales)
-%   Fila 4: I0    (Infectados iniciales)
+% Definición de rangos para Factores: [Condiciones Iniciales + Parámetros]
+%   Fila 1: S0    (Susceptibles iniciales)
+%   Fila 2: I0    (Infectados iniciales)
+%   Fila 3: beta  (tasa de transmisión)
+%   Fila 4: gamma (tasa de recuperación)
 ranges_sir = [
-    0.0001, 0.0008;  % beta
-    0.05,   0.20;    % gamma
     900,    999;     % S0 (Condición inicial)
-    1,      50       % I0 (Condición inicial)
+    1,      50;      % I0 (Condición inicial)
+    0.0001, 0.0008;  % beta
+    0.05,   0.20     % gamma
 ];
 
 domain_sir = [0, 80]; % 80 días
 
 % Especificación explícita de nombres de factores (4) y salidas (3)
-factor_names_sir = {'beta', 'gamma', 'S0', 'I0'};
+factor_names_sir = {'S0', 'I0', 'beta', 'gamma'};
 out_names_sir    = {'Susceptibles', 'Infectados', 'Recuperados'};
 
 [T_sir, ~] = gsua_dataprep('sir_continuous_userdefined', ranges_sir, ...
@@ -589,7 +587,7 @@ out_names_sir    = {'Susceptibles', 'Infectados', 'Recuperados'};
     'names', factor_names_sir, ...
     'out_names', out_names_sir);
 
-disp('Tabla Resumen del Modelo SIR (Parámetros + Condiciones Iniciales):');
+disp('Tabla Resumen del Modelo SIR (Condiciones Iniciales + Parámetros):');
 disp(T_sir);
 
 % A. Simulación Nominal de Todos los Compartimentos (S, I, R)
@@ -611,9 +609,9 @@ I_nom = Y(:,2).';
 R_nom = Y(:,3).';
 
 % Cálculo del Número Reproductivo Básico R0 = (beta * S0) / gamma
-beta_nom  = T_sir.Nominal(1);
-gamma_nom = T_sir.Nominal(2);
-S0_nom    = T_sir.Nominal(3);
+beta_nom  = T_sir.Nominal(3);
+gamma_nom = T_sir.Nominal(4);
+S0_nom    = T_sir.Nominal(1);
 R0_basic  = (beta_nom * S0_nom) / gamma_nom;
 
 fprintf('Parámetros Nominales: beta = %.5f, gamma = %.2f, S0 = %.0f\n', beta_nom, gamma_nom, S0_nom);

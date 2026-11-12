@@ -43,14 +43,14 @@ fprintf('=======================================================================
 % estrechos que en el Módulo 02: aquí no exploramos el muestreo, sino que propagamos
 % una incertidumbre plausible para ver cuánta variabilidad induce en la salida.
 ranges_sir = [
-    4.0e-4, 6.0e-4;  % beta  (tasa de transmisión)
-    0.10,   0.15;    % gamma (tasa de recuperación)
     920,    980;     % S0    (susceptibles iniciales)
-    3,      8        % I0    (infectados iniciales)
+    3,      8;       % I0    (infectados iniciales)
+    4.0e-4, 6.0e-4;  % beta  (tasa de transmisión)
+    0.10,   0.15     % gamma (tasa de recuperación)
 ];
 [T, ~] = gsua_dataprep('sir_continuous_userdefined', ranges_sir, ...
     'domain', [0, 80], ...
-    'names', {'beta', 'gamma', 'S0', 'I0'}, ...
+    'names', {'S0', 'I0', 'beta', 'gamma'}, ...
     'out_names', {'Susceptibles', 'Infectados', 'Recuperados'});
 
 % Seleccionamos la salida a analizar. En una tabla GSUA esto se hace fijando la

@@ -3,12 +3,12 @@ function sol = sir_discreto_solucion(pars, domain, ~)
 %
 %   Ábrela después de intentar SIR_DISCRETO_PLANTILLA por tu cuenta.
 
-beta  = pars(1);
-gamma = pars(2);
+beta  = pars(3);
+gamma = pars(4);
 
 t = domain(1):domain(2);
 Y = zeros(3, numel(t));
-Y(:, 1) = [pars(3); pars(4); 0];
+Y(:, 1) = [pars(1); pars(2); 0];
 
 for k = 1:numel(t)-1
     S = Y(1, k);  I = Y(2, k);  R = Y(3, k);

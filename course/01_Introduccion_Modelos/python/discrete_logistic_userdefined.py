@@ -14,9 +14,9 @@ def discrete_logistic_func(params, domain):
     Función del modelo de crecimiento logístico discreto.
     N(t+1) = N(t) + r * N(t) * (1 - N(t) / K)
     """
-    r = params[0]
-    K = params[1]
-    N0 = params[2] if len(params) >= 3 else 10.0
+    N0 = params[0]
+    r = params[1] if len(params) >= 2 else 0.275
+    K = params[2] if len(params) >= 3 else 550.0
     
     num_steps = len(domain)
     N = np.zeros(num_steps, dtype=float)
@@ -30,17 +30,17 @@ def discrete_logistic_func(params, domain):
     return N
 
 def create_discrete_logistic_model(
+    N0_range=(5.0, 50.0),
     r_range=(0.05, 0.50),
     K_range=(100.0, 1000.0),
-    N0_range=(5.0, 50.0),
     t_max=50
 ):
     """
     Construye y retorna una instancia de UserFunctionModel (Objeto de Control del Sistema).
     """
     domain = np.arange(0, t_max + 1)
-    names = ["r", "K", "N0"]
-    param_ranges = np.array([r_range, K_range, N0_range])
+    names = ["N0", "r", "K"]
+    param_ranges = np.array([N0_range, r_range, K_range])
     
     model = UserFunctionModel(
         func=discrete_logistic_func,
@@ -65,7 +65,7 @@ if __name__ == "__main__":
     y_nominal = np.squeeze(model.evaluate(model.nominal, model.domain))
     
     # Evaluación con parámetros alternativos
-    test_params = np.array([0.40, 800.0, 10.0])
+    test_params = np.array([10.0, 0.40, 800.0])
     y_test = np.squeeze(model.evaluate(test_params, model.domain))
     
     # 3. Graficar simulaciones

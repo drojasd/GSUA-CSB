@@ -9,7 +9,7 @@ To make changes, update the MATLAB code and republish this document.
 <title>demo_05_estimacion</title>
 <meta name="generator" content="MATLAB 25.2">
 <link rel="schema.DC" href="http://purl.org/dc/elements/1.1/">
-<meta name="DC.date" content="2026-09-17">
+<meta name="DC.date" content="2026-11-12">
 <meta name="DC.source" content="demo_05_estimacion.m">
 <style type="text/css">
 html,body,div,span,applet,object,iframe,h1,h2,h3,h4,h5,h6,p,blockquote,pre,a,abbr,acronym,address,big,cite,code,del,dfn,em,font,img,ins,kbd,q,s,samp,small,strike,strong,tt,var,b,u,i,center,dl,dt,dd,ol,ul,li,fieldset,form,label,legend,table,caption,tbody,tfoot,thead,tr,th,td{margin:0;padding:0;border:0;outline:0;font-size:100%;vertical-align:baseline;background:transparent}body{line-height:1}ol,ul{list-style:none}blockquote,q{quotes:none}blockquote:before,blockquote:after,q:before,q:after{content:'';content:none}:focus{outine:0}ins{text-decoration:none}del{text-decoration:line-through}table{border-collapse:collapse;border-spacing:0}
@@ -153,27 +153,27 @@ fprintf(<span class="string">'==================================================
 <h2 id="3">2. Modelo SIR con I0 fijo (estimamos beta, gamma, S0)</h2>
 <p>Un factor se FIJA d&aacute;ndole un rango degenerado [v v]. Fijamos I0 = 5 y dejamos libres beta, gamma y S0. Observamos &uacute;nicamente la curva de Infectados (output 2).</p>
 <pre class="codeinput">ranges = [
-    1e-4, 8e-4;   <span class="comment">% beta   (libre)</span>
-    0.05, 0.20;   <span class="comment">% gamma  (libre)</span>
     900,  999;    <span class="comment">% S0     (libre)</span>
-    5,    5       <span class="comment">% I0     (FIJO en 5)</span>
+    5,    5;      <span class="comment">% I0     (FIJO en 5)</span>
+    1e-4, 8e-4;   <span class="comment">% beta   (libre)</span>
+    0.05, 0.20    <span class="comment">% gamma  (libre)</span>
 ];
 [T, ~] = gsua_dataprep(<span class="string">'sir_continuous_userdefined'</span>, ranges, <span class="keyword">...</span>
     <span class="string">'domain'</span>, [0, 80], <span class="keyword">...</span>
-    <span class="string">'names'</span>, {<span class="string">'beta'</span>, <span class="string">'gamma'</span>, <span class="string">'S0'</span>, <span class="string">'I0'</span>}, <span class="keyword">...</span>
+    <span class="string">'names'</span>, {<span class="string">'S0'</span>, <span class="string">'I0'</span>, <span class="string">'beta'</span>, <span class="string">'gamma'</span>}, <span class="keyword">...</span>
     <span class="string">'out_names'</span>, {<span class="string">'Susceptibles'</span>, <span class="string">'Infectados'</span>, <span class="string">'Recuperados'</span>});
 T.Properties.CustomProperties.output = 2;      <span class="comment">% solo Infectados</span>
-names = T.Properties.RowNames;                 <span class="comment">% {'beta','gamma','S0'}</span>
+names = T.Properties.RowNames;                 <span class="comment">% {'S0','beta','gamma'} (I0 fijo sale de la tabla)</span>
 xdata = linspace(0, 80, 200);
 opt   = optimoptions(<span class="string">'lsqcurvefit'</span>, <span class="string">'Display'</span>, <span class="string">'off'</span>);   <span class="comment">% silenciar el optimizador</span>
 fprintf(<span class="string">'Factores a estimar: %s (I0 fijo en 5); se observa solo Infectados.\n\n'</span>, strjoin(names, <span class="string">', '</span>));
 </pre>
 <pre class="codeoutput">Setting environment to work with user-defined function
-Factores a estimar: beta, gamma, S0 (I0 fijo en 5); se observa solo Infectados.
+Factores a estimar: S0, beta, gamma (I0 fijo en 5); se observa solo Infectados.
 
 </pre>
 <h2 id="4">3. Datos "observados" sint&eacute;ticos (verdad conocida + 5% de ruido)</h2>
-<pre class="codeinput">true_free = [5e-4; 0.12; 950];                 <span class="comment">% beta, gamma, S0 verdaderos</span>
+<pre class="codeinput">true_free = [950; 5e-4; 0.12];                 <span class="comment">% S0, beta, gamma verdaderos (orden de los libres)</span>
 y_clean   = squeeze(gsua_eval(true_free, T, xdata, [], false, false, false)).';
 rng(3);
 ydata     = y_clean .* (1 + 0.05 * randn(size(y_clean)));
@@ -184,9 +184,9 @@ ydata     = y_clean .* (1 + 0.05 * randn(size(y_clean)));
 [bestCost, ix] = min(res);
 best = T.Estlsqc(:, ix);
 fprintf(<span class="string">'--- Mejor ajuste ---\n'</span>);
-fprintf(<span class="string">'   beta  = %.3e   (verdad 5.000e-04)\n'</span>, best(1));
-fprintf(<span class="string">'   gamma = %.4f    (verdad 0.1200)\n'</span>, best(2));
-fprintf(<span class="string">'   S0    = %.1f     (verdad 950.0)\n'</span>, best(3));
+fprintf(<span class="string">'   S0    = %.1f     (verdad 950.0)\n'</span>, best(1));
+fprintf(<span class="string">'   beta  = %.3e   (verdad 5.000e-04)\n'</span>, best(2));
+fprintf(<span class="string">'   gamma = %.4f    (verdad 0.1200)\n'</span>, best(3));
 fprintf(<span class="string">'   El ajuste es EXCELENTE (costo = %.4g). &iquest;Significa que los par&aacute;metros son confiables?\n\n'</span>, bestCost);
 
 y_best = squeeze(gsua_eval(best, T, xdata, [], false, false, false)).';
@@ -198,28 +198,29 @@ title(<span class="string">'Estimaci&oacute;n de par&aacute;metros: el modelo aj
 grid <span class="string">on</span>; legend(<span class="string">'Location'</span>, <span class="string">'northeast'</span>);
 </pre>
 <pre class="codeoutput">--- Mejor ajuste ---
+   S0    = 929.4     (verdad 950.0)
    beta  = 5.103e-04   (verdad 5.000e-04)
    gamma = 0.1179    (verdad 0.1200)
-   S0    = 929.4     (verdad 950.0)
    El ajuste es EXCELENTE (costo = 6980). &iquest;Significa que los par&aacute;metros son confiables?
 
 </pre>
 <img vspace="5" hspace="5" src="demo_05_estimacion_01.png" alt=""> <h2 id="6">5. Identificabilidad por Bootstrap</h2>
 <p>Una sola estimaci&oacute;n no dice cu&aacute;nta CONFIANZA merece cada par&aacute;metro. Generamos un ENSAMBLE re-ajustando B realizaciones de ruido distintas: la dispersi&oacute;n resultante es la incertidumbre de cada par&aacute;metro, y su ESTRUCTURA (correlaci&oacute;n) revela los entrelazamientos.</p>
 <pre class="codeinput">B = 20;
-Est = zeros(numel(names), B);
-fprintf(<span class="string">'Generando ensamble bootstrap (%d re-ajustes)...\n'</span>, B);
-<span class="keyword">for</span> b = 1:B
-    yb = y_clean .* (1 + 0.05 * randn(size(y_clean)));   <span class="comment">% nueva realizaci&oacute;n de ruido</span>
-    [Tb, resb] = gsua_pe(T, xdata, yb, <span class="string">'N'</span>, 3, <span class="string">'solver'</span>, <span class="string">'lsqc'</span>, <span class="keyword">...</span>
-        <span class="string">'opt'</span>, opt, <span class="string">'save'</span>, false, <span class="string">'timer'</span>, false);
-    [~, jx] = min(resb);
-    Est(:, b) = Tb.Estlsqc(:, jx);
-<span class="keyword">end</span>
+fprintf(<span class="string">'Generando ensamble bootstrap parametrico (%d re-ajustes)...\n'</span>, B);
+<span class="comment">% gsua_bootstrap re-ajusta B conjuntos sinteticos generados DESDE el mejor ajuste. El modelo de</span>
+<span class="comment">% ruido debe ser COHERENTE con los datos: aqui son continuos con ruido gaussiano (seccion 3), asi</span>
+<span class="comment">% que usamos 'gaussian' (desviacion estimada de los residuos). Los modelos de conteo</span>
+<span class="comment">% ('poisson'/'quasipoisson') asumen conteos enteros y no aplican a esta serie continua. Su</span>
+<span class="comment">% dispersion s&iacute; mide la incertidumbre de cada parametro (re-ajustar los mismos datos desde muchos</span>
+<span class="comment">% arranques colapsa al mismo optimo, no la mide).</span>
+Est = gsua_bootstrap(T, xdata, ydata, T.Estlsqc, res, <span class="string">'B'</span>, B, <span class="string">'solver'</span>, <span class="string">'lsqc'</span>, <span class="string">'N'</span>, 3, <span class="keyword">...</span>
+    <span class="string">'noise'</span>, <span class="string">'gaussian'</span>, <span class="string">'opt'</span>, opt, <span class="string">'seed'</span>, 7, <span class="string">'timer'</span>, false);
 
 <span class="comment">% gsua_ia analiza el ensamble: actualiza rangos a un IC de la mediana, calcula el</span>
 <span class="comment">% &iacute;ndice de identificabilidad por par&aacute;metro (0 = bien, 1 = mal) y abre las figuras</span>
-<span class="comment">% diagn&oacute;sticas (incluida la matriz de correlaci&oacute;n).</span>
+<span class="comment">% diagn&oacute;sticas (incluida la matriz de correlaci&oacute;n). Una sola cuenca aqu&iacute; (el ensamble se dispersa</span>
+<span class="comment">% sobre la variedad R0=beta*S0/gamma): cluster=false. Usa cluster=true si sospechas minimos multiples.</span>
 [T, ci] = gsua_ia(T, Est, false, false, true, false); <span class="comment">%#ok&lt;ASGLU&gt;</span>
 
 fprintf(<span class="string">'\n--- Dispersi&oacute;n del ensamble (coeficiente de variaci&oacute;n) ---\n'</span>);
@@ -239,42 +240,56 @@ fprintf(<span class="string">'Par m&aacute;s entrelazado: %s &lt;-&gt; %s  (|cor
     fprintf(<span class="string">'   COMBINACI&Oacute;N, no cada par&aacute;metro por separado (no-identificabilidad pr&aacute;ctica).\n\n'</span>);
 <span class="keyword">end</span>
 </pre>
-<pre class="codeoutput">Generando ensamble bootstrap (20 re-ajustes)...
+<pre class="codeoutput">Generando ensamble bootstrap parametrico (20 re-ajustes)...
 
 --- Dispersi&oacute;n del ensamble (coeficiente de variaci&oacute;n) ---
-   beta   CV =   1.8%   &iacute;ndice identif = 0.50
-   gamma  CV =   1.7%   &iacute;ndice identif = 0.50
-   S0     CV =   2.0%   &iacute;ndice identif = 0.59
+   S0     CV =   1.1%   &iacute;ndice identif = 0.70
+   beta   CV =   0.9%   &iacute;ndice identif = 0.51
+   gamma  CV =   1.2%   &iacute;ndice identif = 0.52
 
 --- Correlaci&oacute;n entre par&aacute;metros ---
-               beta       gamma        S0   
-             ________    ________    _______
+                S0         beta       gamma  
+             ________    ________    ________
 
-    beta            1    -0.96115    -0.9828
-    gamma    -0.96115           1    0.95703
-    S0        -0.9828     0.95703          1
+    S0              1    -0.98905     0.98788
+    beta     -0.98905           1    -0.97306
+    gamma     0.98788    -0.97306           1
 
-Par m&aacute;s entrelazado: S0 &lt;-&gt; beta  (|corr| = 0.98)
+Par m&aacute;s entrelazado: beta &lt;-&gt; S0  (|corr| = 0.99)
 =&gt; |corr| &gt; 0.9: aunque el ajuste sea perfecto, los datos identifican su
    COMBINACI&Oacute;N, no cada par&aacute;metro por separado (no-identificabilidad pr&aacute;ctica).
 
 </pre>
 <img vspace="5" hspace="5" src="demo_05_estimacion_02.png" alt=""> <img vspace="5" hspace="5" src="demo_05_estimacion_03.png" alt=""> <img vspace="5" hspace="5" src="demo_05_estimacion_04.png" alt=""> <img vspace="5" hspace="5" src="demo_05_estimacion_05.png" alt=""> <img vspace="5" hspace="5" src="demo_05_estimacion_06.png" alt=""> <img vspace="5" hspace="5" src="demo_05_estimacion_07.png" alt=""> <h2 id="7">6. La cantidad identificable: R0 = beta*S0/gamma</h2>
 <p>Aunque beta, gamma y S0 se dispersen, su combinaci&oacute;n R0 deber&iacute;a quedar fija: es lo que la curva de Infectados realmente determina.</p>
-<pre class="codeinput">R0_ens   = (Est(1,:) .* Est(3,:)) ./ Est(2,:);
-R0_true  = (true_free(1) * true_free(3)) / true_free(2);
+<pre class="codeinput">R0_ens   = (Est(2,:) .* Est(1,:)) ./ Est(3,:);   <span class="comment">% beta*S0/gamma con libres {S0,beta,gamma}</span>
+R0_true  = (true_free(2) * true_free(1)) / true_free(3);
 fprintf(<span class="string">'--- N&uacute;mero reproductivo b&aacute;sico R0 = beta*S0/gamma ---\n'</span>);
 fprintf(<span class="string">'   CV de los par&aacute;metros individuales ~ %.1f%%, pero CV de R0 = %.2f%%\n'</span>, <span class="keyword">...</span>
     mean([cv(Est(1,:)), cv(Est(2,:)), cv(Est(3,:))]), cv(R0_ens));
 fprintf(<span class="string">'   R0 estimado = %.2f &plusmn; %.2f   (verdad = %.2f)\n'</span>, mean(R0_ens), std(R0_ens), R0_true);
 fprintf(<span class="string">'=&gt; Moraleja: la COMBINACI&Oacute;N identificable (R0) es confiable aunque sus\n'</span>);
 fprintf(<span class="string">'   componentes por separado no lo sean.\n\n'</span>);
+
+<span class="comment">% Resumen por cluster (gsua_clustersummary): por parametro, el veredicto de identificabilidad y el</span>
+<span class="comment">% ancho del intervalo de percentiles 2.5-97.5 relativo al rango original.</span>
+S = gsua_clustersummary(T, ci);
+fprintf(<span class="string">'--- Resumen de identificabilidad por parametro ---\n'</span>);
+disp(S(:, {<span class="string">'Cluster'</span>,<span class="string">'Parameter'</span>,<span class="string">'PctWidthRel'</span>,<span class="string">'Verdict'</span>}));
 </pre>
 <pre class="codeoutput">--- N&uacute;mero reproductivo b&aacute;sico R0 = beta*S0/gamma ---
-   CV de los par&aacute;metros individuales ~ 1.8%, pero CV de R0 = 1.56%
-   R0 estimado = 3.95 &plusmn; 0.06   (verdad = 3.96)
+   CV de los par&aacute;metros individuales ~ 1.1%, pero CV de R0 = 1.10%
+   R0 estimado = 4.02 &plusmn; 0.04   (verdad = 3.96)
 =&gt; Moraleja: la COMBINACI&Oacute;N identificable (R0) es confiable aunque sus
    componentes por separado no lo sean.
+
+--- Resumen de identificabilidad por parametro ---
+    Cluster    Parameter    PctWidthRel        Verdict     
+    _______    _________    ___________    ________________
+
+       1       {'S0'   }      0.39619      {'dubious'     }
+       1       {'beta' }     0.027213      {'identifiable'}
+       1       {'gamma'}     0.038081      {'identifiable'}
 
 </pre>
 <h2 id="8">7. PREGUNTAS Y EJERCICIOS PARA EL ESTUDIANTE</h2>
@@ -353,23 +368,23 @@ fprintf('=======================================================================
 % Un factor se FIJA dándole un rango degenerado [v v]. Fijamos I0 = 5 y dejamos
 % libres beta, gamma y S0. Observamos únicamente la curva de Infectados (output 2).
 ranges = [
-    1e-4, 8e-4;   % beta   (libre)
-    0.05, 0.20;   % gamma  (libre)
     900,  999;    % S0     (libre)
-    5,    5       % I0     (FIJO en 5)
+    5,    5;      % I0     (FIJO en 5)
+    1e-4, 8e-4;   % beta   (libre)
+    0.05, 0.20    % gamma  (libre)
 ];
 [T, ~] = gsua_dataprep('sir_continuous_userdefined', ranges, ...
     'domain', [0, 80], ...
-    'names', {'beta', 'gamma', 'S0', 'I0'}, ...
+    'names', {'S0', 'I0', 'beta', 'gamma'}, ...
     'out_names', {'Susceptibles', 'Infectados', 'Recuperados'});
 T.Properties.CustomProperties.output = 2;      % solo Infectados
-names = T.Properties.RowNames;                 % {'beta','gamma','S0'}
+names = T.Properties.RowNames;                 % {'S0','beta','gamma'} (I0 fijo sale de la tabla)
 xdata = linspace(0, 80, 200);
 opt   = optimoptions('lsqcurvefit', 'Display', 'off');   % silenciar el optimizador
 fprintf('Factores a estimar: %s (I0 fijo en 5); se observa solo Infectados.\n\n', strjoin(names, ', '));
 
 %% 3. Datos "observados" sintéticos (verdad conocida + 5% de ruido)
-true_free = [5e-4; 0.12; 950];                 % beta, gamma, S0 verdaderos
+true_free = [950; 5e-4; 0.12];                 % S0, beta, gamma verdaderos (orden de los libres)
 y_clean   = squeeze(gsua_eval(true_free, T, xdata, [], false, false, false)).';
 rng(3);
 ydata     = y_clean .* (1 + 0.05 * randn(size(y_clean)));
@@ -380,9 +395,9 @@ ydata     = y_clean .* (1 + 0.05 * randn(size(y_clean)));
 [bestCost, ix] = min(res);
 best = T.Estlsqc(:, ix);
 fprintf('REPLACE_WITH_DASH_DASH- Mejor ajuste REPLACE_WITH_DASH_DASH-\n');
-fprintf('   beta  = %.3e   (verdad 5.000e-04)\n', best(1));
-fprintf('   gamma = %.4f    (verdad 0.1200)\n', best(2));
-fprintf('   S0    = %.1f     (verdad 950.0)\n', best(3));
+fprintf('   S0    = %.1f     (verdad 950.0)\n', best(1));
+fprintf('   beta  = %.3e   (verdad 5.000e-04)\n', best(2));
+fprintf('   gamma = %.4f    (verdad 0.1200)\n', best(3));
 fprintf('   El ajuste es EXCELENTE (costo = %.4g). ¿Significa que los parámetros son confiables?\n\n', bestCost);
 
 y_best = squeeze(gsua_eval(best, T, xdata, [], false, false, false)).';
@@ -399,19 +414,20 @@ grid on; legend('Location', 'northeast');
 % es la incertidumbre de cada parámetro, y su ESTRUCTURA (correlación) revela los
 % entrelazamientos.
 B = 20;
-Est = zeros(numel(names), B);
-fprintf('Generando ensamble bootstrap (%d re-ajustes)...\n', B);
-for b = 1:B
-    yb = y_clean .* (1 + 0.05 * randn(size(y_clean)));   % nueva realización de ruido
-    [Tb, resb] = gsua_pe(T, xdata, yb, 'N', 3, 'solver', 'lsqc', ...
-        'opt', opt, 'save', false, 'timer', false);
-    [~, jx] = min(resb);
-    Est(:, b) = Tb.Estlsqc(:, jx);
-end
+fprintf('Generando ensamble bootstrap parametrico (%d re-ajustes)...\n', B);
+% gsua_bootstrap re-ajusta B conjuntos sinteticos generados DESDE el mejor ajuste. El modelo de
+% ruido debe ser COHERENTE con los datos: aqui son continuos con ruido gaussiano (seccion 3), asi
+% que usamos 'gaussian' (desviacion estimada de los residuos). Los modelos de conteo
+% ('poisson'/'quasipoisson') asumen conteos enteros y no aplican a esta serie continua. Su
+% dispersion sí mide la incertidumbre de cada parametro (re-ajustar los mismos datos desde muchos
+% arranques colapsa al mismo optimo, no la mide).
+Est = gsua_bootstrap(T, xdata, ydata, T.Estlsqc, res, 'B', B, 'solver', 'lsqc', 'N', 3, ...
+    'noise', 'gaussian', 'opt', opt, 'seed', 7, 'timer', false);
 
 % gsua_ia analiza el ensamble: actualiza rangos a un IC de la mediana, calcula el
 % índice de identificabilidad por parámetro (0 = bien, 1 = mal) y abre las figuras
-% diagnósticas (incluida la matriz de correlación).
+% diagnósticas (incluida la matriz de correlación). Una sola cuenca aquí (el ensamble se dispersa
+% sobre la variedad R0=beta*S0/gamma): cluster=false. Usa cluster=true si sospechas minimos multiples.
 [T, ci] = gsua_ia(T, Est, false, false, true, false); %#ok<ASGLU>
 
 fprintf('\nREPLACE_WITH_DASH_DASH- Dispersión del ensamble (coeficiente de variación) REPLACE_WITH_DASH_DASH-\n');
@@ -434,14 +450,20 @@ end
 %% 6. La cantidad identificable: R0 = beta*S0/gamma
 % Aunque beta, gamma y S0 se dispersen, su combinación R0 debería quedar fija:
 % es lo que la curva de Infectados realmente determina.
-R0_ens   = (Est(1,:) .* Est(3,:)) ./ Est(2,:);
-R0_true  = (true_free(1) * true_free(3)) / true_free(2);
+R0_ens   = (Est(2,:) .* Est(1,:)) ./ Est(3,:);   % beta*S0/gamma con libres {S0,beta,gamma}
+R0_true  = (true_free(2) * true_free(1)) / true_free(3);
 fprintf('REPLACE_WITH_DASH_DASH- Número reproductivo básico R0 = beta*S0/gamma REPLACE_WITH_DASH_DASH-\n');
 fprintf('   CV de los parámetros individuales ~ %.1f%%, pero CV de R0 = %.2f%%\n', ...
     mean([cv(Est(1,:)), cv(Est(2,:)), cv(Est(3,:))]), cv(R0_ens));
 fprintf('   R0 estimado = %.2f ± %.2f   (verdad = %.2f)\n', mean(R0_ens), std(R0_ens), R0_true);
 fprintf('=> Moraleja: la COMBINACIÓN identificable (R0) es confiable aunque sus\n');
 fprintf('   componentes por separado no lo sean.\n\n');
+
+% Resumen por cluster (gsua_clustersummary): por parametro, el veredicto de identificabilidad y el
+% ancho del intervalo de percentiles 2.5-97.5 relativo al rango original.
+S = gsua_clustersummary(T, ci);
+fprintf('REPLACE_WITH_DASH_DASH- Resumen de identificabilidad por parametro REPLACE_WITH_DASH_DASH-\n');
+disp(S(:, {'Cluster','Parameter','PctWidthRel','Verdict'}));
 
 %% 7. PREGUNTAS Y EJERCICIOS PARA EL ESTUDIANTE
 fprintf('=========================================================================\n');

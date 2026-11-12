@@ -10,7 +10,7 @@ from scipy.integrate import solve_ivp
 
 
 def sir_arranca_en_domain0(pars, domain):
-    beta, gamma, S0, I0 = pars
+    S0, I0, beta, gamma = pars
     domain = np.asarray(domain, dtype=float)
     rhs = lambda t, y: [-beta * y[0] * y[1], beta * y[0] * y[1] - gamma * y[1], gamma * y[1]]
     return solve_ivp(rhs, (domain[0], domain[-1]), [S0, I0, 0.0], t_eval=domain,

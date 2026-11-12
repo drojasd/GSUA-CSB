@@ -5,10 +5,10 @@ function sol = logistica_discreta(pars, domain, ~)
 %
 %   Ecuación en diferencias:  N(t+1) = N(t) + r*N(t)*(1 - N(t)/K)
 %
-%   Factores, en este orden (primero parámetros, después condición inicial):
-%       pars(1) -> r  : tasa de crecimiento por paso (adimensional)
-%       pars(2) -> K  : capacidad de carga (individuos)
-%       pars(3) -> N0 : población en t0 (individuos)
+%   Factores, en este orden (primero la condición inicial, después los parámetros):
+%       pars(1) -> N0 : población en t0 (individuos)
+%       pars(2) -> r  : tasa de crecimiento por paso (adimensional)
+%       pars(3) -> K  : capacidad de carga (individuos)
 %
 %   domain = [t0, tf]: lo fija 'domain' en gsua_dataprep.
 %   El tercer argumento (opt) no se usa aquí, pero DEBE declararse:
@@ -17,9 +17,9 @@ function sol = logistica_discreta(pars, domain, ~)
 %   Salida: sol.x (1 x Nt) con los pasos t0:tf
 %           sol.y (1 x Nt) con N(t): una fila por salida.
 
-r  = pars(1);
-K  = pars(2);
-N0 = pars(3);
+N0 = pars(1);
+r  = pars(2);
+K  = pars(3);
 
 t  = domain(1):domain(2);       % un punto por paso de tiempo
 N  = zeros(1, numel(t));        % 1 salida -> 1 fila

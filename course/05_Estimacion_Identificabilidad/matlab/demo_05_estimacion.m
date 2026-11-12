@@ -44,23 +44,23 @@ fprintf('=======================================================================
 % Un factor se FIJA dándole un rango degenerado [v v]. Fijamos I0 = 5 y dejamos
 % libres beta, gamma y S0. Observamos únicamente la curva de Infectados (output 2).
 ranges = [
-    1e-4, 8e-4;   % beta   (libre)
-    0.05, 0.20;   % gamma  (libre)
     900,  999;    % S0     (libre)
-    5,    5       % I0     (FIJO en 5)
+    5,    5;      % I0     (FIJO en 5)
+    1e-4, 8e-4;   % beta   (libre)
+    0.05, 0.20    % gamma  (libre)
 ];
 [T, ~] = gsua_dataprep('sir_continuous_userdefined', ranges, ...
     'domain', [0, 80], ...
-    'names', {'beta', 'gamma', 'S0', 'I0'}, ...
+    'names', {'S0', 'I0', 'beta', 'gamma'}, ...
     'out_names', {'Susceptibles', 'Infectados', 'Recuperados'});
 T.Properties.CustomProperties.output = 2;      % solo Infectados
-names = T.Properties.RowNames;                 % {'beta','gamma','S0'}
+names = T.Properties.RowNames;                 % {'S0','beta','gamma'} (I0 fijo sale de la tabla)
 xdata = linspace(0, 80, 200);
 opt   = optimoptions('lsqcurvefit', 'Display', 'off');   % silenciar el optimizador
 fprintf('Factores a estimar: %s (I0 fijo en 5); se observa solo Infectados.\n\n', strjoin(names, ', '));
 
 %% 3. Datos "observados" sintéticos (verdad conocida + 5% de ruido)
-true_free = [5e-4; 0.12; 950];                 % beta, gamma, S0 verdaderos
+true_free = [950; 5e-4; 0.12];                 % S0, beta, gamma verdaderos (orden de los libres)
 y_clean   = squeeze(gsua_eval(true_free, T, xdata, [], false, false, false)).';
 rng(3);
 ydata     = y_clean .* (1 + 0.05 * randn(size(y_clean)));
@@ -71,9 +71,9 @@ ydata     = y_clean .* (1 + 0.05 * randn(size(y_clean)));
 [bestCost, ix] = min(res);
 best = T.Estlsqc(:, ix);
 fprintf('--- Mejor ajuste ---\n');
-fprintf('   beta  = %.3e   (verdad 5.000e-04)\n', best(1));
-fprintf('   gamma = %.4f    (verdad 0.1200)\n', best(2));
-fprintf('   S0    = %.1f     (verdad 950.0)\n', best(3));
+fprintf('   S0    = %.1f     (verdad 950.0)\n', best(1));
+fprintf('   beta  = %.3e   (verdad 5.000e-04)\n', best(2));
+fprintf('   gamma = %.4f    (verdad 0.1200)\n', best(3));
 fprintf('   El ajuste es EXCELENTE (costo = %.4g). ¿Significa que los parámetros son confiables?\n\n', bestCost);
 
 y_best = squeeze(gsua_eval(best, T, xdata, [], false, false, false)).';
@@ -91,11 +91,14 @@ grid on; legend('Location', 'northeast');
 % entrelazamientos.
 B = 20;
 fprintf('Generando ensamble bootstrap parametrico (%d re-ajustes)...\n', B);
-% gsua_bootstrap re-ajusta B conjuntos sinteticos generados DESDE el mejor ajuste con el modelo
-% de ruido de conteo de los datos: su dispersion sí mide la incertidumbre de cada parametro
-% (re-ajustar los mismos datos desde muchos arranques colapsa al mismo optimo, no la mide).
+% gsua_bootstrap re-ajusta B conjuntos sinteticos generados DESDE el mejor ajuste. El modelo de
+% ruido debe ser COHERENTE con los datos: aqui son continuos con ruido gaussiano (seccion 3), asi
+% que usamos 'gaussian' (desviacion estimada de los residuos). Los modelos de conteo
+% ('poisson'/'quasipoisson') asumen conteos enteros y no aplican a esta serie continua. Su
+% dispersion sí mide la incertidumbre de cada parametro (re-ajustar los mismos datos desde muchos
+% arranques colapsa al mismo optimo, no la mide).
 Est = gsua_bootstrap(T, xdata, ydata, T.Estlsqc, res, 'B', B, 'solver', 'lsqc', 'N', 3, ...
-    'noise', 'quasipoisson', 'opt', opt, 'seed', 7, 'timer', false);
+    'noise', 'gaussian', 'opt', opt, 'seed', 7, 'timer', false);
 
 % gsua_ia analiza el ensamble: actualiza rangos a un IC de la mediana, calcula el
 % índice de identificabilidad por parámetro (0 = bien, 1 = mal) y abre las figuras
@@ -123,8 +126,8 @@ end
 %% 6. La cantidad identificable: R0 = beta*S0/gamma
 % Aunque beta, gamma y S0 se dispersen, su combinación R0 debería quedar fija:
 % es lo que la curva de Infectados realmente determina.
-R0_ens   = (Est(1,:) .* Est(3,:)) ./ Est(2,:);
-R0_true  = (true_free(1) * true_free(3)) / true_free(2);
+R0_ens   = (Est(2,:) .* Est(1,:)) ./ Est(3,:);   % beta*S0/gamma con libres {S0,beta,gamma}
+R0_true  = (true_free(2) * true_free(1)) / true_free(3);
 fprintf('--- Número reproductivo básico R0 = beta*S0/gamma ---\n');
 fprintf('   CV de los parámetros individuales ~ %.1f%%, pero CV de R0 = %.2f%%\n', ...
     mean([cv(Est(1,:)), cv(Est(2,:)), cv(Est(3,:))]), cv(R0_ens));

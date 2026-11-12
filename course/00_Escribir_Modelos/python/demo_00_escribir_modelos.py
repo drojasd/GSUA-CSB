@@ -9,7 +9,7 @@
 # mismos resultados):
 #
 # 1. la firma del modelo y la forma de su salida;
-# 2. el orden de los factores: primero los parámetros, después las condiciones iniciales;
+# 2. el orden de los factores: primero las condiciones iniciales, después los parámetros;
 # 3. un modelo discreto (un bucle) y uno continuo (un integrador de EDO evaluado en una rejilla);
 # 4. cómo se declaran los rangos, los nombres de los factores y de las salidas, qué guarda la
 #    toolbox del modelo y cómo se evalúa;
@@ -59,8 +59,8 @@ def ruta(nombre):
 # **Entradas**
 #
 # * `pars`: arreglo con los factores. La posición manda: `pars[0]` es el factor de la fila 0 de
-#   los rangos, `pars[1]` el de la fila 1, etc. Convención del curso: **primero los
-#   parámetros, después las condiciones iniciales**.
+#   los rangos, `pars[1]` el de la fila 1, etc. Convención del curso: **primero las
+#   condiciones iniciales, después los parámetros**.
 # * `domain`: **la rejilla de puntos** donde quieres la salida. Es `model.domain` por defecto, o
 #   el `xdata` que pases a `model.evaluate(pars, xdata)`. Como puede empezar en cualquier punto,
 #   la condición inicial vale en un `t0` fijo que el modelo conoce por su cuenta.
@@ -79,8 +79,8 @@ def ruta(nombre):
 # %% [markdown]
 # ## 3. Paso 1 — un modelo discreto: la logística
 #
-# $N(t+1) = N(t) + r\,N(t)\,(1 - N(t)/K)$, con tres factores: `r`, `K` (parámetros) y `N0`
-# (condición inicial). Un bucle avanza un paso de tiempo por iteración. Este es el archivo
+# $N(t+1) = N(t) + r\,N(t)\,(1 - N(t)/K)$, con tres factores: `N0` (condición inicial) y `r`,
+# `K` (parámetros). Un bucle avanza un paso de tiempo por iteración. Este es el archivo
 # `logistica_discreta.py` completo:
 
 # %%
@@ -90,7 +90,7 @@ mostrar_codigo(ruta("logistica_discreta.py"))
 # Antes de dárselo a la toolbox, llámalo tú a mano y mira las formas:
 
 # %%
-y = logistica_discreta([0.3, 500, 10], np.arange(0, 51))
+y = logistica_discreta([10, 0.3, 500], np.arange(0, 51))
 print(f"salida: {y.shape}   (1 salida x 51 tiempos)")
 print(f"N(0) = {y[0]:.1f},  N(50) = {y[-1]:.1f}")
 
@@ -104,14 +104,14 @@ print(f"N(0) = {y[0]:.1f},  N(50) = {y[-1]:.1f}")
 
 # %%
 rangos_log = np.array([
+    [5.,   50.],     # N0  (condición inicial, primero)
     [0.05, 0.50],    # r   (parámetro)
     [100., 1000.],   # K   (parámetro)
-    [5.,   50.],     # N0  (condición inicial, al final)
 ])
 
 model_log = UserFunctionModel(
     func=logistica_discreta,
-    names=["r", "K", "N0"],
+    names=["N0", "r", "K"],
     range=rangos_log,
     domain=np.arange(0, 51),
     output_names=["Poblacion"],
@@ -145,7 +145,7 @@ xdata = np.arange(0, 51)
 y_nom = model_log.evaluate(model_log.nominal, xdata)
 print(f"una simulación   : {y_nom.shape}")
 
-M3 = np.array([model_log.nominal, [0.45, 800, 10], [0.10, 300, 40]])   # 3 filas = 3 simulaciones
+M3 = np.array([model_log.nominal, [10, 0.45, 800], [40, 0.10, 300]])   # 3 filas = 3 simulaciones
 y3 = model_log.evaluate_batch(M3, xdata)
 print(f"tres simulaciones: {y3.shape}")
 
@@ -165,14 +165,14 @@ plt.tight_layout(); plt.savefig("demo_00_logistica.png")
 # 2. pedirle la solución exactamente en la rejilla con `t_eval=domain`;
 # 3. devolver `sol.y`, que ya viene como (estados, tiempo).
 #
-# Factores: `beta`, `gamma` (parámetros), `S0`, `I0` (condiciones iniciales). Salidas: S, I y R,
+# Factores: `S0`, `I0` (condiciones iniciales), `beta`, `gamma` (parámetros). Salidas: S, I y R,
 # en ese orden de filas. Archivo `sir_continuo.py` completo:
 
 # %%
 mostrar_codigo(ruta("sir_continuo.py"))
 
 # %%
-y = sir_continuo([4.5e-4, 0.125, 950, 25], np.arange(0, 80.5, 0.5))
+y = sir_continuo([950, 25, 4.5e-4, 0.125], np.arange(0, 80.5, 0.5))
 print(f"salida: {y.shape}  (S, I, R x tiempo)")
 
 # %% [markdown]
@@ -181,15 +181,15 @@ print(f"salida: {y.shape}  (S, I, R x tiempo)")
 
 # %%
 rangos_sir = np.array([
+    [900., 999.],    # S0    (condición inicial, personas)
+    [1.,   50.],     # I0    (condición inicial, personas)
     [1e-4, 8e-4],    # beta  (1/(persona*día))
     [0.05, 0.20],    # gamma (1/día)
-    [900., 999.],    # S0    (personas)
-    [1.,   50.],     # I0    (personas)
 ])
 
 model_sir = UserFunctionModel(
     func=sir_continuo,
-    names=["beta", "gamma", "S0", "I0"],
+    names=["S0", "I0", "beta", "gamma"],
     range=rangos_sir,
     domain=np.linspace(0, 80, 161),
     output_names=["S", "I", "R"],
@@ -235,14 +235,14 @@ plt.tight_layout(); plt.savefig("demo_00_sir.png")
 
 # %%
 rangos_fijo = rangos_sir.copy()
-rangos_fijo[3] = [10., 10.]                        # I0 fijo en 10
-model_fijo = UserFunctionModel(func=sir_continuo, names=["beta", "gamma", "S0", "I0"],
+rangos_fijo[1] = [10., 10.]                        # I0 fijo en 10
+model_fijo = UserFunctionModel(func=sir_continuo, names=["S0", "I0", "beta", "gamma"],
                                range=rangos_fijo, domain=xs, output_names=["S", "I", "R"])
 print("fijos:", {n: bool(f) for n, f in zip(model_fijo.names, model_fijo.fixed)})
 M_fijo = design_matrix(model_fijo, n=4, method="latin_hypercube", seed=1)
-print(f"design_matrix: {M_fijo.shape} (todos los factores; columna I0 = {M_fijo[:, 3]})")
+print(f"design_matrix: {M_fijo.shape} (todos los factores; columna I0 = {M_fijo[:, 1]})")
 y_fijo = model_fijo.evaluate(model_fijo.nominal, xs)
-print(f"el modelo recibió I0 = 10 en pars[3]: I(0) = {y_fijo[1, 0]:.1f}")
+print(f"el modelo recibió I0 = 10 en pars[1]: I(0) = {y_fijo[1, 0]:.1f}")
 
 # %% [markdown]
 # ## 8. Errores típicos
@@ -258,7 +258,7 @@ mostrar_codigo(ruta("errores/logistica_sin_opt.py"))
 # %%
 from logistica_sin_opt import logistica_sin_opt
 
-m_mal = UserFunctionModel(func=logistica_sin_opt, names=["r", "K", "N0"], range=rangos_log,
+m_mal = UserFunctionModel(func=logistica_sin_opt, names=["N0", "r", "K"], range=rangos_log,
                           domain=xdata, opt={"t0": 0})
 try:
     m_mal.evaluate(m_mal.nominal, xdata)
@@ -271,7 +271,7 @@ except TypeError as err:
 # modelo cuya fila 0 es S, la toolbox analiza S con la etiqueta `"I"` y no da ningún error.
 
 # %%
-m_etiq = UserFunctionModel(func=sir_continuo, names=["beta", "gamma", "S0", "I0"],
+m_etiq = UserFunctionModel(func=sir_continuo, names=["S0", "I0", "beta", "gamma"],
                            range=rangos_sir, domain=xs, output_names=["I"], output="I")
 print(f"salida etiquetada 'I': valor inicial {m_etiq.evaluate(m_etiq.nominal, xs)[0, 0]:.1f} (es S0, no I0)")
 
@@ -287,7 +287,7 @@ mostrar_codigo(ruta("errores/sir_transpuesto.py"))
 # %%
 from sir_transpuesto import sir_transpuesto
 
-m_T = UserFunctionModel(func=sir_transpuesto, names=["beta", "gamma", "S0", "I0"],
+m_T = UserFunctionModel(func=sir_transpuesto, names=["S0", "I0", "beta", "gamma"],
                         range=rangos_sir, domain=xs, output_names=["S", "I", "R"], output="I")
 y_T = m_T.evaluate(m_T.nominal, xs)
 print(f"sir_transpuesto con set_output('I'): forma {y_T.shape}  <- debería ser (1, 161); Python no la corrige")
@@ -372,9 +372,9 @@ print(f"R0 con S0 en fracción (0.95): {b * 0.95 / g:.4f}   <- mismas ecuaciones
 
 # %%
 grid = np.linspace(0, 80, 161)
-verificar_modelo(logistica_discreta, [0.3, 500, 10], np.arange(0, 51), ["Poblacion"])
+verificar_modelo(logistica_discreta, [10, 0.3, 500], np.arange(0, 51), ["Poblacion"])
 verificar_modelo(sir_continuo, model_sir.nominal, grid, ["S", "I", "R"])
-verificar_modelo(logistica_sin_opt, [0.3, 500, 10], np.arange(0, 51), ["Poblacion"], t0=0)
+verificar_modelo(logistica_sin_opt, [10, 0.3, 500], np.arange(0, 51), ["Poblacion"], t0=0)
 verificar_modelo(sir_transpuesto, model_sir.nominal, grid, ["S", "I", "R"])
 verificar_modelo(sir_continuo_crudo, model_sir.nominal, grid, ["S", "I", "R"])
 
@@ -407,7 +407,7 @@ mostrar_codigo(ruta("sir_discreto_plantilla.py"))
 from sir_discreto_plantilla import sir_discreto_plantilla
 
 verificar_modelo(sir_discreto_plantilla, model_sir.nominal, np.arange(0, 81), ["S", "I", "R"])
-m_ej = UserFunctionModel(func=sir_discreto_plantilla, names=["beta", "gamma", "S0", "I0"],
+m_ej = UserFunctionModel(func=sir_discreto_plantilla, names=["S0", "I0", "beta", "gamma"],
                          range=rangos_sir, domain=np.arange(0, 81),
                          output_names=["S", "I", "R"], output="I")
 I_ej = m_ej.evaluate(m_ej.nominal).ravel()
@@ -420,7 +420,7 @@ else:
 # ## 11. Resumen: lista de chequeo
 #
 # * Función en su propio archivo `.py`: `func(pars, domain, **opt)`, con argumento para cada clave de `opt`.
-# * `pars[i]` = fila *i* de los rangos = `names[i]`: parámetros primero, condiciones iniciales después.
+# * `pars[i]` = fila *i* de los rangos = `names[i]`: condiciones iniciales primero, parámetros después.
 # * Salida `(n_salidas, len(domain))` evaluada en los puntos de `domain`, filas en el orden de `output_names`; la condición inicial vale en un `t0` fijo.
 # * Discreto: un bucle de `t0` al último punto pedido. Continuo: `solve_ivp(..., t_eval=domain)` desde `t0`.
 # * `UserFunctionModel(func, names, range, domain, output_names, opt=...)` crea el modelo.

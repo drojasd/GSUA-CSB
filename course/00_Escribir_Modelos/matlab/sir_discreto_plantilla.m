@@ -9,22 +9,22 @@ function sol = sir_discreto_plantilla(pars, domain, ~)
 %       I(t+1) = I(t) + beta*S(t)*I(t) - gamma*I(t)
 %       R(t+1) = R(t) + gamma*I(t)
 %
-%   Factores (primero parámetros, después condiciones iniciales):
-%       pars(1) -> beta  (1/(persona*día))
-%       pars(2) -> gamma (1/día)
-%       pars(3) -> S0    (personas)
-%       pars(4) -> I0    (personas)
+%   Factores (primero las condiciones iniciales, después los parámetros):
+%       pars(1) -> S0    (personas)
+%       pars(2) -> I0    (personas)
+%       pars(3) -> beta  (1/(persona*día))
+%       pars(4) -> gamma (1/día)
 %   R0 = 0 al inicio.
 %
 %   Salida: sol.x (1 x Nt) = domain(1):domain(2)
 %           sol.y (3 x Nt) = [S; I; R]
 
-beta  = pars(1);
-gamma = pars(2);
+beta  = pars(3);
+gamma = pars(4);
 
 t = domain(1):domain(2);
 Y = zeros(3, numel(t));          % 3 salidas -> 3 filas
-Y(:, 1) = [pars(3); pars(4); 0];
+Y(:, 1) = [pars(1); pars(2); 0];
 
 for k = 1:numel(t)-1
     S = Y(1, k);  I = Y(2, k);  R = Y(3, k);

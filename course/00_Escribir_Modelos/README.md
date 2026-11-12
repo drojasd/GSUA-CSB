@@ -9,8 +9,9 @@ la salida y cómo se declara ante la toolbox. Va antes del módulo 1 porque todo
 * **El contrato.** MATLAB: `sol = f(pars, domain, opt)` en su propio archivo `.m`, con `sol.x`
   (1 × Nt, de `t0` a `tf`) y `sol.y` (nSalidas × Nt). Python: `func(pars, domain, **opt)` que
   devuelve un arreglo (n_salidas, len(domain)) evaluado en los puntos de `domain`.
-* **Orden de los factores:** primero los parámetros, después las condiciones iniciales; fila *i*
-  de los rangos = `pars(i)` = `names{i}`.
+* **Orden de los factores:** primero las condiciones iniciales, después los parámetros; fila *i*
+  de los rangos = `pars(i)` = `names{i}`. La regla dura es esa correspondencia posicional (rango =
+  `pars(i)` = `names{i}`); el orden CI-primero es la convención de estilo del curso.
 * **Modelo discreto** (logística, con un bucle) y **modelo continuo** (SIR con `ode45` + `deval`
   en una rejilla / `solve_ivp` con `t_eval`).
 * **Declarar y evaluar:** `gsua_dataprep` (rangos, `names`, `out_names`, `opt`), la tabla `T` y

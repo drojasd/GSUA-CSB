@@ -8,11 +8,11 @@ Con un paso de un día, el SIR discreto es:
     I(t+1) = I(t) + beta*S(t)*I(t) - gamma*I(t)
     R(t+1) = R(t) + gamma*I(t)
 
-Factores (primero parámetros, después condiciones iniciales):
-    pars[0] -> beta  (1/(persona*día))
-    pars[1] -> gamma (1/día)
-    pars[2] -> S0    (personas)
-    pars[3] -> I0    (personas)
+Factores (primero condiciones iniciales, después parámetros):
+    pars[0] -> S0    (personas)
+    pars[1] -> I0    (personas)
+    pars[2] -> beta  (1/(persona*día))
+    pars[3] -> gamma (1/día)
 R0 = 0 al inicio, en el día t0.
 
 Salida: arreglo (3, len(domain)) = [S; I; R] en los días de domain.
@@ -21,7 +21,7 @@ import numpy as np
 
 
 def sir_discreto_plantilla(pars, domain, t0=0):
-    beta, gamma, S0, I0 = pars
+    S0, I0, beta, gamma = pars
     domain = np.asarray(domain, dtype=float)
 
     dias = np.arange(t0, int(np.ceil(domain.max())) + 1)   # t0, t0+1, ..., último día pedido

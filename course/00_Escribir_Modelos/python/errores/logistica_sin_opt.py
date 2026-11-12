@@ -9,7 +9,7 @@ import numpy as np
 
 
 def logistica_sin_opt(pars, domain):
-    r, K, N0 = pars
+    N0, r, K = pars
     domain = np.asarray(domain, dtype=float)
     t = np.arange(0, int(np.ceil(domain.max())) + 1)
     N = np.zeros(len(t))

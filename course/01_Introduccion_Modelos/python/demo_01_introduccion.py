@@ -38,7 +38,7 @@ def run_demo():
     print("--- 1. MODELO LOGÍSTICO DISCRETO ---")
     model_discrete = create_discrete_logistic_model()
     
-    print(f"Factores (Parámetros + C.I.): {model_discrete.names}")
+    print(f"Factores (C.I. + Parámetros): {model_discrete.names}")
     print(f"Límites de los factores:\n{model_discrete.range}")
     print(f"Nombres de salidas: {model_discrete.output_names}")
     print(f"Punto nominal: {model_discrete.nominal}\n")
@@ -67,7 +67,7 @@ def run_demo():
     print("\n--- 2. MODELO EPIDÉMICO SIR CONTINUO ---")
     model_sir = create_sir_continuous_model(output_selection=None) # Todas las salidas (3)
     
-    print(f"Factores (Parámetros + C.I.): {model_sir.names}")
+    print(f"Factores (C.I. + Parámetros): {model_sir.names}")
     print(f"Límites de los factores:\n{model_sir.range}")
     print(f"Nombres de salidas: {model_sir.output_names}")
     print(f"Punto nominal: {model_sir.nominal}\n")
@@ -76,7 +76,7 @@ def run_demo():
     y_sir_all = model_sir.evaluate(model_sir.nominal, model_sir.domain) # shape (3, len(domain))
     S_nom, I_nom, R_nom = y_sir_all[0], y_sir_all[1], y_sir_all[2]
     
-    beta_nom, gamma_nom, S0_nom, I0_nom = model_sir.nominal
+    S0_nom, I0_nom, beta_nom, gamma_nom = model_sir.nominal
     R0_basic = (beta_nom * S0_nom) / gamma_nom
     
     print(f"Parámetros Nominales: beta = {beta_nom:.5f}, gamma = {gamma_nom:.2f}, S0 = {S0_nom:.0f}")

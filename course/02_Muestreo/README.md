@@ -9,5 +9,7 @@ En este módulo abordamos el diseño de experimentos computacionales mediante el
 * Muestreo conjunto preservando correlación (`joint`).
 
 ## Funciones Clave
-* **MATLAB**: `M = gsua_dmatrix(T, N, 'Method', 'latin_hypercube')`
+* **MATLAB**: `M = gsua_dmatrix(T, N, 'Method', 'LatinHypercube')`
 * **Python**: `M = gc.design_matrix(model, n=N, method="latin_hypercube")`
+
+> Los nombres de método difieren por lenguaje: en MATLAB se escriben con mayúsculas — `'LatinHypercube'`, `'Uniform'`, `'Sobol'`, `'Joint'` (`gsua_dmatrix`); en Python en minúsculas — `latin_hypercube`, `uniform`, `sobol`, `joint`.

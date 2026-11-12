@@ -3,12 +3,12 @@ function sol = sir_continuous_userdefined(params, domain, ~)
 %
 %   sol = sir_continuous_userdefined(params, domain, opt)
 %
-%   Factores (Parámetros + Condiciones Iniciales):
-%       params(1) -> beta  : Tasa de transmisión / contacto infectivo (1/(persona*día))
-%       params(2) -> gamma : Tasa de recuperación (1/día)
-%       params(3) -> S0    : Susceptibles iniciales en t0
-%       params(4) -> I0    : Infectados iniciales en t0
-%       params(5) -> R0_pop: Recuperados iniciales en t0 (opcional, por defecto 0)
+%   Factores (Condiciones Iniciales + Parámetros):
+%       params(1) -> S0    : Susceptibles iniciales en t0
+%       params(2) -> I0    : Infectados iniciales en t0
+%       params(3) -> beta  : Tasa de transmisión / contacto infectivo (1/(persona*día))
+%       params(4) -> gamma : Tasa de recuperación (1/día)
+%       params(5) -> R0_pop: Recuperados iniciales en t0 (constante opcional, por defecto 0)
 %
 %   Salidas (3 componentes):
 %       Fila 1 -> S(t): Susceptibles
@@ -18,10 +18,10 @@ function sol = sir_continuous_userdefined(params, domain, ~)
 %   Retorna:
 %       Estructura sol compatible con GSUA_EVAL / GSUA_INTRP.
 
-beta  = params(1);
-gamma = params(2);
-S0    = params(3);
-I0    = params(4);
+S0    = params(1);
+I0    = params(2);
+beta  = params(3);
+gamma = params(4);
 
 if length(params) >= 5
     R0_pop = params(5);

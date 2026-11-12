@@ -4,9 +4,11 @@ function sol = sir_continuo_crudo(pars, domain, ~)
 %   Solo existe para comparar en el módulo 0: sol.x son los pasos adaptativos
 %   de ode45 (pocos y desiguales) y gsua_eval interpola linealmente entre ellos.
 
-beta  = pars(1);
-gamma = pars(2);
-y0    = [pars(3); pars(4); 0];
+S0    = pars(1);
+I0    = pars(2);
+beta  = pars(3);
+gamma = pars(4);
+y0    = [S0; I0; 0];
 
 rhs = @(t, y) [ -beta*y(1)*y(2);
                  beta*y(1)*y(2) - gamma*y(2);

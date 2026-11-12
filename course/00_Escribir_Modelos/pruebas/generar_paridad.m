@@ -12,8 +12,8 @@ if isempty(aqui), aqui = pwd; end
 mod0 = fileparts(aqui);
 addpath(fullfile(mod0, 'matlab'), fullfile(mod0, 'matlab', 'solucion'));
 
-rangos_log = [0.05 0.50; 100 1000; 5 50];
-rangos_sir = [1e-4 8e-4; 0.05 0.20; 900 999; 1 50];
+rangos_log = [5 50; 0.05 0.50; 100 1000];
+rangos_sir = [900 999; 1 50; 1e-4 8e-4; 0.05 0.20];
 modelos = {                                          % nombre, rangos, domain
     'logistica_discreta',     rangos_log, [0 50]
     'sir_continuo',           rangos_sir, [0 80]

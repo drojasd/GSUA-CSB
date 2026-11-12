@@ -8,11 +8,14 @@ output series.
 
 ### ⚠ Breaking
 
-- **Unified `margin` convention.** `margin` is now the RAW relative noise everywhere (`0.1 = 10%`),
-  matching `gsua_pe`/`gsua_costf` and the Python port. **`gsua_likelihood` changed**: it previously
-  took the value offset by one (`1.08` meant 8%); pass the raw fraction now (`0.08`). A value `>= 1`
-  raises a `MarginConvention` warning. (`profile_likelihood` in Python was already raw; it gained the
-  same warning.)
+- **Unified `margin` convention (estimation/likelihood path).** `margin` is the RAW relative noise
+  in `gsua_pe`/`gsua_costf`/`gsua_likelihood` and the Python port (`0.1 = 10%`). **`gsua_likelihood`
+  changed**: it previously took the value offset by one (`1.08` meant 8%); pass the raw fraction now
+  (`0.08`). A value `>= 1` raises a `MarginConvention` warning. (`profile_likelihood` in Python was
+  already raw; it gained the same warning.) NOTE: `gsua_covmetric`/`gsua_rcostf`/`gsua_costfMulti`
+  keep a dual-mode band convention — a value `< 1` is the same raw fraction (so `0.1` = 10% there
+  too, agreeing with `gsua_pe`), while a value `>= 1` is read as already `1+fraction`. The raw
+  convention applies to the estimation/likelihood path, not to those three band helpers.
 
 ### New
 

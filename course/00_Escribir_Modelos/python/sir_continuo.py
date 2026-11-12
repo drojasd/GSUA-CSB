@@ -7,11 +7,11 @@ dS/dt = -beta*S*I
 dI/dt =  beta*S*I - gamma*I
 dR/dt =  gamma*I
 
-Factores, en este orden (primero parámetros, después condiciones iniciales):
-    pars[0] -> beta  : tasa de transmisión (1/(persona*día))
-    pars[1] -> gamma : tasa de recuperación (1/día)
-    pars[2] -> S0    : susceptibles en t0 (personas)
-    pars[3] -> I0    : infectados en t0 (personas)
+Factores, en este orden (primero condiciones iniciales, después parámetros):
+    pars[0] -> S0    : susceptibles en t0 (personas)
+    pars[1] -> I0    : infectados en t0 (personas)
+    pars[2] -> beta  : tasa de transmisión (1/(persona*día))
+    pars[3] -> gamma : tasa de recuperación (1/día)
 R(t0) = 0 no es un factor: es una constante del modelo.
 
 domain = la rejilla de tiempos (días) donde se quiere la salida.
@@ -24,7 +24,7 @@ from scipy.integrate import solve_ivp
 
 
 def sir_continuo(pars, domain, t0=0.0):
-    beta, gamma, S0, I0 = pars
+    S0, I0, beta, gamma = pars
     domain = np.asarray(domain, dtype=float)
 
     def rhs(t, y):

@@ -8,21 +8,22 @@
 
 clc; clear; close all;
 
-% Asegurar la inclusión de funciones del toolbox
-toolbox_path = fullfile('C:', 'Users', 'Lanre', 'MATLAB Drive', 'Toolbox', 'Functions');
+% Asegurar la inclusión de funciones del toolbox (ruta relativa a este archivo)
+toolbox_root = fileparts(fileparts(fileparts(fileparts(mfilename('fullpath')))));
+toolbox_path = fullfile(toolbox_root, 'Functions');
 if exist(toolbox_path, 'dir'), addpath(toolbox_path); end
 
 fprintf('=== EJEMPLO 2: MODELO EPIDÉMICO SIR CONTINUO ===\n\n');
 
-%% PASO 1: Especificar Rangos, Dominio, Nombres de Factores (Parámetros + C.I.) y Salidas
+%% PASO 1: Especificar Rangos, Dominio, Nombres de Factores (C.I. + Parámetros) y Salidas
 ranges = [
-    0.0001, 0.0008;  % beta  (tasa de transmisión)
-    0.05,   0.20;    % gamma (tasa de recuperación)
     900,    999;     % S0    (Susceptibles iniciales)
-    1,      50       % I0    (Infectados iniciales)
+    1,      50;      % I0    (Infectados iniciales)
+    0.0001, 0.0008;  % beta  (tasa de transmisión)
+    0.05,   0.20     % gamma (tasa de recuperación)
 ];
 domain = [0, 80]; % 80 días
-factor_names = {'beta', 'gamma', 'S0', 'I0'};
+factor_names = {'S0', 'I0', 'beta', 'gamma'};
 output_names = {'Susceptibles', 'Infectados', 'Recuperados'};
 
 %% PASO 2: Crear la Tabla de Control del Sistema (T) con gsua_dataprep

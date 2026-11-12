@@ -42,17 +42,17 @@ fprintf('  MÓDULO 02: MUESTREO DEL ESPACIO DE PARÁMETROS (DESIGN OF EXPERIMENT
 fprintf('=========================================================================\n\n');
 
 %% 2. Definición del Modelo Epidémico SIR
-% Rango de variación para 4 factores: [beta, gamma, S0, I0]
+% Rango de variación para 4 factores: [S0, I0, beta, gamma]
 ranges_sir = [
-    0.0001, 0.0008;  % beta  (tasa de transmisión)
-    0.05,   0.20;    % gamma (tasa de recuperación)
     900,    999;     % S0    (Susceptibles iniciales)
-    1,      50       % I0    (Infectados iniciales)
+    1,      50;      % I0    (Infectados iniciales)
+    0.0001, 0.0008;  % beta  (tasa de transmisión)
+    0.05,   0.20     % gamma (tasa de recuperación)
 ];
 
 [T_sir, ~] = gsua_dataprep('sir_continuous_userdefined', ranges_sir, ...
     'domain', [0, 80], ...
-    'names', {'beta', 'gamma', 'S0', 'I0'}, ...
+    'names', {'S0', 'I0', 'beta', 'gamma'}, ...
     'out_names', {'Susceptibles', 'Infectados', 'Recuperados'});
 
 disp('Tabla de Factores del Modelo SIR:');

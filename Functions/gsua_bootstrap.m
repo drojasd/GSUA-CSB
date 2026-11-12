@@ -29,8 +29,10 @@ function [Est,costs,out] = gsua_bootstrap(T,xdata,ydata,Est0,res,varargin)
 %   GSUA_IA for honest parameter-uncertainty intervals and correlations.
 %
 %   Inputs:
-%     T     <-- summary table from GSUA_PE (must carry the Margin/Alpha CustomProperties GSUA_PE
-%               sets when it scored with GSUA_COSTF, unless 'margin'/'alpha' are supplied).
+%     T     <-- summary table from GSUA_PE. It carries the Margin/Alpha CustomProperties GSUA_PE
+%               sets when it scored with GSUA_COSTF (the cost-function solvers); if neither those
+%               properties nor the 'margin'/'alpha' name-values are present, the refits fall back to
+%               margin=0 (plain MSE), matching GSUA_PE's own default -- no error.
 %     xdata <-- domain the pool was fit against
 %     ydata <-- inputs x len reference data the pool was fit against (may contain NaN)
 %     Est0  <-- Np x N pool of estimated parameter vectors (e.g. T.Estfmincon)
@@ -42,7 +44,7 @@ function [Est,costs,out] = gsua_bootstrap(T,xdata,ydata,Est0,res,varargin)
 %     'N'          <-- GSUA_PE starts per replica (multistart within each refit). Default 20.
 %     'margin'     <-- raw margin for the refits (GSUA_PE's own convention). Default: recovered
 %                      from T.Properties.CustomProperties.Margin (stored already offset; converted
-%                      back to raw here).
+%                      back to raw here); if that property is absent, 0 (plain MSE).
 %     'alpha'      <-- cost exponent for the refits. Default: recovered from T's Alpha property.
 %     'noise'      <-- noise model for the synthetic datasets. A single name applies to EVERY row:
 %                      'poisson', 'quasipoisson' (default) or 'nbglobal' -- these are COUNT models

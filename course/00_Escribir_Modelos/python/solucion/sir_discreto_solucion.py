@@ -7,7 +7,7 @@ import numpy as np
 
 
 def sir_discreto_solucion(pars, domain, t0=0):
-    beta, gamma, S0, I0 = pars
+    S0, I0, beta, gamma = pars
     domain = np.asarray(domain, dtype=float)
 
     dias = np.arange(t0, int(np.ceil(domain.max())) + 1)

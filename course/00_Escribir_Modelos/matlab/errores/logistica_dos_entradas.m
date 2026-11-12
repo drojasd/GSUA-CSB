@@ -5,10 +5,10 @@ function sol = logistica_dos_entradas(pars, domain)
 %   llama al modelo como modelo(pars, domain, opt) y falla con
 %   "Too many input arguments". La versión correcta es LOGISTICA_DISCRETA.
 
-r = pars(1); K = pars(2);
+N0 = pars(1); r = pars(2); K = pars(3);
 t = domain(1):domain(2);
 N = zeros(1, numel(t));
-N(1) = pars(3);
+N(1) = N0;
 for k = 1:numel(t)-1
     N(k+1) = N(k) + r*N(k)*(1 - N(k)/K);
 end

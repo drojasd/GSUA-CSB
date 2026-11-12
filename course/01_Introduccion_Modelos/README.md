@@ -1,7 +1,7 @@
 # Módulo 01: Introducción a los Modelos Dinámicos
 
 Punto de partida del curso: cómo describir un modelo para la toolbox GSUA-CSB, declarando
-explícitamente sus factores (parámetros + condiciones iniciales) y las salidas, y cómo
+explícitamente sus factores (condiciones iniciales + parámetros) y las salidas, y cómo
 simularlo y explorar su variabilidad.
 
 > **Antes de este módulo:** el [módulo 00](../00_Escribir_Modelos/) enseña a escribir un modelo

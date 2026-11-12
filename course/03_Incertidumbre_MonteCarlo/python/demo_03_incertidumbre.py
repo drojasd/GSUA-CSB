@@ -50,7 +50,7 @@ def run_demo():
     )
 
     # 2. Datos "observados" sintéticos: verdad conocida + ruido de medición del 8%.
-    true_par = np.array([0.0005, 0.12, 950.0, 5.0])          # beta, gamma, S0, I0
+    true_par = np.array([950.0, 5.0, 0.0005, 0.12])          # S0, I0, beta, gamma
     y_true = np.squeeze(model.evaluate(true_par, model.domain))
     rng = np.random.default_rng(7)
     ydata = y_true * (1 + 0.08 * rng.standard_normal(y_true.shape))

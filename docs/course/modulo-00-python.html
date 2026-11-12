@@ -7511,7 +7511,7 @@ a.anchor-link {
 <!-- End of mermaid configuration --></head>
 <body class="jp-Notebook" data-jp-theme-light="true" data-jp-theme-name="JupyterLab Light">
 <main>
-<div class="jp-Cell jp-MarkdownCell jp-Notebook-cell" id="cell-id=db2ea547">
+<div class="jp-Cell jp-MarkdownCell jp-Notebook-cell" id="cell-id=a5e714d9">
 <div class="jp-Cell-inputWrapper" tabindex="0">
 <div class="jp-Collapser jp-InputCollapser jp-Cell-inputCollapser">
 </div>
@@ -7525,7 +7525,7 @@ contrato paso a paso, en espejo con la versión MATLAB (mismas secciones, mismos
 mismos resultados):</p>
 <ol>
 <li>la firma del modelo y la forma de su salida;</li>
-<li>el orden de los factores: primero los parámetros, después las condiciones iniciales;</li>
+<li>el orden de los factores: primero las condiciones iniciales, después los parámetros;</li>
 <li>un modelo discreto (un bucle) y uno continuo (un integrador de EDO evaluado en una rejilla);</li>
 <li>cómo se declaran los rangos, los nombres de los factores y de las salidas, qué guarda la
 toolbox del modelo y cómo se evalúa;</li>
@@ -7538,7 +7538,7 @@ integrador, unidades);</li>
 </div>
 </div>
 </div>
-<div class="jp-Cell jp-MarkdownCell jp-Notebook-cell" id="cell-id=3f347edd">
+<div class="jp-Cell jp-MarkdownCell jp-Notebook-cell" id="cell-id=7b45ae93">
 <div class="jp-Cell-inputWrapper" tabindex="0">
 <div class="jp-Collapser jp-InputCollapser jp-Cell-inputCollapser">
 </div>
@@ -7548,7 +7548,7 @@ integrador, unidades);</li>
 </div>
 </div>
 </div>
-</div><div class="jp-Cell jp-CodeCell jp-Notebook-cell jp-mod-noOutputs" id="cell-id=0a1c81c4">
+</div><div class="jp-Cell jp-CodeCell jp-Notebook-cell jp-mod-noOutputs" id="cell-id=05cab6ea">
 <div class="jp-Cell-inputWrapper" tabindex="0">
 <div class="jp-Collapser jp-InputCollapser jp-Cell-inputCollapser">
 </div>
@@ -7584,7 +7584,7 @@ integrador, unidades);</li>
 </div>
 </div>
 </div>
-<div class="jp-Cell jp-MarkdownCell jp-Notebook-cell" id="cell-id=a1110666">
+<div class="jp-Cell jp-MarkdownCell jp-Notebook-cell" id="cell-id=20317225">
 <div class="jp-Cell-inputWrapper" tabindex="0">
 <div class="jp-Collapser jp-InputCollapser jp-Cell-inputCollapser">
 </div>
@@ -7597,8 +7597,8 @@ importarla desde cualquier guion) con esta firma:</p>
 <p><strong>Entradas</strong></p>
 <ul>
 <li><code>pars</code>: arreglo con los factores. La posición manda: <code>pars[0]</code> es el factor de la fila 0 de
-los rangos, <code>pars[1]</code> el de la fila 1, etc. Convención del curso: <strong>primero los
-parámetros, después las condiciones iniciales</strong>.</li>
+los rangos, <code>pars[1]</code> el de la fila 1, etc. Convención del curso: <strong>primero las
+condiciones iniciales, después los parámetros</strong>.</li>
 <li><code>domain</code>: <strong>la rejilla de puntos</strong> donde quieres la salida. Es <code>model.domain</code> por defecto, o
 el <code>xdata</code> que pases a <code>model.evaluate(pars, xdata)</code>. Como puede empezar en cualquier punto,
 la condición inicial vale en un <code>t0</code> fijo que el modelo conoce por su cuenta.</li>
@@ -7616,19 +7616,19 @@ linealmente en los tiempos pedidos.</p>
 </div>
 </div>
 </div>
-<div class="jp-Cell jp-MarkdownCell jp-Notebook-cell" id="cell-id=3c2ee745">
+<div class="jp-Cell jp-MarkdownCell jp-Notebook-cell" id="cell-id=e26185cd">
 <div class="jp-Cell-inputWrapper" tabindex="0">
 <div class="jp-Collapser jp-InputCollapser jp-Cell-inputCollapser">
 </div>
 <div class="jp-InputArea jp-Cell-inputArea"><div class="jp-InputPrompt jp-InputArea-prompt">
 </div><div class="jp-RenderedHTMLCommon jp-RenderedMarkdown jp-MarkdownOutput" data-mime-type="text/markdown">
-<h2 id="3.-Paso-1-%E2%80%94-un-modelo-discreto:-la-log%C3%ADstica">3. Paso 1 — un modelo discreto: la logística<a class="anchor-link" href="#3.-Paso-1-%E2%80%94-un-modelo-discreto:-la-log%C3%ADstica">¶</a></h2><p>$N(t+1) = N(t) + r\,N(t)\,(1 - N(t)/K)$, con tres factores: <code>r</code>, <code>K</code> (parámetros) y <code>N0</code>
-(condición inicial). Un bucle avanza un paso de tiempo por iteración. Este es el archivo
+<h2 id="3.-Paso-1-%E2%80%94-un-modelo-discreto:-la-log%C3%ADstica">3. Paso 1 — un modelo discreto: la logística<a class="anchor-link" href="#3.-Paso-1-%E2%80%94-un-modelo-discreto:-la-log%C3%ADstica">¶</a></h2><p>$N(t+1) = N(t) + r\,N(t)\,(1 - N(t)/K)$, con tres factores: <code>N0</code> (condición inicial) y <code>r</code>,
+<code>K</code> (parámetros). Un bucle avanza un paso de tiempo por iteración. Este es el archivo
 <code>logistica_discreta.py</code> completo:</p>
 </div>
 </div>
 </div>
-</div><div class="jp-Cell jp-CodeCell jp-Notebook-cell" id="cell-id=edf581ee">
+</div><div class="jp-Cell jp-CodeCell jp-Notebook-cell" id="cell-id=c136c7a1">
 <div class="jp-Cell-inputWrapper" tabindex="0">
 <div class="jp-Collapser jp-InputCollapser jp-Cell-inputCollapser">
 </div>
@@ -7656,10 +7656,10 @@ linealmente en los tiempos pedidos.</p>
 
 <span style="color: #BA2121; font-style: italic">Ecuación en diferencias:  N(t+1) = N(t) + r*N(t)*(1 - N(t)/K)</span>
 
-<span style="color: #BA2121; font-style: italic">Factores, en este orden (primero parámetros, después condición inicial):</span>
-<span style="color: #BA2121; font-style: italic">    pars[0] -&gt; r  : tasa de crecimiento por paso (adimensional)</span>
-<span style="color: #BA2121; font-style: italic">    pars[1] -&gt; K  : capacidad de carga (individuos)</span>
-<span style="color: #BA2121; font-style: italic">    pars[2] -&gt; N0 : población en t0 (individuos)</span>
+<span style="color: #BA2121; font-style: italic">Factores, en este orden (primero la condición inicial, después los parámetros):</span>
+<span style="color: #BA2121; font-style: italic">    pars[0] -&gt; N0 : población en t0 (individuos)</span>
+<span style="color: #BA2121; font-style: italic">    pars[1] -&gt; r  : tasa de crecimiento por paso (adimensional)</span>
+<span style="color: #BA2121; font-style: italic">    pars[2] -&gt; K  : capacidad de carga (individuos)</span>
 
 <span style="color: #BA2121; font-style: italic">domain = la rejilla de tiempos donde se quiere la salida (model.domain o el xdata de evaluate).</span>
 <span style="color: #BA2121; font-style: italic">t0     = el paso donde vale N0. Llega por opt={"t0": ...}; por defecto 0.</span>
@@ -7670,7 +7670,7 @@ linealmente en los tiempos pedidos.</p>
 
 
 <span style="color: #008000; font-weight: bold">def</span><span style="color: #BBB"> </span><span style="color: #00F">logistica_discreta</span>(pars, domain, t0<span style="color: #666">=0</span>):
-    r, K, N0 <span style="color: #666">=</span> pars
+    N0, r, K <span style="color: #666">=</span> pars
     domain <span style="color: #666">=</span> np<span style="color: #666">.</span>asarray(domain, dtype<span style="color: #666">=</span><span style="color: #008000">float</span>)
 
     t <span style="color: #666">=</span> np<span style="color: #666">.</span>arange(t0, <span style="color: #008000">int</span>(np<span style="color: #666">.</span>ceil(domain<span style="color: #666">.</span>max())) <span style="color: #666">+</span> <span style="color: #666">1</span>)   <span style="color: #3D7B7B; font-style: italic"># un punto por paso de tiempo</span>
@@ -7686,7 +7686,7 @@ linealmente en los tiempos pedidos.</p>
 </div>
 </div>
 </div>
-<div class="jp-Cell jp-MarkdownCell jp-Notebook-cell" id="cell-id=e4bb2933">
+<div class="jp-Cell jp-MarkdownCell jp-Notebook-cell" id="cell-id=e7f0d7ec">
 <div class="jp-Cell-inputWrapper" tabindex="0">
 <div class="jp-Collapser jp-InputCollapser jp-Cell-inputCollapser">
 </div>
@@ -7696,7 +7696,7 @@ linealmente en los tiempos pedidos.</p>
 </div>
 </div>
 </div>
-</div><div class="jp-Cell jp-CodeCell jp-Notebook-cell" id="cell-id=4cc62909">
+</div><div class="jp-Cell jp-CodeCell jp-Notebook-cell" id="cell-id=b002b262">
 <div class="jp-Cell-inputWrapper" tabindex="0">
 <div class="jp-Collapser jp-InputCollapser jp-Cell-inputCollapser">
 </div>
@@ -7704,7 +7704,7 @@ linealmente en los tiempos pedidos.</p>
 <div class="jp-InputPrompt jp-InputArea-prompt">In [4]:</div>
 <div class="jp-CodeMirrorEditor jp-Editor jp-InputArea-editor" data-type="inline">
 <div class="cm-editor cm-s-jupyter">
-<div class="highlight hl-ipython3"><pre><span></span><span class="n">y</span> <span class="o">=</span> <span class="n">logistica_discreta</span><span class="p">([</span><span class="mf">0.3</span><span class="p">,</span> <span class="mi">500</span><span class="p">,</span> <span class="mi">10</span><span class="p">],</span> <span class="n">np</span><span class="o">.</span><span class="n">arange</span><span class="p">(</span><span class="mi">0</span><span class="p">,</span> <span class="mi">51</span><span class="p">))</span>
+<div class="highlight hl-ipython3"><pre><span></span><span class="n">y</span> <span class="o">=</span> <span class="n">logistica_discreta</span><span class="p">([</span><span class="mi">10</span><span class="p">,</span> <span class="mf">0.3</span><span class="p">,</span> <span class="mi">500</span><span class="p">],</span> <span class="n">np</span><span class="o">.</span><span class="n">arange</span><span class="p">(</span><span class="mi">0</span><span class="p">,</span> <span class="mi">51</span><span class="p">))</span>
 <span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">"salida: </span><span class="si">{</span><span class="n">y</span><span class="o">.</span><span class="n">shape</span><span class="si">}</span><span class="s2">   (1 salida x 51 tiempos)"</span><span class="p">)</span>
 <span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">"N(0) = </span><span class="si">{</span><span class="n">y</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span><span class="si">:</span><span class="s2">.1f</span><span class="si">}</span><span class="s2">,  N(50) = </span><span class="si">{</span><span class="n">y</span><span class="p">[</span><span class="o">-</span><span class="mi">1</span><span class="p">]</span><span class="si">:</span><span class="s2">.1f</span><span class="si">}</span><span class="s2">"</span><span class="p">)</span>
 </pre></div>
@@ -7727,7 +7727,7 @@ N(0) = 10.0,  N(50) = 500.0
 </div>
 </div>
 </div>
-<div class="jp-Cell jp-MarkdownCell jp-Notebook-cell" id="cell-id=7b5e82f4">
+<div class="jp-Cell jp-MarkdownCell jp-Notebook-cell" id="cell-id=b889e030">
 <div class="jp-Cell-inputWrapper" tabindex="0">
 <div class="jp-Collapser jp-InputCollapser jp-Cell-inputCollapser">
 </div>
@@ -7740,7 +7740,7 @@ listas van en el mismo orden. <code>output_names</code> nombra las filas de la s
 </div>
 </div>
 </div>
-</div><div class="jp-Cell jp-CodeCell jp-Notebook-cell jp-mod-noOutputs" id="cell-id=abc0b8d4">
+</div><div class="jp-Cell jp-CodeCell jp-Notebook-cell jp-mod-noOutputs" id="cell-id=ee180fdd">
 <div class="jp-Cell-inputWrapper" tabindex="0">
 <div class="jp-Collapser jp-InputCollapser jp-Cell-inputCollapser">
 </div>
@@ -7749,14 +7749,14 @@ listas van en el mismo orden. <code>output_names</code> nombra las filas de la s
 <div class="jp-CodeMirrorEditor jp-Editor jp-InputArea-editor" data-type="inline">
 <div class="cm-editor cm-s-jupyter">
 <div class="highlight hl-ipython3"><pre><span></span><span class="n">rangos_log</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">array</span><span class="p">([</span>
+    <span class="p">[</span><span class="mf">5.</span><span class="p">,</span>   <span class="mf">50.</span><span class="p">],</span>     <span class="c1"># N0  (condición inicial, primero)</span>
     <span class="p">[</span><span class="mf">0.05</span><span class="p">,</span> <span class="mf">0.50</span><span class="p">],</span>    <span class="c1"># r   (parámetro)</span>
     <span class="p">[</span><span class="mf">100.</span><span class="p">,</span> <span class="mf">1000.</span><span class="p">],</span>   <span class="c1"># K   (parámetro)</span>
-    <span class="p">[</span><span class="mf">5.</span><span class="p">,</span>   <span class="mf">50.</span><span class="p">],</span>     <span class="c1"># N0  (condición inicial, al final)</span>
 <span class="p">])</span>
 
 <span class="n">model_log</span> <span class="o">=</span> <span class="n">UserFunctionModel</span><span class="p">(</span>
     <span class="n">func</span><span class="o">=</span><span class="n">logistica_discreta</span><span class="p">,</span>
-    <span class="n">names</span><span class="o">=</span><span class="p">[</span><span class="s2">"r"</span><span class="p">,</span> <span class="s2">"K"</span><span class="p">,</span> <span class="s2">"N0"</span><span class="p">],</span>
+    <span class="n">names</span><span class="o">=</span><span class="p">[</span><span class="s2">"N0"</span><span class="p">,</span> <span class="s2">"r"</span><span class="p">,</span> <span class="s2">"K"</span><span class="p">],</span>
     <span class="nb">range</span><span class="o">=</span><span class="n">rangos_log</span><span class="p">,</span>
     <span class="n">domain</span><span class="o">=</span><span class="n">np</span><span class="o">.</span><span class="n">arange</span><span class="p">(</span><span class="mi">0</span><span class="p">,</span> <span class="mi">51</span><span class="p">),</span>
     <span class="n">output_names</span><span class="o">=</span><span class="p">[</span><span class="s2">"Poblacion"</span><span class="p">],</span>
@@ -7767,7 +7767,7 @@ listas van en el mismo orden. <code>output_names</code> nombra las filas de la s
 </div>
 </div>
 </div>
-<div class="jp-Cell jp-MarkdownCell jp-Notebook-cell" id="cell-id=5597eefe">
+<div class="jp-Cell jp-MarkdownCell jp-Notebook-cell" id="cell-id=a70eb9f3">
 <div class="jp-Cell-inputWrapper" tabindex="0">
 <div class="jp-Collapser jp-InputCollapser jp-Cell-inputCollapser">
 </div>
@@ -7780,7 +7780,7 @@ defecto, el punto medio del rango), la rejilla y las salidas; es el equivalente 
 </div>
 </div>
 </div>
-</div><div class="jp-Cell jp-CodeCell jp-Notebook-cell" id="cell-id=952255ea">
+</div><div class="jp-Cell jp-CodeCell jp-Notebook-cell" id="cell-id=92505648">
 <div class="jp-Cell-inputWrapper" tabindex="0">
 <div class="jp-Collapser jp-InputCollapser jp-Cell-inputCollapser">
 </div>
@@ -7805,9 +7805,9 @@ defecto, el punto medio del rango), la rejilla y las salidas; es el equivalente 
 <div class="jp-OutputArea-child">
 <div class="jp-OutputPrompt jp-OutputArea-prompt"></div>
 <div class="jp-RenderedText jp-OutputArea-output" data-mime-type="text/plain" tabindex="0">
-<pre>   r:  rango [0.05, 0.5]   nominal 0.275
+<pre>  N0:  rango [5, 50]   nominal 27.5
+   r:  rango [0.05, 0.5]   nominal 0.275
    K:  rango [100, 1000]   nominal 550
-  N0:  rango [5, 50]   nominal 27.5
 domain : 0 ... 50  (51 puntos)
 output_names: Poblacion   (nombres de salida)
 activas     : Poblacion   (salidas activas)
@@ -7817,7 +7817,7 @@ activas     : Poblacion   (salidas activas)
 </div>
 </div>
 </div>
-<div class="jp-Cell jp-MarkdownCell jp-Notebook-cell" id="cell-id=bcbd8d8b">
+<div class="jp-Cell jp-MarkdownCell jp-Notebook-cell" id="cell-id=b5951e0d">
 <div class="jp-Cell-inputWrapper" tabindex="0">
 <div class="jp-Collapser jp-InputCollapser jp-Cell-inputCollapser">
 </div>
@@ -7831,7 +7831,7 @@ opcional y por defecto es <code>model.domain</code>. <code>model.evaluate_batch(
 </div>
 </div>
 </div>
-</div><div class="jp-Cell jp-CodeCell jp-Notebook-cell" id="cell-id=8df993e3">
+</div><div class="jp-Cell jp-CodeCell jp-Notebook-cell" id="cell-id=021c07f2">
 <div class="jp-Cell-inputWrapper" tabindex="0">
 <div class="jp-Collapser jp-InputCollapser jp-Cell-inputCollapser">
 </div>
@@ -7843,7 +7843,7 @@ opcional y por defecto es <code>model.domain</code>. <code>model.evaluate_batch(
 <span class="n">y_nom</span> <span class="o">=</span> <span class="n">model_log</span><span class="o">.</span><span class="n">evaluate</span><span class="p">(</span><span class="n">model_log</span><span class="o">.</span><span class="n">nominal</span><span class="p">,</span> <span class="n">xdata</span><span class="p">)</span>
 <span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">"una simulación   : </span><span class="si">{</span><span class="n">y_nom</span><span class="o">.</span><span class="n">shape</span><span class="si">}</span><span class="s2">"</span><span class="p">)</span>
 
-<span class="n">M3</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">array</span><span class="p">([</span><span class="n">model_log</span><span class="o">.</span><span class="n">nominal</span><span class="p">,</span> <span class="p">[</span><span class="mf">0.45</span><span class="p">,</span> <span class="mi">800</span><span class="p">,</span> <span class="mi">10</span><span class="p">],</span> <span class="p">[</span><span class="mf">0.10</span><span class="p">,</span> <span class="mi">300</span><span class="p">,</span> <span class="mi">40</span><span class="p">]])</span>   <span class="c1"># 3 filas = 3 simulaciones</span>
+<span class="n">M3</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">array</span><span class="p">([</span><span class="n">model_log</span><span class="o">.</span><span class="n">nominal</span><span class="p">,</span> <span class="p">[</span><span class="mi">10</span><span class="p">,</span> <span class="mf">0.45</span><span class="p">,</span> <span class="mi">800</span><span class="p">],</span> <span class="p">[</span><span class="mi">40</span><span class="p">,</span> <span class="mf">0.10</span><span class="p">,</span> <span class="mi">300</span><span class="p">]])</span>   <span class="c1"># 3 filas = 3 simulaciones</span>
 <span class="n">y3</span> <span class="o">=</span> <span class="n">model_log</span><span class="o">.</span><span class="n">evaluate_batch</span><span class="p">(</span><span class="n">M3</span><span class="p">,</span> <span class="n">xdata</span><span class="p">)</span>
 <span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">"tres simulaciones: </span><span class="si">{</span><span class="n">y3</span><span class="o">.</span><span class="n">shape</span><span class="si">}</span><span class="s2">"</span><span class="p">)</span>
 
@@ -7879,7 +7879,7 @@ tres simulaciones: (3, 51)
 </div>
 </div>
 </div>
-<div class="jp-Cell jp-MarkdownCell jp-Notebook-cell" id="cell-id=204bbcfa">
+<div class="jp-Cell jp-MarkdownCell jp-Notebook-cell" id="cell-id=ac6c9805">
 <div class="jp-Cell-inputWrapper" tabindex="0">
 <div class="jp-Collapser jp-InputCollapser jp-Cell-inputCollapser">
 </div>
@@ -7891,12 +7891,12 @@ tres simulaciones: (3, 51)
 <li>pedirle la solución exactamente en la rejilla con <code>t_eval=domain</code>;</li>
 <li>devolver <code>sol.y</code>, que ya viene como (estados, tiempo).</li>
 </ol>
-<p>Factores: <code>beta</code>, <code>gamma</code> (parámetros), <code>S0</code>, <code>I0</code> (condiciones iniciales). Salidas: S, I y R,
+<p>Factores: <code>S0</code>, <code>I0</code> (condiciones iniciales), <code>beta</code>, <code>gamma</code> (parámetros). Salidas: S, I y R,
 en ese orden de filas. Archivo <code>sir_continuo.py</code> completo:</p>
 </div>
 </div>
 </div>
-</div><div class="jp-Cell jp-CodeCell jp-Notebook-cell" id="cell-id=dca1488f">
+</div><div class="jp-Cell jp-CodeCell jp-Notebook-cell" id="cell-id=791e58e4">
 <div class="jp-Cell-inputWrapper" tabindex="0">
 <div class="jp-Collapser jp-InputCollapser jp-Cell-inputCollapser">
 </div>
@@ -7926,11 +7926,11 @@ en ese orden de filas. Archivo <code>sir_continuo.py</code> completo:</p>
 <span style="color: #BA2121; font-style: italic">dI/dt =  beta*S*I - gamma*I</span>
 <span style="color: #BA2121; font-style: italic">dR/dt =  gamma*I</span>
 
-<span style="color: #BA2121; font-style: italic">Factores, en este orden (primero parámetros, después condiciones iniciales):</span>
-<span style="color: #BA2121; font-style: italic">    pars[0] -&gt; beta  : tasa de transmisión (1/(persona*día))</span>
-<span style="color: #BA2121; font-style: italic">    pars[1] -&gt; gamma : tasa de recuperación (1/día)</span>
-<span style="color: #BA2121; font-style: italic">    pars[2] -&gt; S0    : susceptibles en t0 (personas)</span>
-<span style="color: #BA2121; font-style: italic">    pars[3] -&gt; I0    : infectados en t0 (personas)</span>
+<span style="color: #BA2121; font-style: italic">Factores, en este orden (primero condiciones iniciales, después parámetros):</span>
+<span style="color: #BA2121; font-style: italic">    pars[0] -&gt; S0    : susceptibles en t0 (personas)</span>
+<span style="color: #BA2121; font-style: italic">    pars[1] -&gt; I0    : infectados en t0 (personas)</span>
+<span style="color: #BA2121; font-style: italic">    pars[2] -&gt; beta  : tasa de transmisión (1/(persona*día))</span>
+<span style="color: #BA2121; font-style: italic">    pars[3] -&gt; gamma : tasa de recuperación (1/día)</span>
 <span style="color: #BA2121; font-style: italic">R(t0) = 0 no es un factor: es una constante del modelo.</span>
 
 <span style="color: #BA2121; font-style: italic">domain = la rejilla de tiempos (días) donde se quiere la salida.</span>
@@ -7943,7 +7943,7 @@ en ese orden de filas. Archivo <code>sir_continuo.py</code> completo:</p>
 
 
 <span style="color: #008000; font-weight: bold">def</span><span style="color: #BBB"> </span><span style="color: #00F">sir_continuo</span>(pars, domain, t0<span style="color: #666">=0.0</span>):
-    beta, gamma, S0, I0 <span style="color: #666">=</span> pars
+    S0, I0, beta, gamma <span style="color: #666">=</span> pars
     domain <span style="color: #666">=</span> np<span style="color: #666">.</span>asarray(domain, dtype<span style="color: #666">=</span><span style="color: #008000">float</span>)
 
     <span style="color: #008000; font-weight: bold">def</span><span style="color: #BBB"> </span><span style="color: #00F">rhs</span>(t, y):
@@ -7960,7 +7960,7 @@ en ese orden de filas. Archivo <code>sir_continuo.py</code> completo:</p>
 </div>
 </div>
 </div>
-</div><div class="jp-Cell jp-CodeCell jp-Notebook-cell" id="cell-id=3e55f11e">
+</div><div class="jp-Cell jp-CodeCell jp-Notebook-cell" id="cell-id=378f991e">
 <div class="jp-Cell-inputWrapper" tabindex="0">
 <div class="jp-Collapser jp-InputCollapser jp-Cell-inputCollapser">
 </div>
@@ -7968,7 +7968,7 @@ en ese orden de filas. Archivo <code>sir_continuo.py</code> completo:</p>
 <div class="jp-InputPrompt jp-InputArea-prompt">In [9]:</div>
 <div class="jp-CodeMirrorEditor jp-Editor jp-InputArea-editor" data-type="inline">
 <div class="cm-editor cm-s-jupyter">
-<div class="highlight hl-ipython3"><pre><span></span><span class="n">y</span> <span class="o">=</span> <span class="n">sir_continuo</span><span class="p">([</span><span class="mf">4.5e-4</span><span class="p">,</span> <span class="mf">0.125</span><span class="p">,</span> <span class="mi">950</span><span class="p">,</span> <span class="mi">25</span><span class="p">],</span> <span class="n">np</span><span class="o">.</span><span class="n">arange</span><span class="p">(</span><span class="mi">0</span><span class="p">,</span> <span class="mf">80.5</span><span class="p">,</span> <span class="mf">0.5</span><span class="p">))</span>
+<div class="highlight hl-ipython3"><pre><span></span><span class="n">y</span> <span class="o">=</span> <span class="n">sir_continuo</span><span class="p">([</span><span class="mi">950</span><span class="p">,</span> <span class="mi">25</span><span class="p">,</span> <span class="mf">4.5e-4</span><span class="p">,</span> <span class="mf">0.125</span><span class="p">],</span> <span class="n">np</span><span class="o">.</span><span class="n">arange</span><span class="p">(</span><span class="mi">0</span><span class="p">,</span> <span class="mf">80.5</span><span class="p">,</span> <span class="mf">0.5</span><span class="p">))</span>
 <span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">"salida: </span><span class="si">{</span><span class="n">y</span><span class="o">.</span><span class="n">shape</span><span class="si">}</span><span class="s2">  (S, I, R x tiempo)"</span><span class="p">)</span>
 </pre></div>
 </div>
@@ -7989,7 +7989,7 @@ en ese orden de filas. Archivo <code>sir_continuo.py</code> completo:</p>
 </div>
 </div>
 </div>
-<div class="jp-Cell jp-MarkdownCell jp-Notebook-cell" id="cell-id=af2fa2b8">
+<div class="jp-Cell jp-MarkdownCell jp-Notebook-cell" id="cell-id=052f82bd">
 <div class="jp-Cell-inputWrapper" tabindex="0">
 <div class="jp-Collapser jp-InputCollapser jp-Cell-inputCollapser">
 </div>
@@ -8000,7 +8000,7 @@ pongas en <code>opt</code> llega como argumento con nombre: aquí, el tiempo <co
 </div>
 </div>
 </div>
-</div><div class="jp-Cell jp-CodeCell jp-Notebook-cell" id="cell-id=5405b0aa">
+</div><div class="jp-Cell jp-CodeCell jp-Notebook-cell" id="cell-id=5ceca0bc">
 <div class="jp-Cell-inputWrapper" tabindex="0">
 <div class="jp-Collapser jp-InputCollapser jp-Cell-inputCollapser">
 </div>
@@ -8009,15 +8009,15 @@ pongas en <code>opt</code> llega como argumento con nombre: aquí, el tiempo <co
 <div class="jp-CodeMirrorEditor jp-Editor jp-InputArea-editor" data-type="inline">
 <div class="cm-editor cm-s-jupyter">
 <div class="highlight hl-ipython3"><pre><span></span><span class="n">rangos_sir</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">array</span><span class="p">([</span>
+    <span class="p">[</span><span class="mf">900.</span><span class="p">,</span> <span class="mf">999.</span><span class="p">],</span>    <span class="c1"># S0    (condición inicial, personas)</span>
+    <span class="p">[</span><span class="mf">1.</span><span class="p">,</span>   <span class="mf">50.</span><span class="p">],</span>     <span class="c1"># I0    (condición inicial, personas)</span>
     <span class="p">[</span><span class="mf">1e-4</span><span class="p">,</span> <span class="mf">8e-4</span><span class="p">],</span>    <span class="c1"># beta  (1/(persona*día))</span>
     <span class="p">[</span><span class="mf">0.05</span><span class="p">,</span> <span class="mf">0.20</span><span class="p">],</span>    <span class="c1"># gamma (1/día)</span>
-    <span class="p">[</span><span class="mf">900.</span><span class="p">,</span> <span class="mf">999.</span><span class="p">],</span>    <span class="c1"># S0    (personas)</span>
-    <span class="p">[</span><span class="mf">1.</span><span class="p">,</span>   <span class="mf">50.</span><span class="p">],</span>     <span class="c1"># I0    (personas)</span>
 <span class="p">])</span>
 
 <span class="n">model_sir</span> <span class="o">=</span> <span class="n">UserFunctionModel</span><span class="p">(</span>
     <span class="n">func</span><span class="o">=</span><span class="n">sir_continuo</span><span class="p">,</span>
-    <span class="n">names</span><span class="o">=</span><span class="p">[</span><span class="s2">"beta"</span><span class="p">,</span> <span class="s2">"gamma"</span><span class="p">,</span> <span class="s2">"S0"</span><span class="p">,</span> <span class="s2">"I0"</span><span class="p">],</span>
+    <span class="n">names</span><span class="o">=</span><span class="p">[</span><span class="s2">"S0"</span><span class="p">,</span> <span class="s2">"I0"</span><span class="p">,</span> <span class="s2">"beta"</span><span class="p">,</span> <span class="s2">"gamma"</span><span class="p">],</span>
     <span class="nb">range</span><span class="o">=</span><span class="n">rangos_sir</span><span class="p">,</span>
     <span class="n">domain</span><span class="o">=</span><span class="n">np</span><span class="o">.</span><span class="n">linspace</span><span class="p">(</span><span class="mi">0</span><span class="p">,</span> <span class="mi">80</span><span class="p">,</span> <span class="mi">161</span><span class="p">),</span>
     <span class="n">output_names</span><span class="o">=</span><span class="p">[</span><span class="s2">"S"</span><span class="p">,</span> <span class="s2">"I"</span><span class="p">,</span> <span class="s2">"R"</span><span class="p">],</span>
@@ -8051,7 +8051,7 @@ design_matrix: (5, 4)  -&gt;  evaluate_batch: (5, 3, 161)
 </div>
 </div>
 </div>
-<div class="jp-Cell jp-MarkdownCell jp-Notebook-cell" id="cell-id=645601e8">
+<div class="jp-Cell jp-MarkdownCell jp-Notebook-cell" id="cell-id=fe2a668b">
 <div class="jp-Cell-inputWrapper" tabindex="0">
 <div class="jp-Collapser jp-InputCollapser jp-Cell-inputCollapser">
 </div>
@@ -8062,7 +8062,7 @@ Afecta a todas las funciones que reciban el modelo.</p>
 </div>
 </div>
 </div>
-</div><div class="jp-Cell jp-CodeCell jp-Notebook-cell" id="cell-id=ee631b88">
+</div><div class="jp-Cell jp-CodeCell jp-Notebook-cell" id="cell-id=8987cfcb">
 <div class="jp-Cell-inputWrapper" tabindex="0">
 <div class="jp-Collapser jp-InputCollapser jp-Cell-inputCollapser">
 </div>
@@ -8107,7 +8107,7 @@ Afecta a todas las funciones que reciban el modelo.</p>
 </div>
 </div>
 </div>
-<div class="jp-Cell jp-MarkdownCell jp-Notebook-cell" id="cell-id=50933846">
+<div class="jp-Cell jp-MarkdownCell jp-Notebook-cell" id="cell-id=b08faa24">
 <div class="jp-Cell-inputWrapper" tabindex="0">
 <div class="jp-Collapser jp-InputCollapser jp-Cell-inputCollapser">
 </div>
@@ -8122,7 +8122,7 @@ factores <em>libres</em>.</p>
 </div>
 </div>
 </div>
-</div><div class="jp-Cell jp-CodeCell jp-Notebook-cell" id="cell-id=b68089c0">
+</div><div class="jp-Cell jp-CodeCell jp-Notebook-cell" id="cell-id=343d1332">
 <div class="jp-Cell-inputWrapper" tabindex="0">
 <div class="jp-Collapser jp-InputCollapser jp-Cell-inputCollapser">
 </div>
@@ -8131,14 +8131,14 @@ factores <em>libres</em>.</p>
 <div class="jp-CodeMirrorEditor jp-Editor jp-InputArea-editor" data-type="inline">
 <div class="cm-editor cm-s-jupyter">
 <div class="highlight hl-ipython3"><pre><span></span><span class="n">rangos_fijo</span> <span class="o">=</span> <span class="n">rangos_sir</span><span class="o">.</span><span class="n">copy</span><span class="p">()</span>
-<span class="n">rangos_fijo</span><span class="p">[</span><span class="mi">3</span><span class="p">]</span> <span class="o">=</span> <span class="p">[</span><span class="mf">10.</span><span class="p">,</span> <span class="mf">10.</span><span class="p">]</span>                        <span class="c1"># I0 fijo en 10</span>
-<span class="n">model_fijo</span> <span class="o">=</span> <span class="n">UserFunctionModel</span><span class="p">(</span><span class="n">func</span><span class="o">=</span><span class="n">sir_continuo</span><span class="p">,</span> <span class="n">names</span><span class="o">=</span><span class="p">[</span><span class="s2">"beta"</span><span class="p">,</span> <span class="s2">"gamma"</span><span class="p">,</span> <span class="s2">"S0"</span><span class="p">,</span> <span class="s2">"I0"</span><span class="p">],</span>
+<span class="n">rangos_fijo</span><span class="p">[</span><span class="mi">1</span><span class="p">]</span> <span class="o">=</span> <span class="p">[</span><span class="mf">10.</span><span class="p">,</span> <span class="mf">10.</span><span class="p">]</span>                        <span class="c1"># I0 fijo en 10</span>
+<span class="n">model_fijo</span> <span class="o">=</span> <span class="n">UserFunctionModel</span><span class="p">(</span><span class="n">func</span><span class="o">=</span><span class="n">sir_continuo</span><span class="p">,</span> <span class="n">names</span><span class="o">=</span><span class="p">[</span><span class="s2">"S0"</span><span class="p">,</span> <span class="s2">"I0"</span><span class="p">,</span> <span class="s2">"beta"</span><span class="p">,</span> <span class="s2">"gamma"</span><span class="p">],</span>
                                <span class="nb">range</span><span class="o">=</span><span class="n">rangos_fijo</span><span class="p">,</span> <span class="n">domain</span><span class="o">=</span><span class="n">xs</span><span class="p">,</span> <span class="n">output_names</span><span class="o">=</span><span class="p">[</span><span class="s2">"S"</span><span class="p">,</span> <span class="s2">"I"</span><span class="p">,</span> <span class="s2">"R"</span><span class="p">])</span>
 <span class="nb">print</span><span class="p">(</span><span class="s2">"fijos:"</span><span class="p">,</span> <span class="p">{</span><span class="n">n</span><span class="p">:</span> <span class="nb">bool</span><span class="p">(</span><span class="n">f</span><span class="p">)</span> <span class="k">for</span> <span class="n">n</span><span class="p">,</span> <span class="n">f</span> <span class="ow">in</span> <span class="nb">zip</span><span class="p">(</span><span class="n">model_fijo</span><span class="o">.</span><span class="n">names</span><span class="p">,</span> <span class="n">model_fijo</span><span class="o">.</span><span class="n">fixed</span><span class="p">)})</span>
 <span class="n">M_fijo</span> <span class="o">=</span> <span class="n">design_matrix</span><span class="p">(</span><span class="n">model_fijo</span><span class="p">,</span> <span class="n">n</span><span class="o">=</span><span class="mi">4</span><span class="p">,</span> <span class="n">method</span><span class="o">=</span><span class="s2">"latin_hypercube"</span><span class="p">,</span> <span class="n">seed</span><span class="o">=</span><span class="mi">1</span><span class="p">)</span>
-<span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">"design_matrix: </span><span class="si">{</span><span class="n">M_fijo</span><span class="o">.</span><span class="n">shape</span><span class="si">}</span><span class="s2"> (todos los factores; columna I0 = </span><span class="si">{</span><span class="n">M_fijo</span><span class="p">[:,</span><span class="w"> </span><span class="mi">3</span><span class="p">]</span><span class="si">}</span><span class="s2">)"</span><span class="p">)</span>
+<span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">"design_matrix: </span><span class="si">{</span><span class="n">M_fijo</span><span class="o">.</span><span class="n">shape</span><span class="si">}</span><span class="s2"> (todos los factores; columna I0 = </span><span class="si">{</span><span class="n">M_fijo</span><span class="p">[:,</span><span class="w"> </span><span class="mi">1</span><span class="p">]</span><span class="si">}</span><span class="s2">)"</span><span class="p">)</span>
 <span class="n">y_fijo</span> <span class="o">=</span> <span class="n">model_fijo</span><span class="o">.</span><span class="n">evaluate</span><span class="p">(</span><span class="n">model_fijo</span><span class="o">.</span><span class="n">nominal</span><span class="p">,</span> <span class="n">xs</span><span class="p">)</span>
-<span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">"el modelo recibió I0 = 10 en pars[3]: I(0) = </span><span class="si">{</span><span class="n">y_fijo</span><span class="p">[</span><span class="mi">1</span><span class="p">,</span><span class="w"> </span><span class="mi">0</span><span class="p">]</span><span class="si">:</span><span class="s2">.1f</span><span class="si">}</span><span class="s2">"</span><span class="p">)</span>
+<span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">"el modelo recibió I0 = 10 en pars[1]: I(0) = </span><span class="si">{</span><span class="n">y_fijo</span><span class="p">[</span><span class="mi">1</span><span class="p">,</span><span class="w"> </span><span class="mi">0</span><span class="p">]</span><span class="si">:</span><span class="s2">.1f</span><span class="si">}</span><span class="s2">"</span><span class="p">)</span>
 </pre></div>
 </div>
 </div>
@@ -8151,16 +8151,16 @@ factores <em>libres</em>.</p>
 <div class="jp-OutputArea-child">
 <div class="jp-OutputPrompt jp-OutputArea-prompt"></div>
 <div class="jp-RenderedText jp-OutputArea-output" data-mime-type="text/plain" tabindex="0">
-<pre>fijos: {'beta': False, 'gamma': False, 'S0': False, 'I0': True}
+<pre>fijos: {'S0': False, 'I0': True, 'beta': False, 'gamma': False}
 design_matrix: (4, 4) (todos los factores; columna I0 = [10. 10. 10. 10.])
-el modelo recibió I0 = 10 en pars[3]: I(0) = 10.0
+el modelo recibió I0 = 10 en pars[1]: I(0) = 10.0
 </pre>
 </div>
 </div>
 </div>
 </div>
 </div>
-<div class="jp-Cell jp-MarkdownCell jp-Notebook-cell" id="cell-id=7f6ed8ee">
+<div class="jp-Cell jp-MarkdownCell jp-Notebook-cell" id="cell-id=3027ff21">
 <div class="jp-Cell-inputWrapper" tabindex="0">
 <div class="jp-Collapser jp-InputCollapser jp-Cell-inputCollapser">
 </div>
@@ -8173,7 +8173,7 @@ declarar el modelo con dos entradas: <code>gsua_eval</code> siempre lo llama con
 </div>
 </div>
 </div>
-</div><div class="jp-Cell jp-CodeCell jp-Notebook-cell" id="cell-id=355bc07e">
+</div><div class="jp-Cell jp-CodeCell jp-Notebook-cell" id="cell-id=6dc72b58">
 <div class="jp-Cell-inputWrapper" tabindex="0">
 <div class="jp-Collapser jp-InputCollapser jp-Cell-inputCollapser">
 </div>
@@ -8205,7 +8205,7 @@ declarar el modelo con dos entradas: <code>gsua_eval</code> siempre lo llama con
 
 
 <span style="color: #008000; font-weight: bold">def</span><span style="color: #BBB"> </span><span style="color: #00F">logistica_sin_opt</span>(pars, domain):
-    r, K, N0 <span style="color: #666">=</span> pars
+    N0, r, K <span style="color: #666">=</span> pars
     domain <span style="color: #666">=</span> np<span style="color: #666">.</span>asarray(domain, dtype<span style="color: #666">=</span><span style="color: #008000">float</span>)
     t <span style="color: #666">=</span> np<span style="color: #666">.</span>arange(<span style="color: #666">0</span>, <span style="color: #008000">int</span>(np<span style="color: #666">.</span>ceil(domain<span style="color: #666">.</span>max())) <span style="color: #666">+</span> <span style="color: #666">1</span>)
     N <span style="color: #666">=</span> np<span style="color: #666">.</span>zeros(<span style="color: #008000">len</span>(t))
@@ -8218,7 +8218,7 @@ declarar el modelo con dos entradas: <code>gsua_eval</code> siempre lo llama con
 </div>
 </div>
 </div>
-</div><div class="jp-Cell jp-CodeCell jp-Notebook-cell" id="cell-id=41a6fc49">
+</div><div class="jp-Cell jp-CodeCell jp-Notebook-cell" id="cell-id=f454d8d5">
 <div class="jp-Cell-inputWrapper" tabindex="0">
 <div class="jp-Collapser jp-InputCollapser jp-Cell-inputCollapser">
 </div>
@@ -8228,7 +8228,7 @@ declarar el modelo con dos entradas: <code>gsua_eval</code> siempre lo llama con
 <div class="cm-editor cm-s-jupyter">
 <div class="highlight hl-ipython3"><pre><span></span><span class="kn">from</span><span class="w"> </span><span class="nn">logistica_sin_opt</span><span class="w"> </span><span class="kn">import</span> <span class="n">logistica_sin_opt</span>
 
-<span class="n">m_mal</span> <span class="o">=</span> <span class="n">UserFunctionModel</span><span class="p">(</span><span class="n">func</span><span class="o">=</span><span class="n">logistica_sin_opt</span><span class="p">,</span> <span class="n">names</span><span class="o">=</span><span class="p">[</span><span class="s2">"r"</span><span class="p">,</span> <span class="s2">"K"</span><span class="p">,</span> <span class="s2">"N0"</span><span class="p">],</span> <span class="nb">range</span><span class="o">=</span><span class="n">rangos_log</span><span class="p">,</span>
+<span class="n">m_mal</span> <span class="o">=</span> <span class="n">UserFunctionModel</span><span class="p">(</span><span class="n">func</span><span class="o">=</span><span class="n">logistica_sin_opt</span><span class="p">,</span> <span class="n">names</span><span class="o">=</span><span class="p">[</span><span class="s2">"N0"</span><span class="p">,</span> <span class="s2">"r"</span><span class="p">,</span> <span class="s2">"K"</span><span class="p">],</span> <span class="nb">range</span><span class="o">=</span><span class="n">rangos_log</span><span class="p">,</span>
                           <span class="n">domain</span><span class="o">=</span><span class="n">xdata</span><span class="p">,</span> <span class="n">opt</span><span class="o">=</span><span class="p">{</span><span class="s2">"t0"</span><span class="p">:</span> <span class="mi">0</span><span class="p">})</span>
 <span class="k">try</span><span class="p">:</span>
     <span class="n">m_mal</span><span class="o">.</span><span class="n">evaluate</span><span class="p">(</span><span class="n">m_mal</span><span class="o">.</span><span class="n">nominal</span><span class="p">,</span> <span class="n">xdata</span><span class="p">)</span>
@@ -8253,7 +8253,7 @@ declarar el modelo con dos entradas: <code>gsua_eval</code> siempre lo llama con
 </div>
 </div>
 </div>
-<div class="jp-Cell jp-MarkdownCell jp-Notebook-cell" id="cell-id=598d2204">
+<div class="jp-Cell jp-MarkdownCell jp-Notebook-cell" id="cell-id=94b3893d">
 <div class="jp-Cell-inputWrapper" tabindex="0">
 <div class="jp-Collapser jp-InputCollapser jp-Cell-inputCollapser">
 </div>
@@ -8265,7 +8265,7 @@ modelo cuya fila 0 es S, la toolbox analiza S con la etiqueta <code>"I"</code> y
 </div>
 </div>
 </div>
-</div><div class="jp-Cell jp-CodeCell jp-Notebook-cell" id="cell-id=a714aaa6">
+</div><div class="jp-Cell jp-CodeCell jp-Notebook-cell" id="cell-id=74346413">
 <div class="jp-Cell-inputWrapper" tabindex="0">
 <div class="jp-Collapser jp-InputCollapser jp-Cell-inputCollapser">
 </div>
@@ -8273,7 +8273,7 @@ modelo cuya fila 0 es S, la toolbox analiza S con la etiqueta <code>"I"</code> y
 <div class="jp-InputPrompt jp-InputArea-prompt">In [15]:</div>
 <div class="jp-CodeMirrorEditor jp-Editor jp-InputArea-editor" data-type="inline">
 <div class="cm-editor cm-s-jupyter">
-<div class="highlight hl-ipython3"><pre><span></span><span class="n">m_etiq</span> <span class="o">=</span> <span class="n">UserFunctionModel</span><span class="p">(</span><span class="n">func</span><span class="o">=</span><span class="n">sir_continuo</span><span class="p">,</span> <span class="n">names</span><span class="o">=</span><span class="p">[</span><span class="s2">"beta"</span><span class="p">,</span> <span class="s2">"gamma"</span><span class="p">,</span> <span class="s2">"S0"</span><span class="p">,</span> <span class="s2">"I0"</span><span class="p">],</span>
+<div class="highlight hl-ipython3"><pre><span></span><span class="n">m_etiq</span> <span class="o">=</span> <span class="n">UserFunctionModel</span><span class="p">(</span><span class="n">func</span><span class="o">=</span><span class="n">sir_continuo</span><span class="p">,</span> <span class="n">names</span><span class="o">=</span><span class="p">[</span><span class="s2">"S0"</span><span class="p">,</span> <span class="s2">"I0"</span><span class="p">,</span> <span class="s2">"beta"</span><span class="p">,</span> <span class="s2">"gamma"</span><span class="p">],</span>
                            <span class="nb">range</span><span class="o">=</span><span class="n">rangos_sir</span><span class="p">,</span> <span class="n">domain</span><span class="o">=</span><span class="n">xs</span><span class="p">,</span> <span class="n">output_names</span><span class="o">=</span><span class="p">[</span><span class="s2">"I"</span><span class="p">],</span> <span class="n">output</span><span class="o">=</span><span class="s2">"I"</span><span class="p">)</span>
 <span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">"salida etiquetada 'I': valor inicial </span><span class="si">{</span><span class="n">m_etiq</span><span class="o">.</span><span class="n">evaluate</span><span class="p">(</span><span class="n">m_etiq</span><span class="o">.</span><span class="n">nominal</span><span class="p">,</span><span class="w"> </span><span class="n">xs</span><span class="p">)[</span><span class="mi">0</span><span class="p">,</span><span class="w"> </span><span class="mi">0</span><span class="p">]</span><span class="si">:</span><span class="s2">.1f</span><span class="si">}</span><span class="s2"> (es S0, no I0)"</span><span class="p">)</span>
 </pre></div>
@@ -8295,7 +8295,7 @@ modelo cuya fila 0 es S, la toolbox analiza S con la etiqueta <code>"I"</code> y
 </div>
 </div>
 </div>
-<div class="jp-Cell jp-MarkdownCell jp-Notebook-cell" id="cell-id=cb5882eb">
+<div class="jp-Cell jp-MarkdownCell jp-Notebook-cell" id="cell-id=a9aec509">
 <div class="jp-Cell-inputWrapper" tabindex="0">
 <div class="jp-Collapser jp-InputCollapser jp-Cell-inputCollapser">
 </div>
@@ -8308,7 +8308,7 @@ dependas de la corrección: devuelve la salida bien orientada.</p>
 </div>
 </div>
 </div>
-</div><div class="jp-Cell jp-CodeCell jp-Notebook-cell" id="cell-id=d14f8ced">
+</div><div class="jp-Cell jp-CodeCell jp-Notebook-cell" id="cell-id=f282a9ef">
 <div class="jp-Cell-inputWrapper" tabindex="0">
 <div class="jp-Collapser jp-InputCollapser jp-Cell-inputCollapser">
 </div>
@@ -8345,7 +8345,7 @@ dependas de la corrección: devuelve la salida bien orientada.</p>
 </div>
 </div>
 </div>
-</div><div class="jp-Cell jp-CodeCell jp-Notebook-cell" id="cell-id=3ae5c58d">
+</div><div class="jp-Cell jp-CodeCell jp-Notebook-cell" id="cell-id=2af1cd01">
 <div class="jp-Cell-inputWrapper" tabindex="0">
 <div class="jp-Collapser jp-InputCollapser jp-Cell-inputCollapser">
 </div>
@@ -8355,7 +8355,7 @@ dependas de la corrección: devuelve la salida bien orientada.</p>
 <div class="cm-editor cm-s-jupyter">
 <div class="highlight hl-ipython3"><pre><span></span><span class="kn">from</span><span class="w"> </span><span class="nn">sir_transpuesto</span><span class="w"> </span><span class="kn">import</span> <span class="n">sir_transpuesto</span>
 
-<span class="n">m_T</span> <span class="o">=</span> <span class="n">UserFunctionModel</span><span class="p">(</span><span class="n">func</span><span class="o">=</span><span class="n">sir_transpuesto</span><span class="p">,</span> <span class="n">names</span><span class="o">=</span><span class="p">[</span><span class="s2">"beta"</span><span class="p">,</span> <span class="s2">"gamma"</span><span class="p">,</span> <span class="s2">"S0"</span><span class="p">,</span> <span class="s2">"I0"</span><span class="p">],</span>
+<span class="n">m_T</span> <span class="o">=</span> <span class="n">UserFunctionModel</span><span class="p">(</span><span class="n">func</span><span class="o">=</span><span class="n">sir_transpuesto</span><span class="p">,</span> <span class="n">names</span><span class="o">=</span><span class="p">[</span><span class="s2">"S0"</span><span class="p">,</span> <span class="s2">"I0"</span><span class="p">,</span> <span class="s2">"beta"</span><span class="p">,</span> <span class="s2">"gamma"</span><span class="p">],</span>
                         <span class="nb">range</span><span class="o">=</span><span class="n">rangos_sir</span><span class="p">,</span> <span class="n">domain</span><span class="o">=</span><span class="n">xs</span><span class="p">,</span> <span class="n">output_names</span><span class="o">=</span><span class="p">[</span><span class="s2">"S"</span><span class="p">,</span> <span class="s2">"I"</span><span class="p">,</span> <span class="s2">"R"</span><span class="p">],</span> <span class="n">output</span><span class="o">=</span><span class="s2">"I"</span><span class="p">)</span>
 <span class="n">y_T</span> <span class="o">=</span> <span class="n">m_T</span><span class="o">.</span><span class="n">evaluate</span><span class="p">(</span><span class="n">m_T</span><span class="o">.</span><span class="n">nominal</span><span class="p">,</span> <span class="n">xs</span><span class="p">)</span>
 <span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">"sir_transpuesto con set_output('I'): forma </span><span class="si">{</span><span class="n">y_T</span><span class="o">.</span><span class="n">shape</span><span class="si">}</span><span class="s2">  &lt;- debería ser (1, 161); Python no la corrige"</span><span class="p">)</span>
@@ -8378,7 +8378,7 @@ dependas de la corrección: devuelve la salida bien orientada.</p>
 </div>
 </div>
 </div>
-<div class="jp-Cell jp-MarkdownCell jp-Notebook-cell" id="cell-id=066ad59a">
+<div class="jp-Cell jp-MarkdownCell jp-Notebook-cell" id="cell-id=09aa7b9e">
 <div class="jp-Cell-inputWrapper" tabindex="0">
 <div class="jp-Collapser jp-InputCollapser jp-Cell-inputCollapser">
 </div>
@@ -8393,7 +8393,7 @@ pedido.</p>
 </div>
 </div>
 </div>
-</div><div class="jp-Cell jp-CodeCell jp-Notebook-cell" id="cell-id=3f623c40">
+</div><div class="jp-Cell jp-CodeCell jp-Notebook-cell" id="cell-id=e4cd52b9">
 <div class="jp-Cell-inputWrapper" tabindex="0">
 <div class="jp-Collapser jp-InputCollapser jp-Cell-inputCollapser">
 </div>
@@ -8426,7 +8426,7 @@ pedido.</p>
 
 
 <span style="color: #008000; font-weight: bold">def</span><span style="color: #BBB"> </span><span style="color: #00F">sir_arranca_en_domain0</span>(pars, domain):
-    beta, gamma, S0, I0 <span style="color: #666">=</span> pars
+    S0, I0, beta, gamma <span style="color: #666">=</span> pars
     domain <span style="color: #666">=</span> np<span style="color: #666">.</span>asarray(domain, dtype<span style="color: #666">=</span><span style="color: #008000">float</span>)
     rhs <span style="color: #666">=</span> <span style="color: #008000; font-weight: bold">lambda</span> t, y: [<span style="color: #666">-</span>beta <span style="color: #666">*</span> y[<span style="color: #666">0</span>] <span style="color: #666">*</span> y[<span style="color: #666">1</span>], beta <span style="color: #666">*</span> y[<span style="color: #666">0</span>] <span style="color: #666">*</span> y[<span style="color: #666">1</span>] <span style="color: #666">-</span> gamma <span style="color: #666">*</span> y[<span style="color: #666">1</span>], gamma <span style="color: #666">*</span> y[<span style="color: #666">1</span>]]
     <span style="color: #008000; font-weight: bold">return</span> solve_ivp(rhs, (domain[<span style="color: #666">0</span>], domain[<span style="color: #666">-1</span>]), [S0, I0, <span style="color: #666">0.0</span>], t_eval<span style="color: #666">=</span>domain,
@@ -8436,7 +8436,7 @@ pedido.</p>
 </div>
 </div>
 </div>
-</div><div class="jp-Cell jp-CodeCell jp-Notebook-cell" id="cell-id=b8f7241f">
+</div><div class="jp-Cell jp-CodeCell jp-Notebook-cell" id="cell-id=9d054da1">
 <div class="jp-Cell-inputWrapper" tabindex="0">
 <div class="jp-Collapser jp-InputCollapser jp-Cell-inputCollapser">
 </div>
@@ -8485,7 +8485,7 @@ pedido.</p>
 </div>
 </div>
 </div>
-<div class="jp-Cell jp-MarkdownCell jp-Notebook-cell" id="cell-id=d77dfdd9">
+<div class="jp-Cell jp-MarkdownCell jp-Notebook-cell" id="cell-id=46dfc534">
 <div class="jp-Cell-inputWrapper" tabindex="0">
 <div class="jp-Collapser jp-InputCollapser jp-Cell-inputCollapser">
 </div>
@@ -8498,7 +8498,7 @@ estructura cruda de <code>ode45</code>. Este modelo lo hace así:</p>
 </div>
 </div>
 </div>
-</div><div class="jp-Cell jp-CodeCell jp-Notebook-cell" id="cell-id=bbf0fd2e">
+</div><div class="jp-Cell jp-CodeCell jp-Notebook-cell" id="cell-id=fd9be207">
 <div class="jp-Cell-inputWrapper" tabindex="0">
 <div class="jp-Collapser jp-InputCollapser jp-Cell-inputCollapser">
 </div>
@@ -8532,7 +8532,7 @@ estructura cruda de <code>ode45</code>. Este modelo lo hace así:</p>
 
 <span style="color: #008000; font-weight: bold">def</span><span style="color: #BBB"> </span><span style="color: #00F">pasos_del_integrador</span>(pars, tf, t0<span style="color: #666">=0.0</span>):
 <span style="color: #BBB">    </span><span style="color: #BA2121; font-style: italic">"""Los tiempos y estados que solve_ivp calcula por su cuenta (sin t_eval)."""</span>
-    beta, gamma, S0, I0 <span style="color: #666">=</span> pars
+    S0, I0, beta, gamma <span style="color: #666">=</span> pars
     rhs <span style="color: #666">=</span> <span style="color: #008000; font-weight: bold">lambda</span> t, y: [<span style="color: #666">-</span>beta <span style="color: #666">*</span> y[<span style="color: #666">0</span>] <span style="color: #666">*</span> y[<span style="color: #666">1</span>], beta <span style="color: #666">*</span> y[<span style="color: #666">0</span>] <span style="color: #666">*</span> y[<span style="color: #666">1</span>] <span style="color: #666">-</span> gamma <span style="color: #666">*</span> y[<span style="color: #666">1</span>], gamma <span style="color: #666">*</span> y[<span style="color: #666">1</span>]]
     sol <span style="color: #666">=</span> solve_ivp(rhs, (t0, tf), [S0, I0, <span style="color: #666">0.0</span>])                     <span style="color: #3D7B7B; font-style: italic"># tolerancias por defecto</span>
     <span style="color: #008000; font-weight: bold">return</span> sol<span style="color: #666">.</span>t, sol<span style="color: #666">.</span>y
@@ -8547,7 +8547,7 @@ estructura cruda de <code>ode45</code>. Este modelo lo hace así:</p>
 </div>
 </div>
 </div>
-</div><div class="jp-Cell jp-CodeCell jp-Notebook-cell" id="cell-id=37beecb9">
+</div><div class="jp-Cell jp-CodeCell jp-Notebook-cell" id="cell-id=dffd4cb9">
 <div class="jp-Cell-inputWrapper" tabindex="0">
 <div class="jp-Collapser jp-InputCollapser jp-Cell-inputCollapser">
 </div>
@@ -8597,7 +8597,7 @@ estructura cruda de <code>ode45</code>. Este modelo lo hace así:</p>
 </div>
 </div>
 </div>
-<div class="jp-Cell jp-MarkdownCell jp-Notebook-cell" id="cell-id=d6dfdf33">
+<div class="jp-Cell jp-MarkdownCell jp-Notebook-cell" id="cell-id=c04986a9">
 <div class="jp-Cell-inputWrapper" tabindex="0">
 <div class="jp-Collapser jp-InputCollapser jp-Cell-inputCollapser">
 </div>
@@ -8611,7 +8611,7 @@ rejilla está en semanas y <code>gamma</code> en 1/día, el tiempo de recuperaci
 </div>
 </div>
 </div>
-</div><div class="jp-Cell jp-CodeCell jp-Notebook-cell" id="cell-id=98111dd9">
+</div><div class="jp-Cell jp-CodeCell jp-Notebook-cell" id="cell-id=f0703234">
 <div class="jp-Cell-inputWrapper" tabindex="0">
 <div class="jp-Collapser jp-InputCollapser jp-Cell-inputCollapser">
 </div>
@@ -8642,7 +8642,7 @@ R0 con S0 en fracción (0.95): 0.0034   &lt;- mismas ecuaciones, otra escala
 </div>
 </div>
 </div>
-<div class="jp-Cell jp-MarkdownCell jp-Notebook-cell" id="cell-id=959173d6">
+<div class="jp-Cell jp-MarkdownCell jp-Notebook-cell" id="cell-id=80ef19d8">
 <div class="jp-Cell-inputWrapper" tabindex="0">
 <div class="jp-Collapser jp-InputCollapser jp-Cell-inputCollapser">
 </div>
@@ -8656,7 +8656,7 @@ el error (d) de Python. La de MATLAB revisa que la salida cubra el dominio <code
 </div>
 </div>
 </div>
-</div><div class="jp-Cell jp-CodeCell jp-Notebook-cell" id="cell-id=25484c06">
+</div><div class="jp-Cell jp-CodeCell jp-Notebook-cell" id="cell-id=e226a71f">
 <div class="jp-Cell-inputWrapper" tabindex="0">
 <div class="jp-Collapser jp-InputCollapser jp-Cell-inputCollapser">
 </div>
@@ -8665,9 +8665,9 @@ el error (d) de Python. La de MATLAB revisa que la salida cubra el dominio <code
 <div class="jp-CodeMirrorEditor jp-Editor jp-InputArea-editor" data-type="inline">
 <div class="cm-editor cm-s-jupyter">
 <div class="highlight hl-ipython3"><pre><span></span><span class="n">grid</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">linspace</span><span class="p">(</span><span class="mi">0</span><span class="p">,</span> <span class="mi">80</span><span class="p">,</span> <span class="mi">161</span><span class="p">)</span>
-<span class="n">verificar_modelo</span><span class="p">(</span><span class="n">logistica_discreta</span><span class="p">,</span> <span class="p">[</span><span class="mf">0.3</span><span class="p">,</span> <span class="mi">500</span><span class="p">,</span> <span class="mi">10</span><span class="p">],</span> <span class="n">np</span><span class="o">.</span><span class="n">arange</span><span class="p">(</span><span class="mi">0</span><span class="p">,</span> <span class="mi">51</span><span class="p">),</span> <span class="p">[</span><span class="s2">"Poblacion"</span><span class="p">])</span>
+<span class="n">verificar_modelo</span><span class="p">(</span><span class="n">logistica_discreta</span><span class="p">,</span> <span class="p">[</span><span class="mi">10</span><span class="p">,</span> <span class="mf">0.3</span><span class="p">,</span> <span class="mi">500</span><span class="p">],</span> <span class="n">np</span><span class="o">.</span><span class="n">arange</span><span class="p">(</span><span class="mi">0</span><span class="p">,</span> <span class="mi">51</span><span class="p">),</span> <span class="p">[</span><span class="s2">"Poblacion"</span><span class="p">])</span>
 <span class="n">verificar_modelo</span><span class="p">(</span><span class="n">sir_continuo</span><span class="p">,</span> <span class="n">model_sir</span><span class="o">.</span><span class="n">nominal</span><span class="p">,</span> <span class="n">grid</span><span class="p">,</span> <span class="p">[</span><span class="s2">"S"</span><span class="p">,</span> <span class="s2">"I"</span><span class="p">,</span> <span class="s2">"R"</span><span class="p">])</span>
-<span class="n">verificar_modelo</span><span class="p">(</span><span class="n">logistica_sin_opt</span><span class="p">,</span> <span class="p">[</span><span class="mf">0.3</span><span class="p">,</span> <span class="mi">500</span><span class="p">,</span> <span class="mi">10</span><span class="p">],</span> <span class="n">np</span><span class="o">.</span><span class="n">arange</span><span class="p">(</span><span class="mi">0</span><span class="p">,</span> <span class="mi">51</span><span class="p">),</span> <span class="p">[</span><span class="s2">"Poblacion"</span><span class="p">],</span> <span class="n">t0</span><span class="o">=</span><span class="mi">0</span><span class="p">)</span>
+<span class="n">verificar_modelo</span><span class="p">(</span><span class="n">logistica_sin_opt</span><span class="p">,</span> <span class="p">[</span><span class="mi">10</span><span class="p">,</span> <span class="mf">0.3</span><span class="p">,</span> <span class="mi">500</span><span class="p">],</span> <span class="n">np</span><span class="o">.</span><span class="n">arange</span><span class="p">(</span><span class="mi">0</span><span class="p">,</span> <span class="mi">51</span><span class="p">),</span> <span class="p">[</span><span class="s2">"Poblacion"</span><span class="p">],</span> <span class="n">t0</span><span class="o">=</span><span class="mi">0</span><span class="p">)</span>
 <span class="n">verificar_modelo</span><span class="p">(</span><span class="n">sir_transpuesto</span><span class="p">,</span> <span class="n">model_sir</span><span class="o">.</span><span class="n">nominal</span><span class="p">,</span> <span class="n">grid</span><span class="p">,</span> <span class="p">[</span><span class="s2">"S"</span><span class="p">,</span> <span class="s2">"I"</span><span class="p">,</span> <span class="s2">"R"</span><span class="p">])</span>
 <span class="n">verificar_modelo</span><span class="p">(</span><span class="n">sir_continuo_crudo</span><span class="p">,</span> <span class="n">model_sir</span><span class="o">.</span><span class="n">nominal</span><span class="p">,</span> <span class="n">grid</span><span class="p">,</span> <span class="p">[</span><span class="s2">"S"</span><span class="p">,</span> <span class="s2">"I"</span><span class="p">,</span> <span class="s2">"R"</span><span class="p">])</span>
 </pre></div>
@@ -8729,7 +8729,7 @@ Revisando sir_continuo_crudo ...
 </div>
 </div>
 </div>
-<div class="jp-Cell jp-MarkdownCell jp-Notebook-cell" id="cell-id=fb606506">
+<div class="jp-Cell jp-MarkdownCell jp-Notebook-cell" id="cell-id=2e3f328f">
 <div class="jp-Cell-inputWrapper" tabindex="0">
 <div class="jp-Collapser jp-InputCollapser jp-Cell-inputCollapser">
 </div>
@@ -8751,7 +8751,7 @@ mismas"? ¿Qué pasa con S si <code>beta*S0 &gt; 1</code>? ¿Se conserva S + I +
 </div>
 </div>
 </div>
-</div><div class="jp-Cell jp-CodeCell jp-Notebook-cell" id="cell-id=39a223a4">
+</div><div class="jp-Cell jp-CodeCell jp-Notebook-cell" id="cell-id=9ef4f821">
 <div class="jp-Cell-inputWrapper" tabindex="0">
 <div class="jp-Collapser jp-InputCollapser jp-Cell-inputCollapser">
 </div>
@@ -8782,11 +8782,11 @@ mismas"? ¿Qué pasa con S si <code>beta*S0 &gt; 1</code>? ¿Se conserva S + I +
 <span style="color: #BA2121; font-style: italic">    I(t+1) = I(t) + beta*S(t)*I(t) - gamma*I(t)</span>
 <span style="color: #BA2121; font-style: italic">    R(t+1) = R(t) + gamma*I(t)</span>
 
-<span style="color: #BA2121; font-style: italic">Factores (primero parámetros, después condiciones iniciales):</span>
-<span style="color: #BA2121; font-style: italic">    pars[0] -&gt; beta  (1/(persona*día))</span>
-<span style="color: #BA2121; font-style: italic">    pars[1] -&gt; gamma (1/día)</span>
-<span style="color: #BA2121; font-style: italic">    pars[2] -&gt; S0    (personas)</span>
-<span style="color: #BA2121; font-style: italic">    pars[3] -&gt; I0    (personas)</span>
+<span style="color: #BA2121; font-style: italic">Factores (primero condiciones iniciales, después parámetros):</span>
+<span style="color: #BA2121; font-style: italic">    pars[0] -&gt; S0    (personas)</span>
+<span style="color: #BA2121; font-style: italic">    pars[1] -&gt; I0    (personas)</span>
+<span style="color: #BA2121; font-style: italic">    pars[2] -&gt; beta  (1/(persona*día))</span>
+<span style="color: #BA2121; font-style: italic">    pars[3] -&gt; gamma (1/día)</span>
 <span style="color: #BA2121; font-style: italic">R0 = 0 al inicio, en el día t0.</span>
 
 <span style="color: #BA2121; font-style: italic">Salida: arreglo (3, len(domain)) = [S; I; R] en los días de domain.</span>
@@ -8795,7 +8795,7 @@ mismas"? ¿Qué pasa con S si <code>beta*S0 &gt; 1</code>? ¿Se conserva S + I +
 
 
 <span style="color: #008000; font-weight: bold">def</span><span style="color: #BBB"> </span><span style="color: #00F">sir_discreto_plantilla</span>(pars, domain, t0<span style="color: #666">=0</span>):
-    beta, gamma, S0, I0 <span style="color: #666">=</span> pars
+    S0, I0, beta, gamma <span style="color: #666">=</span> pars
     domain <span style="color: #666">=</span> np<span style="color: #666">.</span>asarray(domain, dtype<span style="color: #666">=</span><span style="color: #008000">float</span>)
 
     dias <span style="color: #666">=</span> np<span style="color: #666">.</span>arange(t0, <span style="color: #008000">int</span>(np<span style="color: #666">.</span>ceil(domain<span style="color: #666">.</span>max())) <span style="color: #666">+</span> <span style="color: #666">1</span>)   <span style="color: #3D7B7B; font-style: italic"># t0, t0+1, ..., último día pedido</span>
@@ -8816,7 +8816,7 @@ mismas"? ¿Qué pasa con S si <code>beta*S0 &gt; 1</code>? ¿Se conserva S + I +
 </div>
 </div>
 </div>
-<div class="jp-Cell jp-MarkdownCell jp-Notebook-cell" id="cell-id=6795f023">
+<div class="jp-Cell jp-MarkdownCell jp-Notebook-cell" id="cell-id=9fcdf29d">
 <div class="jp-Cell-inputWrapper" tabindex="0">
 <div class="jp-Collapser jp-InputCollapser jp-Cell-inputCollapser">
 </div>
@@ -8826,7 +8826,7 @@ mismas"? ¿Qué pasa con S si <code>beta*S0 &gt; 1</code>? ¿Se conserva S + I +
 </div>
 </div>
 </div>
-</div><div class="jp-Cell jp-CodeCell jp-Notebook-cell" id="cell-id=71f6b726">
+</div><div class="jp-Cell jp-CodeCell jp-Notebook-cell" id="cell-id=bfa5f6fd">
 <div class="jp-Cell-inputWrapper" tabindex="0">
 <div class="jp-Collapser jp-InputCollapser jp-Cell-inputCollapser">
 </div>
@@ -8837,7 +8837,7 @@ mismas"? ¿Qué pasa con S si <code>beta*S0 &gt; 1</code>? ¿Se conserva S + I +
 <div class="highlight hl-ipython3"><pre><span></span><span class="kn">from</span><span class="w"> </span><span class="nn">sir_discreto_plantilla</span><span class="w"> </span><span class="kn">import</span> <span class="n">sir_discreto_plantilla</span>
 
 <span class="n">verificar_modelo</span><span class="p">(</span><span class="n">sir_discreto_plantilla</span><span class="p">,</span> <span class="n">model_sir</span><span class="o">.</span><span class="n">nominal</span><span class="p">,</span> <span class="n">np</span><span class="o">.</span><span class="n">arange</span><span class="p">(</span><span class="mi">0</span><span class="p">,</span> <span class="mi">81</span><span class="p">),</span> <span class="p">[</span><span class="s2">"S"</span><span class="p">,</span> <span class="s2">"I"</span><span class="p">,</span> <span class="s2">"R"</span><span class="p">])</span>
-<span class="n">m_ej</span> <span class="o">=</span> <span class="n">UserFunctionModel</span><span class="p">(</span><span class="n">func</span><span class="o">=</span><span class="n">sir_discreto_plantilla</span><span class="p">,</span> <span class="n">names</span><span class="o">=</span><span class="p">[</span><span class="s2">"beta"</span><span class="p">,</span> <span class="s2">"gamma"</span><span class="p">,</span> <span class="s2">"S0"</span><span class="p">,</span> <span class="s2">"I0"</span><span class="p">],</span>
+<span class="n">m_ej</span> <span class="o">=</span> <span class="n">UserFunctionModel</span><span class="p">(</span><span class="n">func</span><span class="o">=</span><span class="n">sir_discreto_plantilla</span><span class="p">,</span> <span class="n">names</span><span class="o">=</span><span class="p">[</span><span class="s2">"S0"</span><span class="p">,</span> <span class="s2">"I0"</span><span class="p">,</span> <span class="s2">"beta"</span><span class="p">,</span> <span class="s2">"gamma"</span><span class="p">],</span>
                          <span class="nb">range</span><span class="o">=</span><span class="n">rangos_sir</span><span class="p">,</span> <span class="n">domain</span><span class="o">=</span><span class="n">np</span><span class="o">.</span><span class="n">arange</span><span class="p">(</span><span class="mi">0</span><span class="p">,</span> <span class="mi">81</span><span class="p">),</span>
                          <span class="n">output_names</span><span class="o">=</span><span class="p">[</span><span class="s2">"S"</span><span class="p">,</span> <span class="s2">"I"</span><span class="p">,</span> <span class="s2">"R"</span><span class="p">],</span> <span class="n">output</span><span class="o">=</span><span class="s2">"I"</span><span class="p">)</span>
 <span class="n">I_ej</span> <span class="o">=</span> <span class="n">m_ej</span><span class="o">.</span><span class="n">evaluate</span><span class="p">(</span><span class="n">m_ej</span><span class="o">.</span><span class="n">nominal</span><span class="p">)</span><span class="o">.</span><span class="n">ravel</span><span class="p">()</span>
@@ -8872,7 +8872,7 @@ La plantilla cumple el contrato, pero I(t) sigue constante: completa el TODO.
 </div>
 </div>
 </div>
-<div class="jp-Cell jp-MarkdownCell jp-Notebook-cell" id="cell-id=6911f341">
+<div class="jp-Cell jp-MarkdownCell jp-Notebook-cell" id="cell-id=7b4426f8">
 <div class="jp-Cell-inputWrapper" tabindex="0">
 <div class="jp-Collapser jp-InputCollapser jp-Cell-inputCollapser">
 </div>
@@ -8880,7 +8880,7 @@ La plantilla cumple el contrato, pero I(t) sigue constante: completa el TODO.
 </div><div class="jp-RenderedHTMLCommon jp-RenderedMarkdown jp-MarkdownOutput" data-mime-type="text/markdown">
 <h2 id="11.-Resumen:-lista-de-chequeo">11. Resumen: lista de chequeo<a class="anchor-link" href="#11.-Resumen:-lista-de-chequeo">¶</a></h2><ul>
 <li>Función en su propio archivo <code>.py</code>: <code>func(pars, domain, **opt)</code>, con argumento para cada clave de <code>opt</code>.</li>
-<li><code>pars[i]</code> = fila <em>i</em> de los rangos = <code>names[i]</code>: parámetros primero, condiciones iniciales después.</li>
+<li><code>pars[i]</code> = fila <em>i</em> de los rangos = <code>names[i]</code>: condiciones iniciales primero, parámetros después.</li>
 <li>Salida <code>(n_salidas, len(domain))</code> evaluada en los puntos de <code>domain</code>, filas en el orden de <code>output_names</code>; la condición inicial vale en un <code>t0</code> fijo.</li>
 <li>Discreto: un bucle de <code>t0</code> al último punto pedido. Continuo: <code>solve_ivp(..., t_eval=domain)</code> desde <code>t0</code>.</li>
 <li><code>UserFunctionModel(func, names, range, domain, output_names, opt=...)</code> crea el modelo.</li>
