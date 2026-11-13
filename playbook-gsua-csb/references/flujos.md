@@ -66,9 +66,10 @@ best = T.Estfmincon(:, ix);     % columnas = estimaciones ordenadas por costo
 ## 5. Identificabilidad práctica (IA)
 
 ```matlab
-thr = gsua_noisefloor(T, xdata, ydata, best, 'Show', true);   % umbral (reemplaza costf<1.5·costf(1))
+nf  = gsua_noisefloor(T, xdata, ydata, T.Estfmincon, res, 'Show', true);  % umbral (reemplaza costf<1.5·costf(1))
+% nf.threshold (corte sobre res), nf.accepted (= res < nf.threshold). noise: 'poisson'/'quasipoisson'/'nbglobal'.
 Est = gsua_bootstrap(T, xdata, ydata, T.Estfmincon, res, 'B', 50, 'solver', 'fmincon', ...
-                     'noise', 'gaussian');                     % ensamble paramétrico
+                     'noise', 'gaussian');                     % ensamble paramétrico (ruido coherente con los datos)
 [T, ci] = gsua_ia(T, Est, false, false, true, false);         % cluster=false si una sola cuenca
 S = gsua_clustersummary(T, ci);                                % veredicto por parámetro
 disp(S(:, {'Cluster','Parameter','PctWidthRel','Verdict'}));
