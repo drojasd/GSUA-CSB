@@ -44,7 +44,7 @@ disp(S(:, {'Cluster','Parameter','PctWidthRel','Verdict'}));
 
 - **Haz** CI primero: fila i de rangos = `pars(i)` = `names{i}` (regla dura = consistencia posicional). §2
 - **Haz** el modelo continuo con `ode45` + `deval` en malla fina; 3 entradas; `sol.y` salidas×tiempo. §1
-- **Haz** `margin > 0` crudo (`0.1` = 10 %) y pasa `ydata` como FILA: con el default `fmincon`, en columna falla (`badsubscript`). §3, §6, errores §10b
+- **Haz** `margin > 0` crudo (`0.1` = 10 %) y pasa `ydata` como FILA (salidas×tiempo); `gsua_pe` ya la orienta sola, pero es lo claro. §3, §6, errores §10b
 - **Haz** el ruido coherente con los datos: `'gaussian'` continuo, `'poisson'`/`'quasipoisson'` conteos, `'cumulative'` acumuladas (en `gsua_bootstrap` y `gsua_noisefloor`). §5
 - **No** selecciones con `costf < k·min`: usa `gsua_noisefloor` para el umbral. §7
 - **No** pases el pool del multistart a `gsua_ia`: usa el ensamble de `gsua_bootstrap` (su dispersión es la incertidumbre real). §7

@@ -62,9 +62,10 @@ escritos a propósito.
     bounds"*), se reintenta 100 veces desde puntos aleatorios y termina en *"Every estimation
     failed"* — un mensaje que no apunta a la causa real (la orientación). **Pasa `ydata` como fila**
     (salidas × tiempo). Ojo: el patrón del curso `squeeze(gsua_eval(...)).'` produce una **columna**;
-    funciona con `lsqc` (como en `demo_05`), pero no con el default `fmincon`. **Pendiente de Daniel**
-    (mejora de robustez propuesta): orientar `ydata` de forma genérica al entrar a `gsua_pe`, como ya
-    hace `gsua_noisefloor` desde v1.17.1.
+    funciona con `lsqc` (como en `demo_05`), pero fallaba con el default `fmincon`. **Corregido:**
+    `gsua_pe` ahora orienta `ydata` a salidas×tiempo al entrar (igual que `gsua_noisefloor`), así que
+    fila o columna dan el mismo resultado con cualquier solver; aun así conviene pasarla como
+    salidas×tiempo por claridad. Prueba: `tests/gsuaPeYdataOrientTest.m`.
 
 ## De análisis
 

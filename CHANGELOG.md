@@ -1,5 +1,16 @@
 # Changelog
 
+## Unreleased
+
+### Fixed
+
+- **`gsua_pe` orients `ydata` for every solver.** The gradient default `fmincon` and the
+  metaheuristics did not auto-transpose `ydata` the way `lsqc`/`lsqn` do, so a single-output `ydata`
+  passed as a column (`len x 1`) was read as `len` one-point outputs and crashed `gsua_costf` with an
+  opaque `MATLAB:badsubscript` ("Every estimation failed"). `gsua_pe` now orients `ydata` to
+  outputs×time up front (matching `gsua_noisefloor`/`gsua_bootstrap`), so a row and a column give the
+  same result with any solver. Test: `tests/gsuaPeYdataOrientTest.m`.
+
 ## 1.18.0 (MATLAB) / 0.4.0 (Python) — 2026-11-05
 
 User-defined multi-output models, `gsua_pe` robustness, and a unified `margin` convention. MATLAB

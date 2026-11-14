@@ -107,6 +107,19 @@ saver=p.Results.save;
 costAlpha = p.Results.alpha;
 timer=p.Results.timer;
 
+% Orient ydata to outputs x time, the shape GSUA_DEVAL returns and GSUA_COSTF/GSUA_MSE expect.
+% lsqc/lsqn auto-transpose on a size mismatch, but the gradient default FMINCON and the
+% metaheuristics (ga/particle/psearch/surrogate/annealing) do NOT: a single-output ydata passed as
+% a column (len x 1) is read as len "outputs" of length 1 and crashes GSUA_COSTF with an opaque
+% 'badsubscript'. Orient here, as GSUA_NOISEFLOOR/GSUA_BOOTSTRAP already do (outputs x samples). The
+% ambiguous square case (as many outputs as time points) is left untouched.
+if ismatrix(ydata) && ~isempty(xdata)
+    nx = numel(xdata);
+    if size(ydata,2) ~= nx && size(ydata,1) == nx && size(ydata,1) ~= size(ydata,2)
+        ydata = ydata.';
+    end
+end
+
 % Record the exact margin/alpha this call will score with, so a downstream noise-floor
 % calibration (GSUA_NOISEFLOOR) can recompute the identical regulator/cost formula without the
 % caller having to re-specify (and risk mismatching) them. Margin is stored already offset by +1,
