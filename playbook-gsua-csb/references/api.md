@@ -1862,16 +1862,77 @@ Additional features:
 It is possible to request 2 extra positional outputs, in this order:
 Y <-- model output matrix (same as gsua_ua output), 2nd output
 J <-- vector of model outputs in scalar representation (MSE), 3rd output
-It is possible to choose between 6 SA methods using the paired feature
+It is possible to choose between 7 SA methods using the paired feature
 'SensMethod',method. Where method is one of the following:
 'Saltelli'    <-- requires N*(Np/2+1) simulations
 'Jansen'      <-- requires N*(Np/2+1) simulations
 'Xiao'        <-- newest method (Default), requires N*(Np/2+1)
                   simulations
 'Sobol'       <-- classic method, requires N*(Np+1) simulations
+'Shapley'     <-- Shapley effects (see SHAPLEY EFFECTS below); writes
+                  T.Sh / T.Sh_vec instead of T.Si / T.STi
 'brute-force' <-- explores all possible combinations, N + 2Np*N^2
                   simulations
 'OAT'         <-- non-global method, requires N*(Np+1) simulations
+
+WHAT EACH METHOD ESTIMATES
+'Sobol' and 'Jansen' estimate the variance-based (Sobol') first-order
+and total indices of the output Y at each time (Si_vec, STi_vec).
+'Xiao' (Xiao, Lu & Wang 2018, distance components / energy distance)
+estimates STi = E|YA-YABi|^a / E|YA-YB|^a with a = 'xAlpha' (default 1).
+With 'xAlpha',2 it coincides with the Jansen (variance-based) index; with
+the default 1 it is a moment-independent, distribution-based index, which
+is more robust but can rank the factors differently from Sobol'.
+'Saltelli' scores the squared-deviation field (Y-ynom).^2 rather than Y
+itself, i.e. it measures which factors drive the squared departure from
+the nominal trajectory -- a different quantity from Sobol'/Jansen.
+For every method the scalar Si/STi are indices of the cost
+J = sum((Y-ynom).^2) (time and series summed).
+
+INDICES OUTSIDE [0,1]
+Sensitivity indices lie in [0,1] by definition, but their Monte Carlo
+ESTIMATES do not: with a small N an estimated STi can exceed 1 and an Si
+can be negative. That is sampling noise of the estimator, not an error,
+and it is deliberately not clipped (clipping would hide that N is too
+small). It is most frequent for 'Saltelli', occasional for 'Sobol' and
+'Jansen', and rare for 'Xiao' with xAlpha=1. Increase N until
+sum(Si)/sum(abs(Si)) is stable near 1 (a ratio well below 1 means
+spurious negative Si, i.e. N is too small).
+
+SHAPLEY EFFECTS ('SensMethod','Shapley')
+Sh_i shares the output variance among the factors, splitting every
+interaction fairly between the factors involved (Owen 2014; Song, Nelson
+& Staum 2016). They always sum to 1 and, for independent factors,
+Si <= Sh_i <= STi. Unlike Sobol' indices they remain meaningful when the
+factors are DEPENDENT (correlated or structurally coupled, e.g.
+R0 = beta*S0/gamma). Choose the estimator with 'ShapleyType':
+  'Independent' (default) <-- factors sampled independently from T.Range
+      (as gsua_dmatrix does). Nested Monte Carlo over random permutations
+      (Song, Nelson & Staum 2016). Cost: N + m*(Np-1)*No*Ni simulations,
+      with N = size(M,1) used for Var(Y). Options: 'ShapleyPerm' m
+      (default N; when Np! <= m every permutation is used equally often),
+      'ShapleyNo' outer draws (default 1), 'ShapleyNi' inner draws
+      (default 3).
+  'Given' <-- a JOINT sample whose dependence is kept: the rows of M
+      (e.g. from gsua_dmatrix(Tia,N,'Method','Joint','JointType',
+      'SmoothBootstrap'); the default 'Bootstrap' only repeats pool
+      vectors) or 'Pool', an Np x nPool ensemble such as Tia.Est.
+      Nearest-neighbour estimator
+      of Broto, Bachoc & Depecker (2020); costs one simulation per
+      distinct sample vector (duplicates are dropped). Option
+      'ShapleyK' neighbours (default 3). It answers "how is the output
+      variance shared WITHIN this joint distribution": with an accepted-
+      estimate ensemble (Tia.Est) that is sensitivity inside the
+      identified region, not over the prior ranges. Use a few hundred
+      distinct vectors or more; small samples give noisy estimates.
+Like any Monte Carlo index, an estimated Sh_i can come out slightly
+negative at small N; the scalar T.Sh, built on the heavy-tailed cost J,
+needs a larger N than T.Sh_vec to settle.
+Results: T.Sh (Np x 1, indices of the cost J) and T.Sh_vec
+(Np x Nd x nSeries, indices of Y at each time). Plot them like the other
+indices, e.g. gsua_plot('Pie',T,T.Sh) or
+gsua_plot('FractionalSensitivityArea',T,T.Sh_vec,xdata).
+
 Also, it is possible to specify an output for indices estimation using
 the paired feature 'ynom'. If you want to run the analysis with a
 different resolution for the time-dependent sensitivity indices, you can

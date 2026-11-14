@@ -14,7 +14,7 @@ description: >-
 
 **GSUA-CSB** (Global Sensitivity and Uncertainty Analysis – Confidence Subcontour Box) es una
 toolbox de MATLAB con port Python (`gsua_csb`) para análisis de sensibilidad/incertidumbre,
-identificabilidad y calibración de modelos dinámicos. Versión actual: **1.18.0 (MATLAB) / 0.4.0
+identificabilidad y calibración de modelos dinámicos. Versión actual: **1.19.0 (MATLAB) / 0.5.0
 (Python)**. Autor: Daniel Rojas Díaz (EAFIT). Repo: `drojasd/GSUA-CSB`.
 
 ## Cuándo usar este paquete
@@ -30,6 +30,8 @@ de convención (orden de factores, `margin`, criterio de identificabilidad, N de
 - `references/usage.md` — tarjeta de uso (flujos de ejemplo) verbatim.
 - `references/flujos.md` — flujos de trabajo end-to-end (UA, SA, UA+MCF, PE+IA, multi-salida Kind 6).
 - `references/errores.md` — errores típicos y cómo diagnosticarlos.
+- `references/metodos_sa.md` — qué estima cada método de `gsua_sa` (Xiao α, Saltelli, Shapley
+  independiente/dependiente), por qué un STi estimado puede pasar de 1, y cuál usar.
 - `references/estudio_lineamientos.md` — el estudio independiente que originó estas decisiones (contexto).
 - `recipes/` — plantillas ejecutables mínimas por tarea (derivadas del curso 00–05).
 - `checks/` — verificación ejecutable del contrato de un modelo y del entorno.
@@ -47,7 +49,9 @@ de convención (orden de factores, `margin`, criterio de identificabilidad, N de
    `gsua_clustersummary` (<0.25 identificable / >0.5 no / intermedio dudoso). El **índice es un
    ranking**, no un umbral. `|corr|` alto = combinación, no identificabilidad. La estructural es aparte.
 6. **Confiabilidad del SA:** `sum(Si)/sum(|Si|) → 1` indica N suficiente; `sum(Si) → 1` es aditividad.
-   **No** hay umbral publicado; no uses `sum(Si) > 0.65`.
+   **No** hay umbral publicado; no uses `sum(Si) > 0.65`. Un **STi estimado > 1** (o Si < 0) es ruido
+   del estimador con N pequeño, no un error: sube N. Factores acoplados → `'SensMethod','Shapley'`
+   (`metodos_sa.md`).
 7. **Solver por defecto:** `fmincon`, con `TypicalX` automático (v1.18).
 
 ## Regla operativa

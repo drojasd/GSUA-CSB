@@ -7,7 +7,7 @@
 ## 🐍 New: GSUA-CSB is now available for Python
 
 Every non-Simulink capability of this toolbox — global sensitivity analysis (Sobol, Jansen,
-Saltelli, and the toolbox's own Xiao method), uncertainty analysis and Monte Carlo filtering,
+Saltelli, Shapley effects, and the toolbox's own Xiao method), uncertainty analysis and Monte Carlo filtering,
 multistart parameter estimation, practical identifiability analysis (including spectral-clustering
 detection of multiple global minima), range refinement, the namesake Confidence Sub-contour Box
 algorithm, profile likelihood, and composable Matplotlib plotting — has a Python port in
@@ -174,7 +174,7 @@ Y       = gsua_ua(M,T);           % uncertainty analysis
 ### Analysis
 | Function | Description |
 |----------|-------------|
-| `gsua_sa` | Global sensitivity analysis (Xiao, Sobol, Jansen, Saltelli, brute-force, OAT methods) |
+| `gsua_sa` | Global sensitivity analysis (Xiao, Sobol, Jansen, Saltelli, Shapley effects, brute-force, OAT methods) |
 | `gsua_ua` | Uncertainty analysis via Monte-Carlo simulation, with automatic Monte-Carlo filtering |
 | `gsua_pe` | Parameter estimation (lsqcurvefit, lsqnonlin, ga, particleswarm, patternsearch, surrogateopt, simulannealbnd, fmincon). The correlation-penalized multi-objective cost path (`'margin'` ≠ 0/1, i.e. `gsua_costf`) is NaN-tolerant per output row — a signal with its own gaps (`NaN` in `ydata`) no longer blinds other, fully-populated rows in the same joint fit. When that path is used, `T`'s `Margin`/`Alpha` `CustomProperties` are recorded automatically for later recovery by `gsua_noisefloor` |
 | `gsua_likelihood` | Profile-likelihood confidence intervals for each parameter |
@@ -236,6 +236,13 @@ Sensitivity index estimators implemented in this toolbox are based on:
    Physics Communications*, 181(2), 259-270.
 2. Xiao, S., Lu, Z., and Wang, P. (2018). Multivariate global sensitivity analysis based on distance
    components decomposition. *Risk Analysis*, 38(12), 2703-2721.
+3. Song, E., Nelson, B. L., and Staum, J. (2016). Shapley effects for global sensitivity analysis: theory
+   and computation. *SIAM/ASA Journal on Uncertainty Quantification*, 4(1), 1060-1083.
+   (Shapley effects: Owen, A. B. (2014). Sobol' indices and Shapley value. *SIAM/ASA Journal on
+   Uncertainty Quantification*, 2(1), 245-251.)
+4. Broto, B., Bachoc, F., and Depecker, M. (2020). Variance reduction for estimation of Shapley effects and
+   adaptation to unknown input distribution. *SIAM/ASA Journal on Uncertainty Quantification*, 8(2),
+   693-716. (Shapley effects for dependent inputs, `'ShapleyType','Given'`.)
 
 ## Citation
 

@@ -50,5 +50,6 @@ disp(S(:, {'Cluster','Parameter','PctWidthRel','Verdict'}));
 - **No** pases el pool del multistart a `gsua_ia`: usa el ensamble de `gsua_bootstrap` (su dispersión es la incertidumbre real). §7
 - **No** concluyas identificabilidad desde `T.Range` / IC de la mediana: usa la banda `PctWidthRel` de `gsua_clustersummary`. §5
 - **No** leas el índice como umbral (es un ranking); `|corr|` alto = combinación (p. ej. `R0 = β·S0/γ`), no identificabilidad individual. §5
+- **No** tomes un STi > 1 (o Si < 0) como bug: es ruido del estimador con N pequeño — sube N hasta que `sum(Si)/sum(|Si|)` ≈ 1. Para factores acoplados usa `'SensMethod','Shapley'` (`'Given'` sobre un ensamble). §4, `metodos_sa.md`
 
 Lo demás está en `references/`: `lineamientos.md` (decisiones + citas), `flujos.md`, `errores.md`, `api.md`/`usage.md`; recetas completas en `recipes/`, verificación en `checks/run_checks.m`.

@@ -2,12 +2,15 @@
 
 The package name **`gsua-csb` is free on PyPI** (checked 2026-11-07), so the first upload claims it.
 
-## Already done (v0.4.0)
+## Already done (v0.5.0)
 
-- Built `python/dist/gsua_csb-0.4.0.tar.gz` (sdist) and `python/dist/gsua_csb-0.4.0-py3-none-any.whl`.
-- `twine check` **PASSED** on both (metadata + README render correctly).
-- Installed the wheel in a clean virtualenv and ran a smoke test: `import gsua_csb` reports `0.4.0`
-  and the new features work.
+- Built `python/dist/gsua_csb-0.5.0.tar.gz` (sdist) and `python/dist/gsua_csb-0.5.0-py3-none-any.whl`
+  (2026-11-14). 0.4.0 was never uploaded; 0.5.0 supersedes it (it is reproducible from commit
+  `81276f0` if ever needed).
+- Smoke test of the built wheel (imported from the archive itself): `import gsua_csb` reports `0.5.0`
+  and `sensitivity_analysis(..., method="shapley")` reproduces the Ishigami Shapley effects.
+- **Not yet run for 0.5.0:** `twine check dist/*` (twine is not installed in the base env — see below).
+  Run it before uploading.
 
 These are the exact files to upload. A rebuild (`python -m build`) is reproducible, but **do not change
 the version** — PyPI refuses to overwrite an already-published version.
@@ -39,7 +42,7 @@ python -m venv ~/twine-venv && ~/twine-venv/Scripts/pip install twine
 
 ```bash
 cd python
-twine upload --repository testpypi dist/gsua_csb-0.4.0*
+twine upload --repository testpypi dist/gsua_csb-0.5.0*
 python -m venv /tmp/t && /tmp/t/Scripts/pip install \
   -i https://test.pypi.org/simple/ --extra-index-url https://pypi.org/simple/ gsua-csb
 /tmp/t/Scripts/python -c "import gsua_csb; print(gsua_csb.__version__)"
@@ -51,7 +54,7 @@ python -m venv /tmp/t && /tmp/t/Scripts/pip install \
 
 ```bash
 cd python
-twine upload dist/gsua_csb-0.4.0*
+twine upload dist/gsua_csb-0.5.0*
 # username: __token__
 # password: <your pypi-... token>
 ```
@@ -59,14 +62,14 @@ twine upload dist/gsua_csb-0.4.0*
 Non-interactive alternative:
 
 ```bash
-TWINE_USERNAME=__token__ TWINE_PASSWORD=pypi-AgEI... twine upload dist/gsua_csb-0.4.0*
+TWINE_USERNAME=__token__ TWINE_PASSWORD=pypi-AgEI... twine upload dist/gsua_csb-0.5.0*
 ```
 
 ## Verify
 
 ```bash
 python -m venv /tmp/v && /tmp/v/Scripts/pip install gsua-csb
-/tmp/v/Scripts/python -c "import gsua_csb; print(gsua_csb.__version__)"   # -> 0.4.0
+/tmp/v/Scripts/python -c "import gsua_csb; print(gsua_csb.__version__)"   # -> 0.5.0
 ```
 
 ## Future releases

@@ -131,3 +131,94 @@ def test_n_jobs_matches_serial():
     s1 = sensitivity_analysis(m, M, method="sobol", n_jobs=1)
     s2 = sensitivity_analysis(m, M, method="sobol", n_jobs=2)
     np.testing.assert_allclose(s1.STi, s2.STi)
+
+
+# ---------------------------------------------------------------------------------------------------
+# Shapley effects (method="shapley"), mirroring MATLAB tests/gsuaShapleyTest.m.
+# Ishigami (a=7, b=0.1) on [-pi, pi]^3: S = [0.3139 0.4424 0], ST = [0.5576 0.4424 0.2437],
+# Shapley Sh = [0.4358 0.4424 0.1218] (the x1-x3 interaction split evenly).
+# ---------------------------------------------------------------------------------------------------
+SH_ISHIGAMI = np.array([0.4358, 0.4424, 0.1218])
+S_ISHIGAMI = np.array([0.3139, 0.4424, 0.0])
+ST_ISHIGAMI = np.array([0.5576, 0.4424, 0.2437])
+
+
+def _ishigami_model(x3_range=(-np.pi, np.pi)):
+    def func(p):
+        return np.array([np.sin(p[0]) + 7.0 * np.sin(p[1]) ** 2 + 0.1 * p[2] ** 4 * np.sin(p[0])])
+
+    rng = np.array([[-np.pi, np.pi], [-np.pi, np.pi], list(x3_range)])
+    return UserFunctionModel(func=func, names=["x1", "x2", "x3"], range=rng)
+
+
+def _linear12_model():
+    # y = x1 + 2*x2. With corr(x1, x2) = 0.5 (unit normals): Sh = [0.3393, 0.6607];
+    # with independent identical uniforms: Sh = [0.2, 0.8].
+    return UserFunctionModel(func=lambda p: np.array([p[0] + 2.0 * p[1]]), names=["x1", "x2"],
+                             range=np.array([[-4.0, 4.0], [-4.0, 4.0]]))
+
+
+def test_shapley_independent_matches_ishigami():
+    model = _ishigami_model()
+    M = design_matrix(model, 8000, seed=11)
+    r = sensitivity_analysis(model, M, method="shapley", seed=11)
+    np.testing.assert_allclose(r.Sh_vec[:, 0], SH_ISHIGAMI, atol=0.04)
+    np.testing.assert_allclose(r.Sh_vec.sum(axis=0), 1.0, atol=1e-10)
+    np.testing.assert_allclose(r.Sh.sum(), 1.0, atol=1e-10)
+    assert np.all(np.isnan(r.Si)) and r.Si_vec is None   # Sobol fields are not computed
+
+
+def test_shapley_given_matches_ishigami_and_lies_between_first_and_total():
+    model = _ishigami_model()
+    M = design_matrix(model, 4000, seed=12)
+    r = sensitivity_analysis(model, M, method="shapley", shapley_type="given")
+    sh = r.Sh_vec[:, 0]
+    np.testing.assert_allclose(sh, SH_ISHIGAMI, atol=0.03)
+    assert np.all(sh + 0.03 >= S_ISHIGAMI) and np.all(sh - 0.03 <= ST_ISHIGAMI)
+    np.testing.assert_allclose(r.Sh.sum(), 1.0, atol=1e-10)
+
+
+def test_shapley_given_uses_the_dependence_of_a_correlated_pool():
+    model = _linear12_model()
+    rng = np.random.default_rng(14)
+    pool = rng.multivariate_normal([0.0, 0.0], [[1.0, 0.5], [0.5, 1.0]], size=4000)   # (n_pool, Np)
+    M = design_matrix(model, 10, seed=0)
+    r = sensitivity_analysis(model, M, method="shapley", shapley_type="given", pool=pool)
+    np.testing.assert_allclose(r.Sh_vec[:, 0], [0.3393, 0.6607], atol=0.03)
+    # Same model, independent factors: the dependence, not only the model, decides the attribution.
+    ri = sensitivity_analysis(model, design_matrix(model, 4000, seed=15), method="shapley", seed=15)
+    np.testing.assert_allclose(ri.Sh_vec[:, 0], [0.2, 0.8], atol=0.04)
+
+
+@pytest.mark.parametrize("shapley_type", ["independent", "given"])
+def test_shapley_fixed_factor_is_zero(shapley_type):
+    model = _ishigami_model(x3_range=(1.0, 1.0))      # Sh = [0.0899, 0.9101, 0]
+    M = design_matrix(model, 4000, seed=16)
+    r = sensitivity_analysis(model, M, method="shapley", shapley_type=shapley_type, seed=16)
+    assert r.Sh[2] == 0.0 and np.all(r.Sh_vec[2] == 0.0)
+    np.testing.assert_allclose(r.Sh_vec[:2, 0], [0.0899, 0.9101], atol=0.05)
+
+
+def test_shapley_given_evaluates_repeated_vectors_once():
+    model = _ishigami_model()
+    base = design_matrix(model, 300, seed=17)
+    pool = np.vstack([base, base[:100]])
+    r = sensitivity_analysis(model, base, method="shapley", shapley_type="given", pool=pool)
+    assert r.Y.shape[0] == 300
+
+
+def test_shapley_is_reproducible_with_seed():
+    model = _ishigami_model()
+    M = design_matrix(model, 300, seed=18)
+    a = sensitivity_analysis(model, M, method="shapley", seed=5)
+    b = sensitivity_analysis(model, M, method="shapley", seed=5)
+    np.testing.assert_array_equal(a.Sh_vec, b.Sh_vec)
+
+
+def test_shapley_bad_pool_or_type_raises():
+    model = _ishigami_model()
+    M = design_matrix(model, 50, seed=0)
+    with pytest.raises(ValueError, match="pool must be"):
+        sensitivity_analysis(model, M, method="shapley", shapley_type="given", pool=np.ones((20, 2)))
+    with pytest.raises(ValueError, match="Unknown shapley_type"):
+        sensitivity_analysis(model, M, method="shapley", shapley_type="bogus")

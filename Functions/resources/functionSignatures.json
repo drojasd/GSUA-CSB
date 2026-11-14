@@ -106,13 +106,19 @@
       {"name": "M", "kind": "required", "type": ["numeric"]},
       {"name": "ParT", "kind": "required", "type": ["table"]},
       {"name": "ynom", "kind": "namevalue", "type": ["numeric"]},
-      {"name": "SensMethod", "kind": "namevalue", "type": ["char", "choices={'brute-force','Jansen','Sobol','OAT','Saltelli','Xiao'}"]},
+      {"name": "SensMethod", "kind": "namevalue", "type": ["char", "choices={'brute-force','Jansen','Sobol','OAT','Saltelli','Xiao','Shapley'}"]},
       {"name": "parallel", "kind": "namevalue", "type": ["logical"]},
       {"name": "xdata", "kind": "namevalue", "type": ["numeric"]},
       {"name": "xAlpha", "kind": "namevalue", "type": ["numeric", "scalar"]},
       {"name": "bandwidth", "kind": "namevalue", "type": ["numeric"]},
       {"name": "verbose", "kind": "namevalue", "type": ["logical"]},
-      {"name": "multiObjective", "kind": "namevalue", "type": ["logical"]}
+      {"name": "multiObjective", "kind": "namevalue", "type": ["logical"]},
+      {"name": "ShapleyType", "kind": "namevalue", "type": ["char", "choices={'Independent','Given'}"]},
+      {"name": "ShapleyPerm", "kind": "namevalue", "type": ["numeric", "scalar", "positive", "integer"]},
+      {"name": "ShapleyNo", "kind": "namevalue", "type": ["numeric", "scalar", "positive", "integer"]},
+      {"name": "ShapleyNi", "kind": "namevalue", "type": ["numeric", "scalar", "positive", "integer"]},
+      {"name": "ShapleyK", "kind": "namevalue", "type": ["numeric", "scalar", "positive", "integer"]},
+      {"name": "Pool", "kind": "namevalue", "type": ["numeric", "2d"]}
     ],
     "outputs": [
       {"name": "ParT", "type": ["table"]},

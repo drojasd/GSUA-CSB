@@ -2,7 +2,8 @@
 
 Decisiones autoritativas que resuelven las ambigüedades del *estudio de lineamientos*
 (`estudio_lineamientos.md`), **ratificadas por Daniel Rojas Díaz** (autor de GSUA-CSB) el
-2026-11-12. Aplican a la toolbox MATLAB (`GSUA-CSB`, v1.18.0) y al port Python (`gsua_csb`, v0.4.0).
+2026-11-12. Aplican a la toolbox MATLAB (`GSUA-CSB`, v1.18.0 en adelante; v1.19.0 añade Shapley) y al port
+Python (`gsua_csb`, v0.4.0 en adelante; v0.5.0).
 
 Cada lineamiento da: la **regla**, el **porqué**, **dónde** vive en el código y la **cita**.
 Las cuatro preguntas abiertas del estudio (Q1–Q4) quedan cerradas aquí; las contradicciones del
@@ -81,6 +82,16 @@ factores.
   práctico: subir N hasta que el ratio se estabilice cerca de 1.
 - **Aditividad del modelo (cosa aparte):** `sum(Si) → 1` significa que los efectos de primer orden
   explican casi toda la varianza (modelo casi aditivo). No confundir con lo anterior.
+- **STi estimado > 1 (o Si < 0) = ruido del estimador, no error** (ratificado 2026-11-14). Los índices
+  están en [0,1] por definición; sus estimaciones Monte Carlo no, y el código **no recorta** a
+  propósito. Más frecuente con `'Saltelli'`, raro con `'Xiao'` α=1. Remedio: subir N (indicador de
+  arriba). Detalle y tabla de frecuencias en `metodos_sa.md`.
+- **Qué mide cada método** (documentado, sin cambio de comportamiento): `'Xiao'` con α=2 ≡ Jansen
+  (varianza); con el default α=1 es moment-independent y puede reordenar factores. `'Saltelli'` mide
+  el campo `(Y−ynom)²`, no `Y`. El default α=1 y el nombre `'Saltelli'` se conservan (cambiarlos rompería
+  resultados existentes).
+- **Factores acoplados → `'SensMethod','Shapley'`** (v1.19): `'Independent'` sobre los rangos,
+  `'Given'` sobre una muestra conjunta o un ensamble (`'Pool', Tia.Est`). Ver `metodos_sa.md`.
 - Cita: Lizarralde-Bejarano, D.P., Rojas-Díaz, D., *et al.* (2020), **PLOS ONE**,
   [10.1371/journal.pone.0229668](https://doi.org/10.1371/journal.pone.0229668).
 
@@ -169,3 +180,11 @@ Las 6 que caen en el repo del semillero se enviaron por el buzón de Octopus al
 - **IJERPH 2023** — [10.3390/ijerph20186740](https://doi.org/10.3390/ijerph20186740) (identificabilidad
   estructural vs. práctica en contexto epidemiológico).
 - **Zenodo** — GSUA-CSB software, [10.5281/zenodo.3383316](https://doi.org/10.5281/zenodo.3383316).
+- **Risk Analysis 2018** — Xiao, Lu & Wang, *Multivariate global sensitivity analysis based on distance
+  components decomposition* (el método `'Xiao'`), [10.1111/risa.13133](https://doi.org/10.1111/risa.13133).
+- **SIAM/ASA JUQ 2014** — Owen, *Sobol' indices and Shapley value*, [10.1137/130936233](https://doi.org/10.1137/130936233).
+- **SIAM/ASA JUQ 2016** — Song, Nelson & Staum, *Shapley effects for global sensitivity analysis:
+  theory and computation* (estimador `'Independent'`), [10.1137/15M1048070](https://doi.org/10.1137/15M1048070).
+- **SIAM/ASA JUQ 2020** — Broto, Bachoc & Depecker, *Variance reduction for estimation of Shapley
+  effects and adaptation to unknown input distribution* (estimador `'Given'`),
+  [10.1137/18M1234631](https://doi.org/10.1137/18M1234631).

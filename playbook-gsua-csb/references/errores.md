@@ -81,6 +81,18 @@ escritos a propósito.
 13. **Fijar N con una regla inventada.** No existe `sum(Si) > 0.65` ni umbral publicado. Sube N hasta
     que `sum(Si)/sum(|Si|)` se estabilice cerca de 1. Ver `lineamientos.md §4`.
 
+13b. **"STi > 1 es imposible, debe haber un bug".** No lo es: el índice está en [0,1] por definición,
+    pero su **estimación** Monte Carlo con N pequeño puede pasarse (y un Si salir negativo). El código
+    no recorta a propósito. Frecuente con `'Saltelli'` (25 % de corridas con N=64 en Ishigami), raro con
+    el default `'Xiao'`. Sube N. Tampoco confundas `'Saltelli'` con Sobol': mide el campo `(Y−ynom)²`,
+    no `Y`, así que sus índices son otros. Ver `metodos_sa.md`.
+
+13c. **`'SensMethod','OAT'` falla en la ruta de un objetivo (MATLAB).** Bug previo a v1.19, sin
+    corregir: pasa una sola columna `M(:,i)` al modelo (todas las evaluaciones fallan y quedan en cero)
+    y luego revienta con *"Unrecognized function or variable 'STi_vec'"*. El port Python reimplementa
+    OAT correctamente (barre cada factor libre con los demás en el nominal). Mientras tanto, usa un
+    método global o `gsua_oatr`.
+
 ## Históricos (resueltos en v1.18)
 
 14. **Kind 6 (modelo matriz) reventaba `gsua_pardeval`** dentro de `parfor` con *"indices on the left

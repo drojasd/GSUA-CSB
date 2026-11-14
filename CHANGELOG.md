@@ -1,9 +1,57 @@
 # Changelog
 
-## Unreleased
+## 1.19.0 (MATLAB) / 0.5.0 (Python) — 2026-11-14
+
+Shapley effects, a documented answer to "STi > 1", and two fixes. Back-compatible: no existing
+method changes its results. MATLAB and Python, tests in both.
+
+### New
+
+- **Shapley effects — `gsua_sa(M,T,'SensMethod','Shapley')`** (Python:
+  `sensitivity_analysis(..., method="shapley")`). Shares the output variance among the factors,
+  splitting each interaction fairly between the factors involved (Owen 2014; Song, Nelson & Staum
+  2016): the effects sum to 1, satisfy `Si <= Sh <= STi` for independent factors, and — unlike Sobol'
+  indices — remain meaningful for **dependent** factors (correlated or structurally coupled, e.g.
+  `R0 = beta*S0/gamma`). Two estimators via `'ShapleyType'`:
+  - `'Independent'` (default): nested Monte Carlo over permutations (Song, Nelson & Staum 2016),
+    factors drawn from their marginals as `gsua_dmatrix` does; `N + m*(Np-1)*No*Ni` simulations
+    (`'ShapleyPerm'`/`'ShapleyNo'`/`'ShapleyNi'`, defaults `N`/1/3; every permutation used equally
+    often when `Np! <= m`).
+  - `'Given'`: nearest-neighbour estimator on a JOINT sample (Broto, Bachoc & Depecker 2020) — the
+    rows of `M` or a `'Pool'` ensemble such as `Tia.Est` — keeping its dependence; one simulation per
+    distinct vector (`'ShapleyK'`, default 3). With an accepted-estimate ensemble it measures
+    sensitivity inside the identified region.
+
+  Results go to `T.Sh` (indices of the cost `J`) and `T.Sh_vec` (`Np x Nd x nSeries`, indices of `Y`
+  at each time; Python `Sh`/`Sh_vec`), and plot with the existing `gsua_plot`/`plot_sensitivity_*`
+  calls. Validated against analytic values: Ishigami `[0.4358 0.4424 0.1218]` (both estimators), and
+  `y = x1 + 2*x2` with `corr = 0.5` → `[0.3393 0.6607]` with `'Given'`. Tests:
+  `tests/gsuaShapleyTest.m`, `python/tests/test_sensitivity.py`.
+- `references/metodos_sa.md` in the `playbook-gsua-csb` package: what each SA method estimates and
+  when to use it.
+
+### Documented (no behaviour change)
+
+- **Estimated indices outside [0,1].** A Monte Carlo estimate of `STi` can exceed 1 (and `Si` can be
+  negative) at small `N`; that is estimator noise, not an implementation error, and is deliberately
+  not clipped. On Ishigami at `N = 64`: 25% of `'Saltelli'`, 9% of `'Sobol'`, 6% of `'Jansen'` and 0%
+  of the default `'Xiao'` runs gave some `STi > 1`; all vanish as `N` grows. Judge `N` with
+  `sum(Si)/sum(abs(Si))`. (`gsua_sa` help, user guide §4, Python docstring/USERGUIDE.)
+- **What each estimator measures.** `'Xiao'` with `'xAlpha',2` coincides with the Jansen
+  (variance-based) index; the default `xAlpha = 1` is a moment-independent index that can rank
+  factors differently. `'Saltelli'`'s `Si_vec`/`STi_vec` score the squared-deviation field
+  `(Y-ynom).^2`, not `Y` (verified: they converge to the indices of that field). The default and the
+  method name are kept, since changing either would alter existing results.
+- Known issue, not fixed in this release: MATLAB `'SensMethod','OAT'` fails in the single-objective
+  path (it passes one column of `M` to the model, then errors on an undefined `STi_vec`). The Python
+  `"oat"` is unaffected.
 
 ### Fixed
 
+- **README citation DOI.** The Zenodo DOI was malformed (`10.5755281/...`); it is
+  `10.5281/zenodo.3383316`.
+- **`gsua_sa` method names are case-insensitive** (`'shapley'`, `'xiao'` now select the method instead
+  of falling through to "Give the right name").
 - **`gsua_pe` orients `ydata` for every solver.** The gradient default `fmincon` and the
   metaheuristics did not auto-transpose `ydata` the way `lsqc`/`lsqn` do, so a single-output `ydata`
   passed as a column (`len x 1`) was read as `len` one-point outputs and crashed `gsua_costf` with an

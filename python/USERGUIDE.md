@@ -222,17 +222,49 @@ term, modelled by [`noise_floor`](#9-noise-calibrated-fit-acceptance-threshold).
 from gsua_csb import sensitivity_analysis
 
 result = sensitivity_analysis(model, M, method="xiao")  # "xiao" (default), "sobol", "jansen",
-                                                          # "saltelli", or "oat"
+                                                          # "saltelli", "shapley", or "oat"
 result.Si       # (Np,) first-order index on the scalar SSE cost vs. the nominal run
 result.STi      # (Np,) total-order index
 result.Si_vec   # (Np, Nd) time-dependent first-order index (None for method="oat")
 result.STi_vec  # (Np, Nd) time-dependent total-order index
 ```
 
-`"xiao"` is the toolbox's own robust estimator [Xiao, Lu & Wang, 2018] and the only one of the
-five with no equivalent in `SALib`. Pass `y_exp=` to score against real data instead of the
+`"xiao"` is the toolbox's own robust estimator [Xiao, Lu & Wang, 2018], with no equivalent in
+`SALib`. Pass `y_exp=` to score against real data instead of the
 model's own nominal run, and `output_index=` to pick which state to analyze for a multi-state
 model (e.g. a `SymbolicODEModel`).
+
+**What each estimator measures.** `"sobol"` and `"jansen"` estimate variance-based (Sobol')
+indices of the output. `"xiao"` estimates `E|YA-YABi|^pod / E|YA-YB|^pod`: with `pod=2` it equals
+`"jansen"`, with the default `pod=1` it is a moment-independent, distribution-based index that can
+rank factors differently. `"saltelli"` scores the squared departure from the nominal run,
+`(Y - y_exp)**2`, not `Y`. The scalar `Si`/`STi` are always indices of the SSE cost.
+
+**Indices outside [0, 1].** The indices lie in [0, 1] by definition, but their Monte Carlo
+*estimates* do not: with a small `N` an `STi` above 1 or a negative `Si` is sampling noise, not an
+error, and is deliberately not clipped. It is most frequent for `"saltelli"` and rare for `"xiao"`
+with `pod=1`. Raise `N` until `sum(Si)/sum(abs(Si))` is stable near 1.
+
+**Shapley effects** (`method="shapley"`) share the output variance among the factors, splitting
+every interaction fairly between the factors involved (Owen 2014; Song, Nelson & Staum 2016). They
+sum to 1, satisfy `Si <= Sh <= STi` for independent factors, and stay meaningful for **dependent**
+factors such as structurally coupled parameters (`R0 = beta*S0/gamma`):
+
+```python
+from gsua_csb import plot_sensitivity_bar
+
+r = sensitivity_analysis(model, M, method="shapley", seed=0)            # independent factors
+r.Sh, r.Sh_vec                                                           # (Np,), (Np, Nd)
+# Dependent factors: a joint sample, e.g. an accepted-estimate ensemble (rows are vectors)
+r = sensitivity_analysis(model, M, method="shapley", shapley_type="given", pool=ensemble)
+plot_sensitivity_bar(r, index="Sh")
+```
+
+`shapley_type="independent"` is the nested Monte Carlo estimator of Song, Nelson & Staum (cost
+`N + m*(Np-1)*shapley_no*shapley_ni`); `"given"` is the nearest-neighbour estimator of Broto,
+Bachoc & Depecker (2020), one evaluation per distinct vector. With an accepted-estimate ensemble the
+second measures sensitivity *inside the identified region*, not over the prior ranges; use a few
+hundred distinct vectors or more.
 
 ## 4. Uncertainty analysis and Monte Carlo filtering
 

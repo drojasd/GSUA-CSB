@@ -90,7 +90,8 @@ def plot_sensitivity_bar(sens: "SensitivityResult", index: str = "Si", ax: "Axes
 
     Args:
         sens: Result from :func:`gsua_csb.sensitivity_analysis`.
-        index: Which scalar index to plot -- ``"Si"`` (first-order) or ``"STi"`` (total-order).
+        index: Which scalar index to plot -- ``"Si"`` (first-order), ``"STi"`` (total-order), or
+            ``"Sh"`` (Shapley effects, for ``method="shapley"``).
         ax: Axes to draw on. A new figure/axes is created if not given.
 
     Returns:
@@ -123,7 +124,8 @@ def plot_sensitivity_area(
     Args:
         sens: Result from :func:`gsua_csb.sensitivity_analysis`.
         xdata: Domain points matching the columns of ``Si_vec``/``STi_vec`` (e.g. ``model.domain``).
-        index: Which time-dependent index to plot -- ``"Si_vec"`` or ``"STi_vec"``.
+        index: Which time-dependent index to plot -- ``"Si_vec"``, ``"STi_vec"``, or ``"Sh_vec"``
+            (Shapley effects, for ``method="shapley"``).
         ax: Axes to draw on. A new figure/axes is created if not given.
 
     Returns:
