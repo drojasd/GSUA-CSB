@@ -242,7 +242,7 @@ Sensitivity index estimators implemented in this toolbox are based on:
 If you use this toolbox, cite:
 
 Rojas-Diaz, Daniel and Velez-Sanchez, Carlos Mario (2019). GSUA-CSB (https://www.github.com/drojasd/GSUA-CSB),
-GitHub. doi:10.5755281/zenodo.3383316.
+GitHub. doi:10.5281/zenodo.3383316.
 
 ## License
 
