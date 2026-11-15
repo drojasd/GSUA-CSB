@@ -8032,12 +8032,12 @@ curve.</p>
 <tr>
 <th>ka</th>
 <td>1.0000</td>
-<td>-0.9999</td>
+<td>-0.9998</td>
 <td>1.0</td>
 </tr>
 <tr>
 <th>ke</th>
-<td>-0.9999</td>
+<td>-0.9998</td>
 <td>1.0000</td>
 <td>-1.0</td>
 </tr>
@@ -8065,8 +8065,8 @@ curve.</p>
 <div class="highlight hl-ipython3"><pre><span></span><span class="c1"># profile_likelihood steps each factor away from the estimate while re-fitting all the</span>
 <span class="c1"># others at every step, and reports where the fit stays statistically acceptable.</span>
 <span class="c1"># margin is the assumed relative standard deviation: 0.08 matches the 8% noise above.</span>
-<span class="c1"># MATLAB's gsua_likelihood offsets this by one, so the same run there is margin=1.08:</span>
-<span class="c1"># MATLAB: gsua_likelihood(T3, xdata, ydata, 0.95, 0.05, 1.08, 0.01, 0.01, 15, 1, ...)</span>
+<span class="c1"># MATLAB's gsua_likelihood takes the same raw value since v1.18, so the same run there is:</span>
+<span class="c1"># MATLAB: gsua_likelihood(T3, xdata, ydata, 0.95, 0.05, 0.08, 0.01, 0.01, 15, 1, ...)</span>
 <span class="n">pl3</span> <span class="o">=</span> <span class="n">profile_likelihood</span><span class="p">(</span><span class="n">model</span><span class="p">,</span> <span class="n">xdata</span><span class="p">,</span> <span class="n">ydata</span><span class="p">,</span> <span class="n">alpha</span><span class="o">=</span><span class="mf">0.95</span><span class="p">,</span> <span class="n">margin</span><span class="o">=</span><span class="mf">0.08</span><span class="p">)</span>
 
 <span class="n">pd</span><span class="o">.</span><span class="n">DataFrame</span><span class="p">({</span>
@@ -8348,8 +8348,8 @@ inside their bounds instead of running to them.</p>
 </tr>
 <tr>
 <th>corr(ka, ke)</th>
-<td>-0.9999</td>
-<td>0.3869</td>
+<td>-0.9998</td>
+<td>0.3770</td>
 </tr>
 <tr>
 <th>CI width ka</th>
@@ -8415,13 +8415,12 @@ that produced that curve could have been recovered. Only the identifiability ana
 that, which is why it belongs <em>inside</em> the workflow rather than after it.</p>
 <blockquote>
 <p><strong>Comparing with the MATLAB version.</strong> Both implementations use the same acceptance
-threshold (chi-squared at one degree of freedom, halved) — but <code>margin</code> is <strong>offset by one</strong>
-between them. MATLAB's <code>gsua_likelihood</code> treats <code>margin-1</code> as the assumed relative standard
-deviation, so its <code>margin=1.08</code> is this notebook's <code>margin=0.08</code>; both mean 8%. Passing <code>0.1</code>
-to MATLAB would assert 90% noise, and would also flip <code>gsua_pe</code>'s internal <code>+1</code> offset
-positive, silently switching its inner refit from the likelihood to plain least squares.
-With the conventions matched the two agree closely — $k_a$ interval widths of 0.48 (MATLAB)
-and 0.61 (Python) on this problem.</p>
+threshold (chi-squared at one degree of freedom, halved) and, since v1.18, the same <code>margin</code>
+convention: the RAW assumed relative standard deviation, so MATLAB's
+<code>gsua_likelihood(..., 0.08, ...)</code> is this notebook's <code>margin=0.08</code>; both mean 8%. Before v1.18
+MATLAB took the value offset by one (<code>1.08</code>); a stale <code>1.08</code> there now raises a
+<code>MarginConvention</code> warning. With the conventions matched the two agree closely — $k_a$
+interval widths of 0.48 (MATLAB) and 0.61 (Python) on this problem.</p>
 </blockquote>
 <p>The companion symbolic-ODE example reaches the same conclusion from the opposite direction:
 there, the dataset that fits <em>better</em> is the one whose parameters are <em>less</em> identifiable.</p>

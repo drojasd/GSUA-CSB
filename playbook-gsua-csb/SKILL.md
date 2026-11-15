@@ -14,7 +14,7 @@ description: >-
 
 **GSUA-CSB** (Global Sensitivity and Uncertainty Analysis – Confidence Subcontour Box) es una
 toolbox de MATLAB con port Python (`gsua_csb`) para análisis de sensibilidad/incertidumbre,
-identificabilidad y calibración de modelos dinámicos. Versión actual: **1.19.0 (MATLAB) / 0.5.0
+identificabilidad y calibración de modelos dinámicos. Versión actual: **1.19.1 (MATLAB) / 0.5.0
 (Python)**. Autor: Daniel Rojas Díaz (EAFIT). Repo: `drojasd/GSUA-CSB`.
 
 ## Cuándo usar este paquete

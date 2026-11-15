@@ -1,3 +1,6 @@
+# PRODUCES: fig:methods-boehm-corr-graph, res:methods-3.2-ablation
+# INPUTS: python/tests/data/petab/Boehm_JProteomeRes2014/Boehm_JProteomeRes2014.yaml, python/tests/data/petab/Bertozzi_PNAS2020/problem.yaml, python/src/gsua_csb/_identifiability.py, python/src/gsua_csb/_petab.py
+# OUTPUTS: python/paper_experiments/figures/Boehm_JProteomeRes2014_correlation_graph_before_after.png, python/paper_experiments/ablation_pipeline_ordering.out
 """Ablation: does the cost-filter + cluster-before-outlier fix matter on real data?
 
 Compares the current identifiability_analysis pipeline (cost filter -> cluster -> outlier, scoped

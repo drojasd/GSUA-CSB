@@ -1,5 +1,30 @@
 # Changelog
 
+## 1.19.1 (MATLAB) — 2026-11-15
+
+Patch: an example still used the pre-v1.18 `margin` convention, plus citation and provenance
+metadata. The Python package is unchanged (0.5.0).
+
+### Fixed
+
+- **`Examples/sir_symbolic.m` passed the pre-v1.18 offset `margin` to `gsua_likelihood`.** It used
+  `1.1` (the old "10%") in both profile-likelihood calls; since v1.18 that means 110% noise and
+  raises a `MarginConvention` warning. It now passes `0.1`, and the comment that explained the old
+  offset is corrected. The rendered example pages (`docs/examples/*-matlab.html`) are regenerated.
+- **Example notebooks described the old MATLAB convention.** `python/examples/pk_user_defined.ipynb`
+  and `sir_symbolic.ipynb` said MATLAB "offsets margin by one" (`1.08`/`1.1`); the text now states
+  the shared raw convention. Code and results are unchanged; the re-executed pages
+  (`docs/examples/*-python.html`) differ only in the 4th decimal of two correlations, from library
+  changes since they were last rendered (2026-09-08).
+
+### New
+
+- **`CITATION.cff`** (CFF 1.2.0): GitHub's "Cite this repository" and the metadata Zenodo uses when
+  it archives a release.
+- **Provenance registry** `pipelines/provenance.json` (which generator renders the user guide, the
+  example and course pages and their figures, and table 3.5 of the methods paper), and
+  `PRODUCES`/`INPUTS`/`OUTPUTS` headers in `python/paper_experiments/*.py`.
+
 ## 1.19.0 (MATLAB) / 0.5.0 (Python) — 2026-11-14
 
 Shapley effects, a documented answer to "STi > 1", a working MATLAB OAT, and smaller fixes.

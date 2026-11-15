@@ -1,0 +1,668 @@
+{
+  "description": "Provenance registry for GSUA-CSB: which generator produces each rendered or published artifact. Read by octopus_provenance; see python/paper_experiments/*.py for the methods-paper experiments (declared by header).",
+  "artifacts": [
+    {
+      "output": "gsua_userguide.mlx",
+      "generator": "docs/gsua_userguide.m",
+      "inputs": [
+        "docs/gsua_userguide.m",
+        "Functions/*.m"
+      ],
+      "command": "MATLAB desktop: matlab.desktop.editor.openDocument(src).saveAs('gsua_userguide.mlx'); matlab.internal.liveeditor.executeAndSave('gsua_userguide.mlx')"
+    },
+    {
+      "output": "docs/gsua_userguide.html",
+      "generator": "docs/gsua_userguide.m",
+      "inputs": [
+        "docs/gsua_userguide.m",
+        "Functions/*.m"
+      ],
+      "command": "MATLAB: export(<abs>/docs/gsua_userguide.m, 'docs/gsua_userguide.html', 'Run', true, 'Format', 'html')"
+    },
+    {
+      "output": "docs/gsua_userguide.pdf",
+      "generator": "docs/gsua_userguide.m",
+      "inputs": [
+        "docs/gsua_userguide.m",
+        "Functions/*.m"
+      ],
+      "command": "MATLAB: export(<abs>/docs/gsua_userguide.m, 'docs/gsua_userguide.pdf', 'Run', true, 'Format', 'pdf')"
+    },
+    {
+      "output": "docs/examples/pk-user-defined-matlab.html",
+      "generator": "docs/buildExamplePages.m",
+      "inputs": [
+        "Examples/pk_user_defined.m",
+        "Functions/*.m"
+      ],
+      "command": "MATLAB, repo root: buildExamplePages()"
+    },
+    {
+      "output": "docs/examples/pk-user-defined-python.html",
+      "generator": "python/examples/pk_user_defined.ipynb",
+      "inputs": [
+        "python/examples/pk_user_defined.ipynb",
+        "python/src/gsua_csb/**"
+      ],
+      "command": "jupyter nbconvert --to html --execute python/examples/pk_user_defined.ipynb --output-dir docs/examples --output pk-user-defined-python"
+    },
+    {
+      "output": "docs/examples/sir-symbolic-matlab.html",
+      "generator": "docs/buildExamplePages.m",
+      "inputs": [
+        "Examples/sir_symbolic.m",
+        "Functions/*.m"
+      ],
+      "command": "MATLAB, repo root: buildExamplePages()"
+    },
+    {
+      "output": "docs/examples/sir-symbolic-python.html",
+      "generator": "python/examples/sir_symbolic.ipynb",
+      "inputs": [
+        "python/examples/sir_symbolic.ipynb",
+        "python/src/gsua_csb/**"
+      ],
+      "command": "jupyter nbconvert --to html --execute python/examples/sir_symbolic.ipynb --output-dir docs/examples --output sir-symbolic-python"
+    },
+    {
+      "output": "docs/course/modulo-00-matlab.html",
+      "generator": "course/build_course_pages.m",
+      "inputs": [
+        "course/00_Escribir_Modelos/matlab/**",
+        "course/01_Introduccion_Modelos/matlab/*.m",
+        "Functions/*.m"
+      ],
+      "command": "MATLAB, repo root: run course/build_course_pages.m (module 00)"
+    },
+    {
+      "output": "docs/course/demo_00_escribir_modelos.png",
+      "generator": "course/build_course_pages.m",
+      "inputs": [
+        "course/00_Escribir_Modelos/matlab/**",
+        "course/01_Introduccion_Modelos/matlab/*.m",
+        "Functions/*.m"
+      ],
+      "command": "MATLAB: course/build_course_pages.m (figure of module 00)"
+    },
+    {
+      "output": "docs/course/demo_00_escribir_modelos_01.png",
+      "generator": "course/build_course_pages.m",
+      "inputs": [
+        "course/00_Escribir_Modelos/matlab/**",
+        "course/01_Introduccion_Modelos/matlab/*.m",
+        "Functions/*.m"
+      ],
+      "command": "MATLAB: course/build_course_pages.m (figure of module 00)"
+    },
+    {
+      "output": "docs/course/demo_00_escribir_modelos_02.png",
+      "generator": "course/build_course_pages.m",
+      "inputs": [
+        "course/00_Escribir_Modelos/matlab/**",
+        "course/01_Introduccion_Modelos/matlab/*.m",
+        "Functions/*.m"
+      ],
+      "command": "MATLAB: course/build_course_pages.m (figure of module 00)"
+    },
+    {
+      "output": "docs/course/demo_00_escribir_modelos_03.png",
+      "generator": "course/build_course_pages.m",
+      "inputs": [
+        "course/00_Escribir_Modelos/matlab/**",
+        "course/01_Introduccion_Modelos/matlab/*.m",
+        "Functions/*.m"
+      ],
+      "command": "MATLAB: course/build_course_pages.m (figure of module 00)"
+    },
+    {
+      "output": "docs/course/demo_00_escribir_modelos_04.png",
+      "generator": "course/build_course_pages.m",
+      "inputs": [
+        "course/00_Escribir_Modelos/matlab/**",
+        "course/01_Introduccion_Modelos/matlab/*.m",
+        "Functions/*.m"
+      ],
+      "command": "MATLAB: course/build_course_pages.m (figure of module 00)"
+    },
+    {
+      "output": "docs/course/demo_00_escribir_modelos_eq06440902229716971433.png",
+      "generator": "course/build_course_pages.m",
+      "inputs": [
+        "course/00_Escribir_Modelos/matlab/**",
+        "course/01_Introduccion_Modelos/matlab/*.m",
+        "Functions/*.m"
+      ],
+      "command": "MATLAB: course/build_course_pages.m (figure of module 00)"
+    },
+    {
+      "output": "docs/course/demo_00_escribir_modelos_eq08468183966608813050.png",
+      "generator": "course/build_course_pages.m",
+      "inputs": [
+        "course/00_Escribir_Modelos/matlab/**",
+        "course/01_Introduccion_Modelos/matlab/*.m",
+        "Functions/*.m"
+      ],
+      "command": "MATLAB: course/build_course_pages.m (figure of module 00)"
+    },
+    {
+      "output": "docs/course/modulo-00-python.html",
+      "generator": "course/build_course_pages.py",
+      "inputs": [
+        "course/00_Escribir_Modelos/python/**",
+        "course/01_Introduccion_Modelos/python/*.py",
+        "python/src/gsua_csb/**"
+      ],
+      "command": "python course/build_course_pages.py 00"
+    },
+    {
+      "output": "course/00_Escribir_Modelos/python/demo_00_logistica.png",
+      "generator": "course/00_Escribir_Modelos/python/demo_00_escribir_modelos.py",
+      "inputs": [
+        "course/00_Escribir_Modelos/python/**",
+        "course/01_Introduccion_Modelos/python/*.py",
+        "python/src/gsua_csb/**"
+      ],
+      "command": "python course/00_Escribir_Modelos/python/demo_00_escribir_modelos.py (figure not versioned; regenerable)"
+    },
+    {
+      "output": "course/00_Escribir_Modelos/python/demo_00_pasos.png",
+      "generator": "course/00_Escribir_Modelos/python/demo_00_escribir_modelos.py",
+      "inputs": [
+        "course/00_Escribir_Modelos/python/**",
+        "course/01_Introduccion_Modelos/python/*.py",
+        "python/src/gsua_csb/**"
+      ],
+      "command": "python course/00_Escribir_Modelos/python/demo_00_escribir_modelos.py (figure not versioned; regenerable)"
+    },
+    {
+      "output": "course/00_Escribir_Modelos/python/demo_00_rejilla.png",
+      "generator": "course/00_Escribir_Modelos/python/demo_00_escribir_modelos.py",
+      "inputs": [
+        "course/00_Escribir_Modelos/python/**",
+        "course/01_Introduccion_Modelos/python/*.py",
+        "python/src/gsua_csb/**"
+      ],
+      "command": "python course/00_Escribir_Modelos/python/demo_00_escribir_modelos.py (figure not versioned; regenerable)"
+    },
+    {
+      "output": "course/00_Escribir_Modelos/python/demo_00_sir.png",
+      "generator": "course/00_Escribir_Modelos/python/demo_00_escribir_modelos.py",
+      "inputs": [
+        "course/00_Escribir_Modelos/python/**",
+        "course/01_Introduccion_Modelos/python/*.py",
+        "python/src/gsua_csb/**"
+      ],
+      "command": "python course/00_Escribir_Modelos/python/demo_00_escribir_modelos.py (figure not versioned; regenerable)"
+    },
+    {
+      "output": "docs/course/modulo-01-matlab.html",
+      "generator": "course/build_course_pages.m",
+      "inputs": [
+        "course/01_Introduccion_Modelos/matlab/**",
+        "course/01_Introduccion_Modelos/matlab/*.m",
+        "Functions/*.m"
+      ],
+      "command": "MATLAB, repo root: run course/build_course_pages.m (module 01)"
+    },
+    {
+      "output": "docs/course/demo_01_introduccion.png",
+      "generator": "course/build_course_pages.m",
+      "inputs": [
+        "course/01_Introduccion_Modelos/matlab/**",
+        "course/01_Introduccion_Modelos/matlab/*.m",
+        "Functions/*.m"
+      ],
+      "command": "MATLAB: course/build_course_pages.m (figure of module 01)"
+    },
+    {
+      "output": "docs/course/demo_01_introduccion_01.png",
+      "generator": "course/build_course_pages.m",
+      "inputs": [
+        "course/01_Introduccion_Modelos/matlab/**",
+        "course/01_Introduccion_Modelos/matlab/*.m",
+        "Functions/*.m"
+      ],
+      "command": "MATLAB: course/build_course_pages.m (figure of module 01)"
+    },
+    {
+      "output": "docs/course/demo_01_introduccion_02.png",
+      "generator": "course/build_course_pages.m",
+      "inputs": [
+        "course/01_Introduccion_Modelos/matlab/**",
+        "course/01_Introduccion_Modelos/matlab/*.m",
+        "Functions/*.m"
+      ],
+      "command": "MATLAB: course/build_course_pages.m (figure of module 01)"
+    },
+    {
+      "output": "docs/course/demo_01_introduccion_03.png",
+      "generator": "course/build_course_pages.m",
+      "inputs": [
+        "course/01_Introduccion_Modelos/matlab/**",
+        "course/01_Introduccion_Modelos/matlab/*.m",
+        "Functions/*.m"
+      ],
+      "command": "MATLAB: course/build_course_pages.m (figure of module 01)"
+    },
+    {
+      "output": "docs/course/modulo-01-python.html",
+      "generator": "course/build_course_pages.py",
+      "inputs": [
+        "course/01_Introduccion_Modelos/python/**",
+        "course/01_Introduccion_Modelos/python/*.py",
+        "python/src/gsua_csb/**"
+      ],
+      "command": "python course/build_course_pages.py 01"
+    },
+    {
+      "output": "course/01_Introduccion_Modelos/python/demo_logistic_discrete_ensemble.png",
+      "generator": "course/01_Introduccion_Modelos/python/demo_01_introduccion.py",
+      "inputs": [
+        "course/01_Introduccion_Modelos/python/**",
+        "course/01_Introduccion_Modelos/python/*.py",
+        "python/src/gsua_csb/**"
+      ],
+      "command": "python course/01_Introduccion_Modelos/python/demo_01_introduccion.py (figure not versioned; regenerable)"
+    },
+    {
+      "output": "course/01_Introduccion_Modelos/python/demo_sir_continuous_ensemble.png",
+      "generator": "course/01_Introduccion_Modelos/python/demo_01_introduccion.py",
+      "inputs": [
+        "course/01_Introduccion_Modelos/python/**",
+        "course/01_Introduccion_Modelos/python/*.py",
+        "python/src/gsua_csb/**"
+      ],
+      "command": "python course/01_Introduccion_Modelos/python/demo_01_introduccion.py (figure not versioned; regenerable)"
+    },
+    {
+      "output": "course/01_Introduccion_Modelos/python/demo_sir_continuous_phase.png",
+      "generator": "course/01_Introduccion_Modelos/python/demo_01_introduccion.py",
+      "inputs": [
+        "course/01_Introduccion_Modelos/python/**",
+        "course/01_Introduccion_Modelos/python/*.py",
+        "python/src/gsua_csb/**"
+      ],
+      "command": "python course/01_Introduccion_Modelos/python/demo_01_introduccion.py (figure not versioned; regenerable)"
+    },
+    {
+      "output": "docs/course/modulo-02-matlab.html",
+      "generator": "course/build_course_pages.m",
+      "inputs": [
+        "course/02_Muestreo/matlab/**",
+        "course/01_Introduccion_Modelos/matlab/*.m",
+        "Functions/*.m"
+      ],
+      "command": "MATLAB, repo root: run course/build_course_pages.m (module 02)"
+    },
+    {
+      "output": "docs/course/demo_02_muestreo.png",
+      "generator": "course/build_course_pages.m",
+      "inputs": [
+        "course/02_Muestreo/matlab/**",
+        "course/01_Introduccion_Modelos/matlab/*.m",
+        "Functions/*.m"
+      ],
+      "command": "MATLAB: course/build_course_pages.m (figure of module 02)"
+    },
+    {
+      "output": "docs/course/demo_02_muestreo_01.png",
+      "generator": "course/build_course_pages.m",
+      "inputs": [
+        "course/02_Muestreo/matlab/**",
+        "course/01_Introduccion_Modelos/matlab/*.m",
+        "Functions/*.m"
+      ],
+      "command": "MATLAB: course/build_course_pages.m (figure of module 02)"
+    },
+    {
+      "output": "docs/course/demo_02_muestreo_02.png",
+      "generator": "course/build_course_pages.m",
+      "inputs": [
+        "course/02_Muestreo/matlab/**",
+        "course/01_Introduccion_Modelos/matlab/*.m",
+        "Functions/*.m"
+      ],
+      "command": "MATLAB: course/build_course_pages.m (figure of module 02)"
+    },
+    {
+      "output": "docs/course/demo_02_muestreo_03.png",
+      "generator": "course/build_course_pages.m",
+      "inputs": [
+        "course/02_Muestreo/matlab/**",
+        "course/01_Introduccion_Modelos/matlab/*.m",
+        "Functions/*.m"
+      ],
+      "command": "MATLAB: course/build_course_pages.m (figure of module 02)"
+    },
+    {
+      "output": "docs/course/modulo-02-python.html",
+      "generator": "course/build_course_pages.py",
+      "inputs": [
+        "course/02_Muestreo/python/**",
+        "course/01_Introduccion_Modelos/python/*.py",
+        "python/src/gsua_csb/**"
+      ],
+      "command": "python course/build_course_pages.py 02"
+    },
+    {
+      "output": "course/02_Muestreo/python/demo_log_scale_sampling.png",
+      "generator": "course/02_Muestreo/python/demo_02_muestreo.py",
+      "inputs": [
+        "course/02_Muestreo/python/**",
+        "course/01_Introduccion_Modelos/python/*.py",
+        "python/src/gsua_csb/**"
+      ],
+      "command": "python course/02_Muestreo/python/demo_02_muestreo.py (figure not versioned; regenerable)"
+    },
+    {
+      "output": "course/02_Muestreo/python/demo_sampling_comparison.png",
+      "generator": "course/02_Muestreo/python/demo_02_muestreo.py",
+      "inputs": [
+        "course/02_Muestreo/python/**",
+        "course/01_Introduccion_Modelos/python/*.py",
+        "python/src/gsua_csb/**"
+      ],
+      "command": "python course/02_Muestreo/python/demo_02_muestreo.py (figure not versioned; regenerable)"
+    },
+    {
+      "output": "docs/course/modulo-03-matlab.html",
+      "generator": "course/build_course_pages.m",
+      "inputs": [
+        "course/03_Incertidumbre_MonteCarlo/matlab/**",
+        "course/01_Introduccion_Modelos/matlab/*.m",
+        "Functions/*.m"
+      ],
+      "command": "MATLAB, repo root: run course/build_course_pages.m (module 03)"
+    },
+    {
+      "output": "docs/course/demo_03_incertidumbre.png",
+      "generator": "course/build_course_pages.m",
+      "inputs": [
+        "course/03_Incertidumbre_MonteCarlo/matlab/**",
+        "course/01_Introduccion_Modelos/matlab/*.m",
+        "Functions/*.m"
+      ],
+      "command": "MATLAB: course/build_course_pages.m (figure of module 03)"
+    },
+    {
+      "output": "docs/course/demo_03_incertidumbre_01.png",
+      "generator": "course/build_course_pages.m",
+      "inputs": [
+        "course/03_Incertidumbre_MonteCarlo/matlab/**",
+        "course/01_Introduccion_Modelos/matlab/*.m",
+        "Functions/*.m"
+      ],
+      "command": "MATLAB: course/build_course_pages.m (figure of module 03)"
+    },
+    {
+      "output": "docs/course/demo_03_incertidumbre_02.png",
+      "generator": "course/build_course_pages.m",
+      "inputs": [
+        "course/03_Incertidumbre_MonteCarlo/matlab/**",
+        "course/01_Introduccion_Modelos/matlab/*.m",
+        "Functions/*.m"
+      ],
+      "command": "MATLAB: course/build_course_pages.m (figure of module 03)"
+    },
+    {
+      "output": "docs/course/demo_03_incertidumbre_03.png",
+      "generator": "course/build_course_pages.m",
+      "inputs": [
+        "course/03_Incertidumbre_MonteCarlo/matlab/**",
+        "course/01_Introduccion_Modelos/matlab/*.m",
+        "Functions/*.m"
+      ],
+      "command": "MATLAB: course/build_course_pages.m (figure of module 03)"
+    },
+    {
+      "output": "docs/course/demo_03_incertidumbre_04.png",
+      "generator": "course/build_course_pages.m",
+      "inputs": [
+        "course/03_Incertidumbre_MonteCarlo/matlab/**",
+        "course/01_Introduccion_Modelos/matlab/*.m",
+        "Functions/*.m"
+      ],
+      "command": "MATLAB: course/build_course_pages.m (figure of module 03)"
+    },
+    {
+      "output": "docs/course/modulo-03-python.html",
+      "generator": "course/build_course_pages.py",
+      "inputs": [
+        "course/03_Incertidumbre_MonteCarlo/python/**",
+        "course/01_Introduccion_Modelos/python/*.py",
+        "python/src/gsua_csb/**"
+      ],
+      "command": "python course/build_course_pages.py 03"
+    },
+    {
+      "output": "course/03_Incertidumbre_MonteCarlo/python/demo_03_banda_incertidumbre.png",
+      "generator": "course/03_Incertidumbre_MonteCarlo/python/demo_03_incertidumbre.py",
+      "inputs": [
+        "course/03_Incertidumbre_MonteCarlo/python/**",
+        "course/01_Introduccion_Modelos/python/*.py",
+        "python/src/gsua_csb/**"
+      ],
+      "command": "python course/03_Incertidumbre_MonteCarlo/python/demo_03_incertidumbre.py (figure not versioned; regenerable)"
+    },
+    {
+      "output": "course/03_Incertidumbre_MonteCarlo/python/demo_03_mcf.png",
+      "generator": "course/03_Incertidumbre_MonteCarlo/python/demo_03_incertidumbre.py",
+      "inputs": [
+        "course/03_Incertidumbre_MonteCarlo/python/**",
+        "course/01_Introduccion_Modelos/python/*.py",
+        "python/src/gsua_csb/**"
+      ],
+      "command": "python course/03_Incertidumbre_MonteCarlo/python/demo_03_incertidumbre.py (figure not versioned; regenerable)"
+    },
+    {
+      "output": "course/03_Incertidumbre_MonteCarlo/python/demo_03_uncertainty_toolbox.png",
+      "generator": "course/03_Incertidumbre_MonteCarlo/python/demo_03_incertidumbre.py",
+      "inputs": [
+        "course/03_Incertidumbre_MonteCarlo/python/**",
+        "course/01_Introduccion_Modelos/python/*.py",
+        "python/src/gsua_csb/**"
+      ],
+      "command": "python course/03_Incertidumbre_MonteCarlo/python/demo_03_incertidumbre.py (figure not versioned; regenerable)"
+    },
+    {
+      "output": "docs/course/modulo-04-matlab.html",
+      "generator": "course/build_course_pages.m",
+      "inputs": [
+        "course/04_Analisis_Sensibilidad/matlab/**",
+        "course/01_Introduccion_Modelos/matlab/*.m",
+        "Functions/*.m"
+      ],
+      "command": "MATLAB, repo root: run course/build_course_pages.m (module 04)"
+    },
+    {
+      "output": "docs/course/demo_04_sensibilidad.png",
+      "generator": "course/build_course_pages.m",
+      "inputs": [
+        "course/04_Analisis_Sensibilidad/matlab/**",
+        "course/01_Introduccion_Modelos/matlab/*.m",
+        "Functions/*.m"
+      ],
+      "command": "MATLAB: course/build_course_pages.m (figure of module 04)"
+    },
+    {
+      "output": "docs/course/demo_04_sensibilidad_01.png",
+      "generator": "course/build_course_pages.m",
+      "inputs": [
+        "course/04_Analisis_Sensibilidad/matlab/**",
+        "course/01_Introduccion_Modelos/matlab/*.m",
+        "Functions/*.m"
+      ],
+      "command": "MATLAB: course/build_course_pages.m (figure of module 04)"
+    },
+    {
+      "output": "docs/course/demo_04_sensibilidad_02.png",
+      "generator": "course/build_course_pages.m",
+      "inputs": [
+        "course/04_Analisis_Sensibilidad/matlab/**",
+        "course/01_Introduccion_Modelos/matlab/*.m",
+        "Functions/*.m"
+      ],
+      "command": "MATLAB: course/build_course_pages.m (figure of module 04)"
+    },
+    {
+      "output": "docs/course/modulo-04-python.html",
+      "generator": "course/build_course_pages.py",
+      "inputs": [
+        "course/04_Analisis_Sensibilidad/python/**",
+        "course/01_Introduccion_Modelos/python/*.py",
+        "python/src/gsua_csb/**"
+      ],
+      "command": "python course/build_course_pages.py 04"
+    },
+    {
+      "output": "course/04_Analisis_Sensibilidad/python/demo_04_indices_barras.png",
+      "generator": "course/04_Analisis_Sensibilidad/python/demo_04_sensibilidad.py",
+      "inputs": [
+        "course/04_Analisis_Sensibilidad/python/**",
+        "course/01_Introduccion_Modelos/python/*.py",
+        "python/src/gsua_csb/**"
+      ],
+      "command": "python course/04_Analisis_Sensibilidad/python/demo_04_sensibilidad.py (figure not versioned; regenerable)"
+    },
+    {
+      "output": "course/04_Analisis_Sensibilidad/python/demo_04_sensibilidad_tiempo.png",
+      "generator": "course/04_Analisis_Sensibilidad/python/demo_04_sensibilidad.py",
+      "inputs": [
+        "course/04_Analisis_Sensibilidad/python/**",
+        "course/01_Introduccion_Modelos/python/*.py",
+        "python/src/gsua_csb/**"
+      ],
+      "command": "python course/04_Analisis_Sensibilidad/python/demo_04_sensibilidad.py (figure not versioned; regenerable)"
+    },
+    {
+      "output": "docs/course/modulo-05-matlab.html",
+      "generator": "course/build_course_pages.m",
+      "inputs": [
+        "course/05_Estimacion_Identificabilidad/matlab/**",
+        "course/01_Introduccion_Modelos/matlab/*.m",
+        "Functions/*.m"
+      ],
+      "command": "MATLAB, repo root: run course/build_course_pages.m (module 05)"
+    },
+    {
+      "output": "docs/course/demo_05_estimacion.png",
+      "generator": "course/build_course_pages.m",
+      "inputs": [
+        "course/05_Estimacion_Identificabilidad/matlab/**",
+        "course/01_Introduccion_Modelos/matlab/*.m",
+        "Functions/*.m"
+      ],
+      "command": "MATLAB: course/build_course_pages.m (figure of module 05)"
+    },
+    {
+      "output": "docs/course/demo_05_estimacion_01.png",
+      "generator": "course/build_course_pages.m",
+      "inputs": [
+        "course/05_Estimacion_Identificabilidad/matlab/**",
+        "course/01_Introduccion_Modelos/matlab/*.m",
+        "Functions/*.m"
+      ],
+      "command": "MATLAB: course/build_course_pages.m (figure of module 05)"
+    },
+    {
+      "output": "docs/course/demo_05_estimacion_02.png",
+      "generator": "course/build_course_pages.m",
+      "inputs": [
+        "course/05_Estimacion_Identificabilidad/matlab/**",
+        "course/01_Introduccion_Modelos/matlab/*.m",
+        "Functions/*.m"
+      ],
+      "command": "MATLAB: course/build_course_pages.m (figure of module 05)"
+    },
+    {
+      "output": "docs/course/demo_05_estimacion_03.png",
+      "generator": "course/build_course_pages.m",
+      "inputs": [
+        "course/05_Estimacion_Identificabilidad/matlab/**",
+        "course/01_Introduccion_Modelos/matlab/*.m",
+        "Functions/*.m"
+      ],
+      "command": "MATLAB: course/build_course_pages.m (figure of module 05)"
+    },
+    {
+      "output": "docs/course/demo_05_estimacion_04.png",
+      "generator": "course/build_course_pages.m",
+      "inputs": [
+        "course/05_Estimacion_Identificabilidad/matlab/**",
+        "course/01_Introduccion_Modelos/matlab/*.m",
+        "Functions/*.m"
+      ],
+      "command": "MATLAB: course/build_course_pages.m (figure of module 05)"
+    },
+    {
+      "output": "docs/course/demo_05_estimacion_05.png",
+      "generator": "course/build_course_pages.m",
+      "inputs": [
+        "course/05_Estimacion_Identificabilidad/matlab/**",
+        "course/01_Introduccion_Modelos/matlab/*.m",
+        "Functions/*.m"
+      ],
+      "command": "MATLAB: course/build_course_pages.m (figure of module 05)"
+    },
+    {
+      "output": "docs/course/demo_05_estimacion_06.png",
+      "generator": "course/build_course_pages.m",
+      "inputs": [
+        "course/05_Estimacion_Identificabilidad/matlab/**",
+        "course/01_Introduccion_Modelos/matlab/*.m",
+        "Functions/*.m"
+      ],
+      "command": "MATLAB: course/build_course_pages.m (figure of module 05)"
+    },
+    {
+      "output": "docs/course/demo_05_estimacion_07.png",
+      "generator": "course/build_course_pages.m",
+      "inputs": [
+        "course/05_Estimacion_Identificabilidad/matlab/**",
+        "course/01_Introduccion_Modelos/matlab/*.m",
+        "Functions/*.m"
+      ],
+      "command": "MATLAB: course/build_course_pages.m (figure of module 05)"
+    },
+    {
+      "output": "docs/course/modulo-05-python.html",
+      "generator": "course/build_course_pages.py",
+      "inputs": [
+        "course/05_Estimacion_Identificabilidad/python/**",
+        "course/01_Introduccion_Modelos/python/*.py",
+        "python/src/gsua_csb/**"
+      ],
+      "command": "python course/build_course_pages.py 05"
+    },
+    {
+      "output": "course/05_Estimacion_Identificabilidad/python/demo_05_identificabilidad.png",
+      "generator": "course/05_Estimacion_Identificabilidad/python/demo_05_estimacion.py",
+      "inputs": [
+        "course/05_Estimacion_Identificabilidad/python/**",
+        "course/01_Introduccion_Modelos/python/*.py",
+        "python/src/gsua_csb/**"
+      ],
+      "command": "python course/05_Estimacion_Identificabilidad/python/demo_05_estimacion.py (figure not versioned; regenerable)"
+    },
+    {
+      "output": "course/05_Estimacion_Identificabilidad/python/demo_05_mejor_ajuste.png",
+      "generator": "course/05_Estimacion_Identificabilidad/python/demo_05_estimacion.py",
+      "inputs": [
+        "course/05_Estimacion_Identificabilidad/python/**",
+        "course/01_Introduccion_Modelos/python/*.py",
+        "python/src/gsua_csb/**"
+      ],
+      "command": "python course/05_Estimacion_Identificabilidad/python/demo_05_estimacion.py (figure not versioned; regenerable)"
+    },
+    {
+      "output": "python/paper_methods.md",
+      "generator": "python/tests/test_petab.py",
+      "inputs": [
+        "python/tests/test_petab.py",
+        "python/src/gsua_csb/_petab.py",
+        "python/tests/data/petab/**"
+      ],
+      "command": "cd python && pytest tests/test_petab.py -k cross_validates. Table 3.5 (max relative error vs the published reference) is copied by hand from that run; the tests only assert thresholds."
+    }
+  ]
+}

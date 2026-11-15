@@ -1,3 +1,6 @@
+# PRODUCES: fig:joint-vs-marginal-bertozzi, res:methods-3.3-band-calibration
+# INPUTS: python/tests/data/petab/Bertozzi_PNAS2020/problem.yaml, python/tests/data/petab/Boehm_JProteomeRes2014/Boehm_JProteomeRes2014.yaml, python/src/gsua_csb/_sampling.py, python/src/gsua_csb/_identifiability.py
+# OUTPUTS: python/paper_experiments/figures/joint_vs_marginal_bertozzi.png, python/paper_experiments/joint_vs_marginal_bands.out
 """Does correlation-preserving sampling actually build a better uncertainty band?
 
 The bands this toolbox's users build come from ``design_matrix(model_with_ia_range, N)`` -- each

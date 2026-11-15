@@ -1,0 +1,36 @@
+cff-version: 1.2.0
+message: "If you use GSUA-CSB, please cite it using the metadata below."
+title: "GSUA-CSB: Global Sensitivity and Uncertainty Analysis - Confidence Subcontour Box"
+type: software
+authors:
+  - family-names: Rojas-Díaz
+    given-names: Daniel
+    affiliation: "Universidad EAFIT, Medellín, Colombia"
+  - family-names: Vélez-Sánchez
+    given-names: Carlos Mario
+    affiliation: "Universidad EAFIT, Medellín, Colombia"
+version: 1.19.1
+date-released: 2026-11-15
+doi: 10.5281/zenodo.3383315
+identifiers:
+  - type: doi
+    value: 10.5281/zenodo.3383315
+    description: "Concept DOI: all archived versions, resolves to the latest."
+  - type: doi
+    value: 10.5281/zenodo.3383316
+    description: "Version 1.0 (2019)."
+repository-code: "https://github.com/drojasd/GSUA-CSB"
+url: "https://drojasd.github.io/GSUA-CSB/"
+license: MIT
+abstract: >-
+  MATLAB toolbox, with a Python port (gsua_csb), for global sensitivity and uncertainty
+  analysis, multistart parameter estimation and practical identifiability analysis of
+  dynamical models, including the Confidence Subcontour Box (CSB) algorithm.
+keywords:
+  - global sensitivity analysis
+  - uncertainty quantification
+  - parameter estimation
+  - practical identifiability
+  - Shapley effects
+  - MATLAB
+  - Python
