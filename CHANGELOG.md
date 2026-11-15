@@ -2,8 +2,8 @@
 
 ## 1.19.0 (MATLAB) / 0.5.0 (Python) — 2026-11-14
 
-Shapley effects, a documented answer to "STi > 1", and two fixes. Back-compatible: no existing
-method changes its results. MATLAB and Python, tests in both.
+Shapley effects, a documented answer to "STi > 1", a working MATLAB OAT, and smaller fixes.
+Back-compatible: no working method changes its results. MATLAB and Python, tests in both.
 
 ### New
 
@@ -42,12 +42,19 @@ method changes its results. MATLAB and Python, tests in both.
   factors differently. `'Saltelli'`'s `Si_vec`/`STi_vec` score the squared-deviation field
   `(Y-ynom).^2`, not `Y` (verified: they converge to the indices of that field). The default and the
   method name are kept, since changing either would alter existing results.
-- Known issue, not fixed in this release: MATLAB `'SensMethod','OAT'` fails in the single-objective
-  path (it passes one column of `M` to the model, then errors on an undefined `STi_vec`). The Python
-  `"oat"` is unaffected.
 
 ### Fixed
 
+- **`gsua_sa` `'SensMethod','OAT'` works again (MATLAB).** In the single-objective path it passed the
+  single column `M(:,i)` to the model, so every evaluation failed (left as zeros, with a
+  "FailedSimulations" warning) and the call then crashed on an undefined `STi_vec`. It now varies
+  factor `i` over its sampled values with the others at `T.Nominal` — the definition the Python port
+  already used — and matches Python to rounding on the same design matrix. `Si` is each factor's
+  share of the summed OAT variance of the cost, `STi` that variance; OAT writes no `Si_vec`/`STi_vec`.
+  Test: `tests/gsuaSaOatTest.m`.
+- **`J` from OAT is the per-run cost in both languages.** Python `"oat"` returned the per-parameter
+  OAT variances in `SensitivityResult.J`, contrary to its docstring; it now returns the cost of the
+  base sample (one value per row of `Y`), like every other method and like MATLAB.
 - **README citation DOI.** The Zenodo DOI was malformed (`10.5755281/...`); it is
   `10.5281/zenodo.3383316`.
 - **`gsua_sa` method names are case-insensitive** (`'shapley'`, `'xiao'` now select the method instead

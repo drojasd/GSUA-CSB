@@ -22,7 +22,11 @@ function [ParT,Y,J] = gsua_sa(M,ParT,varargin)
 %                   T.Sh / T.Sh_vec instead of T.Si / T.STi
 % 'brute-force' <-- explores all possible combinations, N + 2Np*N^2
 %                   simulations
-% 'OAT'         <-- non-global method, requires N*(Np+1) simulations
+% 'OAT'         <-- non-global method, requires N*(Np+1) simulations.
+%                   Varies one factor at a time over its N sampled values
+%                   with the others at T.Nominal; Si is each factor's share
+%                   of the summed OAT variance of the cost J and STi that
+%                   variance itself. No interactions, no Si_vec/STi_vec.
 %
 % WHAT EACH METHOD ESTIMATES
 % 'Sobol' and 'Jansen' estimate the variance-based (Sobol') first-order
@@ -429,25 +433,31 @@ if ~multiObjt
             end
 
         case 'OAT'
-            if nargout>4
-                disp('Too many output arguments')
-                return
-            else
-                Nsim=N*Np2+N;
-                [Y]=gsua_pardeval(M,ParT,xdata,Parallel,[0,Nsim],verbose);
-                J = zeros(Np,1);
-                for i = 1:Np %construir M apropiado
-                    if ~(fixed(i))
-                    M_oat=M(:,i);
-                    [Y_oat]=gsua_pardeval(M_oat,ParT,xdata,Parallel,[i*N,Nsim],verbose);
-                    J(i) = var(sum((Y_oat-yexp3).^2,[2 3]));
-                    end
+            % One factor at a time: factor i takes its N sampled values from M while every other
+            % factor stays at T.Nominal -- the definition the Python port uses. Before v1.19 the
+            % model received the single column M(:,i), so every evaluation failed.
+            Nsim=N*Np2+N;
+            [Y]=gsua_pardeval(M,ParT,xdata,Parallel,[0,Nsim],verbose);
+            J = sum((Y-yexp3).^2,[2 3]);            % cost of the base sample, as for every method
+            nominalRows = repmat(reshape(ParT.Nominal,1,[]),N,1);
+            Voat = zeros(Np,1);
+            done = 0;
+            for i = 1:Np
+                if ~(fixed(i))
+                    M_oat = nominalRows;
+                    M_oat(:,i) = M(:,i);
+                    done = done + 1;
+                    [Y_oat]=gsua_pardeval(M_oat,ParT,xdata,Parallel,[done*N,Nsim],verbose);
+                    Voat(i) = var(sum((Y_oat-yexp3).^2,[2 3]),1);   % population variance (= Python)
                 end
-
-                VT = sum(J);
-                Si = J/VT;
-                STi=J;
             end
+            VT = sum(Voat);
+            if VT > 0
+                Si = Voat/VT;
+            else
+                Si = zeros(Np,1);
+            end
+            STi = Voat;
 
         otherwise
             clc
@@ -459,6 +469,9 @@ if ~multiObjt
     if strcmp(SensMethod,'Shapley')
         ParT.Sh=Sh;
         ParT.Sh_vec=Sh_vec;
+    elseif strcmp(SensMethod,'OAT')
+        ParT.Si=Si;                 % OAT has no time-dependent indices (as in Python)
+        ParT.STi=STi;
     else
         ParT.Si=Si;
         ParT.STi=STi;

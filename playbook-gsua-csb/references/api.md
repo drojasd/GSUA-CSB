@@ -1873,7 +1873,11 @@ It is possible to choose between 7 SA methods using the paired feature
                   T.Sh / T.Sh_vec instead of T.Si / T.STi
 'brute-force' <-- explores all possible combinations, N + 2Np*N^2
                   simulations
-'OAT'         <-- non-global method, requires N*(Np+1) simulations
+'OAT'         <-- non-global method, requires N*(Np+1) simulations.
+                  Varies one factor at a time over its N sampled values
+                  with the others at T.Nominal; Si is each factor's share
+                  of the summed OAT variance of the cost J and STi that
+                  variance itself. No interactions, no Si_vec/STi_vec.
 
 WHAT EACH METHOD ESTIMATES
 'Sobol' and 'Jansen' estimate the variance-based (Sobol') first-order

@@ -12,7 +12,8 @@ función de Ishigami (a=7, b=0.1; índices analíticos conocidos). Complementa `
 | `'Jansen'` | Índices de Sobol' de `Y` | `N·(Np/2+1)` | Insesgado; = Xiao con α=2. |
 | `'Saltelli'` | Índices de Sobol' del **campo `(Y−ynom)²`** | `N·(Np/2+1)` | No mide `Y` sino el desvío cuadrático respecto a la trayectoria nominal. **No es un error**: converge exactamente a los índices de ese campo (Ishigami: `[0.585 0.440 0.423]` vs. verdad del campo `Y²` `[0.587 0.432 0.421]`). Otra pregunta, no documentada antes de v1.19. |
 | `'Shapley'` | Efectos de Shapley de `Y` (`T.Sh_vec`) | ver abajo | v1.19. Escribe `T.Sh`/`T.Sh_vec`, no `Si`/`STi`. |
-| `'brute-force'`, `'OAT'` | — | — | `'OAT'` está **roto** en la ruta de un objetivo (ver `errores.md` §13c). |
+| `'OAT'` | Varianza del costo al mover un factor con los demás en `T.Nominal` | `N·(Np+1)` | No global, sin interacciones, sin `Si_vec`/`STi_vec`. Muy sensible a la escala: como mide el costo cuadrático, un factor que dispara brotes domina por órdenes de magnitud. Corregido en v1.19 (antes fallaba, `errores.md` §13c). |
+| `'brute-force'` | Índices de Sobol' por fuerza bruta | `N + 2·Np·N²` | Solo para verificar con N pequeño. |
 
 Para **todos** los métodos, los escalares `T.Si`/`T.STi`/`T.Sh` son índices del costo
 `J = Σ(Y−ynom)²` (tiempo y series sumados), no de `Y`.

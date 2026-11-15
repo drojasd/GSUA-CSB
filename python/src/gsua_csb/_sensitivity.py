@@ -30,6 +30,12 @@ evaluations); ``shapley_type="given"`` is the nearest-neighbour estimator of Bro
 Depecker (2020) on a JOINT sample (the rows of ``M``, or ``pool``), keeping its dependence. Results go
 to ``Sh``/``Sh_vec`` (``Si``/``STi`` are NaN and the ``*_vec`` Sobol fields ``None``).
 
+``"oat"`` evaluates each free parameter at its sampled values while holding every other parameter at
+``model.nominal`` (the standard one-at-a-time sweep; MATLAB's ``'OAT'`` uses the same definition since
+v1.19, before which it passed a single column of ``M`` to the model and failed). ``Si`` is each
+factor's share of the summed OAT variance of the cost, ``STi`` that variance itself; ``J`` is the cost
+of the base sample (one value per row of ``Y``), as for every method.
+
 Not ported (documented gaps, not silent omissions):
 
 - ``'brute-force'`` -- MATLAB's exhaustive method requiring ``N + 2*Np*N**2`` evaluations. Kept out
@@ -38,11 +44,6 @@ Not ported (documented gaps, not silent omissions):
 - Multi-objective SA (MATLAB's ``ParT.Properties.CustomProperties.output`` with more than one
   selected output, scored via ``gsua_costfMulti`` instead of raw SSE) -- callers with a multi-state
   model should select a single state via ``output_index`` and run analyses per state instead.
-- MATLAB's ``'OAT'`` branch passes a single-column matrix to ``gsua_pardeval`` in a way that only
-  works when the model has exactly one state variable -- almost certainly a latent bug in the
-  MATLAB source, not a method to faithfully reproduce. The port here instead evaluates each free
-  parameter at its full sampled range while holding every other parameter at ``model.nominal``,
-  which is the standard definition of a one-at-a-time sensitivity sweep.
 """
 
 from __future__ import annotations
@@ -310,7 +311,8 @@ def _oat(
     N, Np = M.shape
     fixed = model.fixed
     Y = eval_batch(model, M, xdata, output_index, n_jobs=n_jobs)
-    J = np.zeros(Np)
+    J = np.sum((Y - y_exp) ** 2, axis=1)       # cost of the base sample, as for every method
+    V_oat = np.zeros(Np)
     nominal_rows = np.tile(model.nominal, (N, 1))
     for k in range(Np):
         if fixed[k]:
@@ -318,10 +320,10 @@ def _oat(
         M_oat = nominal_rows.copy()
         M_oat[:, k] = M[:, k]
         Y_oat = eval_batch(model, M_oat, xdata, output_index, n_jobs=n_jobs)
-        J[k] = np.var(np.sum((Y_oat - y_exp) ** 2, axis=1))
-    VT = np.sum(J)
-    Si = J / VT if VT > 0 else np.zeros(Np)
-    STi = J.copy()
+        V_oat[k] = np.var(np.sum((Y_oat - y_exp) ** 2, axis=1))
+    VT = np.sum(V_oat)
+    Si = V_oat / VT if VT > 0 else np.zeros(Np)
+    STi = V_oat.copy()
     return SensitivityResult(
         names=list(model.names), method="oat", Si=Si, STi=STi, Si_vec=None, STi_vec=None, Y=Y, J=J
     )

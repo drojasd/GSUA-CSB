@@ -87,11 +87,11 @@ escritos a propósito.
     el default `'Xiao'`. Sube N. Tampoco confundas `'Saltelli'` con Sobol': mide el campo `(Y−ynom)²`,
     no `Y`, así que sus índices son otros. Ver `metodos_sa.md`.
 
-13c. **`'SensMethod','OAT'` falla en la ruta de un objetivo (MATLAB).** Bug previo a v1.19, sin
-    corregir: pasa una sola columna `M(:,i)` al modelo (todas las evaluaciones fallan y quedan en cero)
-    y luego revienta con *"Unrecognized function or variable 'STi_vec'"*. El port Python reimplementa
-    OAT correctamente (barre cada factor libre con los demás en el nominal). Mientras tanto, usa un
-    método global o `gsua_oatr`.
+13c. **`'SensMethod','OAT'` fallaba en la ruta de un objetivo (MATLAB, antes de v1.19).** Pasaba una
+    sola columna `M(:,i)` al modelo (todas las evaluaciones fallaban, *"FailedSimulations"*) y luego
+    reventaba con *"Unrecognized function or variable 'STi_vec'"*. **Corregido en v1.19:** varía cada
+    factor libre con los demás en `T.Nominal`, igual que Python (coinciden al redondeo). Si ves ese
+    error, actualiza la toolbox.
 
 ## Históricos (resueltos en v1.18)
 

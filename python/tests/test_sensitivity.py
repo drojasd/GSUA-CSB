@@ -65,6 +65,17 @@ def test_oat_orders_parameters_by_influence():
     assert result.STi_vec is None
     assert result.Si[1] > result.Si[0]
     np.testing.assert_allclose(np.sum(result.Si), 1.0)
+    # J is the cost of the base sample, one value per row of Y (as for every method).
+    assert result.J.shape == (result.Y.shape[0],)
+
+
+def test_oat_linear_model_matches_analytic_shares():
+    # y = x1 + 2*x2 on [-4,4]^2, nominal 0: OAT cost of factor k is c_k^2 x_k^2, so
+    # Si = c^4 / sum(c^4) = [1/17, 16/17] -- same value MATLAB's gsua_sa 'OAT' gives (tests/gsuaSaOatTest.m).
+    model = _linear12_model()
+    M = design_matrix(model, 4000, seed=21)
+    result = sensitivity_analysis(model, M, method="oat")
+    np.testing.assert_allclose(result.Si, [1 / 17, 16 / 17], atol=0.01)
 
 
 def test_time_dependent_indices_shape_matches_domain():
